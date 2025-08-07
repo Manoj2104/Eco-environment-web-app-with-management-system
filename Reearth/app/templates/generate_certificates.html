@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <!-- Header and Action Bar -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-primary fw-bold">
+      <i class="bi bi-patch-check"></i> Generate Certificates
+    </h3>
+    <div class="d-flex gap-2">
+      <input type="text" class="form-control shadow-sm" placeholder="Search by name or event..." id="searchInput" onkeyup="filterTable()" style="width: 280px;">
+      <button onclick="exportCSV()" class="btn btn-outline-success btn-sm rounded-pill shadow-sm">
+        <i class="bi bi-download"></i> Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row text-center mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body">
+          <h5 class="card-title mb-1">👥 Participants</h5>
+          <h3 class="fw-bold text-primary">{{ participants|length }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body">
+          <h5 class="card-title mb-1">📅 Unique Events</h5>
+          <h3 class="fw-bold text-info">{{ participants | map(attribute='event') | unique | list | length }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body">
+          <h5 class="card-title mb-1">⏱ Total Hours</h5>
+          <h3 class="fw-bold text-success">{{ participants | sum(attribute='hours') }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if participants %}
+  <div class="table-responsive shadow-sm rounded">
+    <table class="table table-hover align-middle text-center" id="certTable">
+      <thead class="table-primary rounded-top">
+        <tr>
+          <th>Volunteer</th>
+          <th>Event</th>
+          <th>Hours</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in participants %}
+        <tr>
+          <td>
+            <span class="badge rounded-circle bg-primary text-white me-2" style="width: 36px; height: 36px; font-size: 1rem; line-height: 28px;">
+              {{ p.name[0] }}
+            </span>
+            <span data-bs-toggle="tooltip" title="Verified Volunteer">{{ p.name }}</span>
+          </td>
+          <td>{{ p.event }}</td>
+          <td>
+            <span class="badge bg-gradient bg-info text-dark px-3 py-2 rounded-pill shadow-sm">
+              {{ p.hours }} hrs
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-light text-success border border-success rounded-pill" data-bs-toggle="tooltip" title="Eligible for certificate">
+              <i class="bi bi-circle-fill" style="font-size: 0.6rem;"></i> Eligible
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-outline-secondary btn-sm preview-btn" data-name="{{ p.name }}" data-event="{{ p.event }}" data-bs-toggle="modal" data-bs-target="#previewModal">
+              <i class="bi bi-eye"></i>
+            </button>
+            <a href="{{ url_for('dashboard.download_certificate', name=p.name|urlencode, event=p.event|urlencode) }}" class="btn btn-success btn-sm ms-2">
+              <i class="bi bi-download"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="alert alert-warning mt-4">No participants found.</div>
+  {% endif %}
+
+  <!-- Pagination -->
+  <div class="mt-4 text-center" id="pagination"></div>
+
+  <!-- Floating Action Button (Optional) -->
+  <a href="#" class="btn btn-primary rounded-circle position-fixed bottom-0 end-0 m-4 shadow" style="width: 58px; height: 58px;">
+    <i class="bi bi-plus-lg"></i>
+  </a>
+</div>
+
+<!-- Modal for Live Preview -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i> Live Certificate Preview</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <iframe id="previewIframe" style="width: 100%; height: 600px;" class="border rounded shadow-sm"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  const socket = io();
+
+  socket.on('badge_update', data => {
+    console.log('🎖 New badge unlocked for:', data.name);
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltips.map(t => new bootstrap.Tooltip(t));
+  });
+
+  function filterTable() {
+    const value = document.getElementById("searchInput").value.toLowerCase();
+    document.querySelectorAll("#certTable tbody tr").forEach(row => {
+      const [name, event] = [row.cells[0].innerText, row.cells[1].innerText];
+      row.style.display = (name.toLowerCase().includes(value) || event.toLowerCase().includes(value)) ? "" : "none";
+    });
+  }
+
+  document.querySelectorAll(".preview-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+      const name = encodeURIComponent(this.dataset.name);
+      const event = encodeURIComponent(this.dataset.event);
+      document.getElementById("previewIframe").src = `/preview-certificate?name=${name}&event=${event}`;
+    });
+  });
+
+  function exportCSV() {
+    let csv = "Name,Event,Hours,Status\n";
+    document.querySelectorAll("#certTable tbody tr").forEach(row => {
+      const cells = row.querySelectorAll("td");
+      csv += `${cells[0].innerText},${cells[1].innerText},${cells[2].innerText},Eligible\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "certificates.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Pagination
+  document.addEventListener("DOMContentLoaded", function () {
+    const rows = document.querySelectorAll("#certTable tbody tr");
+    const pageSize = 5;
+    const totalPages = Math.ceil(rows.length / pageSize);
+    const pagination = document.getElementById("pagination");
+
+    function showPage(page) {
+      rows.forEach((row, i) => {
+        row.style.display = (i >= (page - 1) * pageSize && i < page * pageSize) ? "" : "none";
+      });
+      pagination.innerHTML = [...Array(totalPages).keys()].map(i =>
+        `<button class="btn btn-sm ${i + 1 === page ? 'btn-primary' : 'btn-outline-primary'} m-1" onclick="showPage(${i + 1})">${i + 1}</button>`
+      ).join('');
+    }
+
+    window.showPage = showPage;
+    showPage(1);
+  });
+</script>
+{% endblock %}

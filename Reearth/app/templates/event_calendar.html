@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h4 class="mb-4 fw-bold text-primary">
+    <i class="bi bi-calendar2-week me-2"></i>Upcoming Events
+  </h4>
+
+  {% if upcoming_events %}
+    <div class="row g-4">
+      {% for event in upcoming_events %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card bg-white border-0 shadow-lg glass-effect rounded-4 h-100">
+          <div class="card-body d-flex flex-column justify-content-between">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <h5 class="text-dark fw-bold mb-1">
+                  {{ event.name }}
+                  {% if event.date.date() == now.date() %}
+                    <span class="badge bg-danger ms-2">Today</span>
+                  {% elif event.date.date() == (now + timedelta(days=1)).date() %}
+                    <span class="badge bg-warning text-dark ms-2">Tomorrow</span>
+                  {% endif %}
+                </h5>
+                <p class="text-muted small mb-2">
+                  <i class="bi bi-clock me-1"></i>{{ event.date.strftime('%d %b %Y, %I:%M %p') }}<br>
+                  <i class="bi bi-geo-alt-fill me-1"></i>{{ event.location or 'TBD' }}
+                </p>
+                <div class="mb-2">
+                  <span class="badge bg-success-subtle text-success me-1"><i class="bi bi-stars me-1"></i>{{ event.xp or 50 }} XP</span>
+                  <span class="badge bg-info-subtle text-dark me-1"><i class="bi bi-tag me-1"></i>{{ event.category or 'General' }}</span>
+                </div>
+              </div>
+              {% if event.thumbnail %}
+              <img src="{{ url_for('static', filename='uploads/' ~ event.thumbnail) }}"
+                   alt="Thumbnail" class="rounded-3 ms-2 shadow-sm"
+                   style="width: 75px; height: 60px; object-fit: cover;">
+              {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <a href="{{ url_for('events.view_event', event_id=event.id) }}"
+                 class="btn btn-sm btn-outline-primary rounded-pill">
+                <i class="bi bi-eye"></i> View
+              </a>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-light border rounded-circle" data-bs-toggle="dropdown">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a class="dropdown-item" href="https://www.google.com/calendar/render?action=TEMPLATE&text={{ event.name|urlencode }}&dates={{ event.date.strftime('%Y%m%dT%H%M%S') }}/{{ event.date.strftime('%Y%m%dT%H%M%S') }}&details=Join%20the%20event%20on%20EcoNova&location={{ event.location|urlencode }}" target="_blank">
+                      <i class="bi bi-calendar-plus me-2"></i>Add to Calendar
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="#" onclick="navigator.clipboard.writeText('{{ request.url_root }}event/{{ event.id }}')">
+                      <i class="bi bi-share me-2"></i>Copy Link
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item text-danger" href="{{ url_for('events.edit_event', event_id=event.id) }}">
+                      <i class="bi bi-pencil me-2"></i>Edit
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Countdown -->
+            <div class="text-muted mt-2 small" id="countdown-{{ event.id }}">⏳ Calculating...</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-light border text-muted">
+      <i class="bi bi-info-circle"></i> No upcoming events found.
+    </div>
+  {% endif %}
+</div>
+
+<!-- Countdown Script -->
+<script>
+  {% for event in upcoming_events %}
+    const countdownEl{{ event.id }} = document.getElementById("countdown-{{ event.id }}");
+    const eventTime{{ event.id }} = new Date("{{ event.date.isoformat() }}").getTime();
+
+    function updateCountdown{{ event.id }}() {
+      const now = new Date().getTime();
+      const distance = eventTime{{ event.id }} - now;
+
+      if (distance < 0) {
+        countdownEl{{ event.id }}.innerText = "🎉 Event Started!";
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hrs = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((distance % (1000 * 60)) / 1000);
+
+      countdownEl{{ event.id }}.innerText = `⏳ Starts in ${days}d ${hrs}h ${mins}m ${secs}s`;
+    }
+
+    updateCountdown{{ event.id }}();
+    setInterval(updateCountdown{{ event.id }}, 1000);
+  {% endfor %}
+</script>
+
+<style>
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    transition: transform 0.2s ease;
+  }
+
+  .glass-effect:hover {
+    transform: scale(1.01);
+  }
+
+  .badge.bg-success-subtle {
+    background-color: #e6f4ea;
+  }
+
+  .badge.bg-info-subtle {
+    background-color: #dff5fc;
+  }
+</style>
+{% endblock %}

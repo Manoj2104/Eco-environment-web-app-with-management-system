@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+
+  <!-- 1. Breadcrumb -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('dashboard.home') }}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('events.manage_events') }}">Events</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ event.title }}</li>
+    </ol>
+  </nav>
+
+  <!-- 2. Header with Tags -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold text-primary">{{ event.title }}</h2>
+      <p class="text-muted mb-1"><i class="bi bi-calendar-event"></i> {{ event.date.strftime('%B %d, %Y %I:%M %p') }}</p>
+      <p class="text-muted"><i class="bi bi-geo-alt-fill"></i> {{ event.location }}</p>
+    </div>
+    {% if event.thumbnail %}
+      <img src="{{ url_for('static', filename='uploads/' ~ event.thumbnail) }}" alt="Event Image"
+        class="rounded shadow-sm d-none d-md-block" style="width: 160px; height: 110px; object-fit: cover;">
+    {% endif %}
+  </div>
+
+  <!-- 3. Event Meta Tags (dummy categories for now) -->
+  <div class="mb-3">
+    <span class="badge bg-success me-2"><i class="bi bi-tree"></i> Cleanup</span>
+    <span class="badge bg-info me-2"><i class="bi bi-people"></i> Community</span>
+    <span class="badge bg-warning text-dark"><i class="bi bi-lightning"></i> XP Boost</span>
+  </div>
+
+  <!-- 4. Description -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title text-secondary"><i class="bi bi-info-circle"></i> Description</h5>
+      <p class="card-text">{{ event.description or 'No description available.' }}</p>
+    </div>
+  </div>
+
+  <!-- 5. Google Map Embed (if coords exist) -->
+  {% if event.latitude and event.longitude %}
+  <div class="mb-4">
+    <h5 class="text-secondary"><i class="bi bi-map"></i> Location Map</h5>
+    <div class="ratio ratio-16x9 rounded shadow-sm">
+      <iframe
+        src="https://www.google.com/maps?q={{ event.latitude }},{{ event.longitude }}&output=embed"
+        allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 6. Booking CTA -->
+  {% if booking %}
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i> You have already booked this event.
+    </div>
+  {% else %}
+    <div class="d-grid gap-2 mb-4">
+      <a href="#" class="btn btn-success btn-lg">
+        <i class="bi bi-calendar-plus"></i> Book Now
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- 7. QR Code & Passcode -->
+  {% if event.qr_code %}
+  <div class="card text-center shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title"><i class="bi bi-qr-code"></i> Event QR Code</h5>
+      <img src="{{ url_for('static', filename='qr_codes/' ~ event.qr_code) }}" alt="QR Code"
+           class="img-fluid my-3" style="max-width: 180px;">
+      <p><strong>Passcode:</strong> <code>{{ event.passcode or 'N/A' }}</code></p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 8. Countdown -->
+  <div class="card bg-light shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title"><i class="bi bi-hourglass-split"></i> Time Until Event</h5>
+      <p id="countdown" class="lead fw-bold text-danger">Calculating...</p>
+    </div>
+  </div>
+
+  <!-- 9. Share Button -->
+  <div class="d-flex justify-content-between mb-4">
+    <div>
+      <button class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(window.location.href)">
+        <i class="bi bi-share"></i> Copy Link
+      </button>
+    </div>
+    <div>
+      <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="btn btn-outline-primary">
+        <i class="bi bi-pencil-square"></i> Edit
+      </a>
+    </div>
+  </div>
+
+  <!-- 10. Progress/XP Example Card -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h6 class="card-title text-secondary"><i class="bi bi-bar-chart-line"></i> XP Reward</h6>
+      <div class="progress mb-2" role="progressbar" aria-label="XP Progress" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar bg-success" style="width: 80%">80 XP</div>
+      </div>
+      <p class="small text-muted">Completing this event grants you 80 XP towards your next badge.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Countdown Script -->
+<script>
+  const countdownEl = document.getElementById("countdown");
+  const eventTime = new Date("{{ event.date.isoformat() }}").getTime();
+
+  function updateCountdown() {
+    const now = new Date().getTime();
+    const distance = eventTime - now;
+
+    if (distance < 0) {
+      countdownEl.innerText = "🎉 Event Started!";
+      return;
+    }
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hrs = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((distance % (1000 * 60)) / 1000);
+
+    countdownEl.innerText = `${days}d ${hrs}h ${mins}m ${secs}s`;
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>
+{% endblock %}

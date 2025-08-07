@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - EcoNova{% endblock %}
+
+{% block content %}
+<style>
+  .profile-card {
+    background: linear-gradient(135deg, #f8f9fa, #e0f7fa);
+  }
+  .ribbon {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: green;
+    color: white;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    border-radius: 0 0 0.5rem 0.5rem;
+    z-index: 1;
+  }
+  .badge-glass {
+    backdrop-filter: blur(8px);
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 0.75rem;
+    text-align: center;
+    transition: transform 0.2s ease-in-out;
+  }
+  .badge-glass:hover {
+    transform: scale(1.05);
+  }
+  .progress-container {
+    background-color: #f1f1f1;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 20px;
+    background: linear-gradient(90deg, green, green);
+    color: white;
+    font-size: 12px;
+    line-height: 20px;
+    text-align: center;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    padding-top: 1rem;
+  }
+  .stat-card {
+    background: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+    text-align: center;
+    padding: 1rem;
+    transition: all 0.3s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-5px);
+  }
+</style>
+
+<div class="row g-4">
+  <!-- Profile Column -->
+  <div class="col-lg-4">
+    <div class="card shadow border-0 rounded-4 p-4 position-relative profile-card">
+      <div class="ribbon">Level {{ current_user.level }}</div>
+      <div class="text-center">
+        {% if current_user.profile_pic %}
+          <img src="{{ url_for('static', filename='uploads/' + current_user.profile_pic) }}" class="rounded-circle mb-3 shadow" width="120" height="120" alt="Profile Image">
+        {% else %}
+          
+        {% endif %}
+        <h5 class="fw-bold">{{ current_user.name }}</h5>
+ <a href="{{ url_for('dashboard.view_volunteer_profile', user_id=user.id) }}" class="btn btn-outline-secondary rounded-pill">
+
+  View Full Profile
+</a>
+
+
+
+        <p class="text-muted mb-0">{{ current_user.role|capitalize }}</p>
+      </div>
+      <hr>
+      <ul class="list-group list-group-flush mb-3">
+        <li class="list-group-item d-flex justify-content-between"><span>XP</span> <strong>{{ current_user.xp }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Achievements</span> <strong>{{ total_achievements }}</strong></li>
+      </ul>
+      <h6 class="fw-bold mb-2">Badges</h6>
+      <div class="d-flex flex-wrap gap-2">
+        {% for badge in current_user.badges %}
+          <span class="badge rounded-pill bg-gradient bg-success-subtle border text-dark shadow-sm" title="{{ badge.description }}">{{ badge.name }}</span>
+        {% else %}
+          <span class="text-muted">No badges yet</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Column -->
+  <div class="col-lg-8">
+    <!-- XP Progress -->
+    <div class="card shadow border-0 rounded-4 p-4 mb-3">
+      <h5 class="fw-bold mb-3">XP Progress</h5>
+      <div class="progress-container mb-3">
+        <div class="progress-bar" style="width: {{ current_user.xp % 100 }}%">{{ current_user.xp % 100 }}%</div>
+      </div>
+      <canvas id="xpChart" height="100"></canvas>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card shadow border-0 rounded-4 p-4 mb-3">
+      <h5 class="fw-bold mb-3">Recent Activity</h5>
+      <ul class="list-group list-group-flush">
+        {% for a in activities %}
+          <li class="list-group-item"><i class="bi bi-check-circle-fill text-success me-2"></i>{{ a }}</li>
+        {% else %}
+          <li class="list-group-item text-muted">No recent activity.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Earned Badges -->
+    <div class="card shadow border-0 rounded-4 p-4 mb-3">
+      <h5 class="fw-bold mb-3">Earned Badges</h5>
+      <div class="row">
+        {% for badge in earned_badges %}
+          <div class="col-6 col-md-4 col-lg-3 mb-3">
+            <div class="badge-glass">
+              <img src="{{ badge.icon_url }}" alt="{{ badge.name }}" class="img-fluid mb-2" style="max-height: 50px;">
+              <p class="small mb-0 fw-semibold">{{ badge.name }}</p>
+            </div>
+          </div>
+        {% else %}
+          <div class="col-12 text-muted">No badges earned yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Impact Overview -->
+    <div class="card shadow border-0 rounded-4 p-4 mb-3">
+      <h5 class="fw-bold mb-3">Impact Overview</h5>
+      <canvas id="impactChartCanvas" height="100"></canvas>
+      <div class="stats-grid">
+        <div class="stat-card"><h6 class="fw-bold">Events</h6><p>{{ user.total_events }}</p></div>
+        <div class="stat-card"><h6 class="fw-bold">Hours</h6><p>{{ user.total_hours }}</p></div>
+        <div class="stat-card"><h6 class="fw-bold">Badges</h6><p>{{ user.total_badges }}</p></div>
+        <div class="stat-card"><h6 class="fw-bold">Certificates</h6><p>{{ user.total_certificates }}</p></div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0 rounded-4 p-3">
+          <h6 class="text-muted text-center">Volunteer Hours</h6>
+          <canvas id="hoursChart" height="200"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0 rounded-4 p-3">
+          <h6 class="text-muted text-center">Event Participation</h6>
+          <canvas id="eventChart" height="200"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0 rounded-4 p-3">
+          <h6 class="text-muted text-center">Monthly XP Trend</h6>
+          <canvas id="monthlyXpChart" height="200"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0 rounded-4 p-3">
+          <h6 class="text-muted text-center">Top Badges</h6>
+          <canvas id="badgeChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  new Chart(document.getElementById('xpChart'), {
+    type: 'line',
+    data: {
+      labels: {{ xp_labels | default([]) | tojson }},
+      datasets: [{
+        label: 'XP Over Time',
+        data: {{ xp_data | default([]) | tojson }},
+        borderColor: 'green',
+        backgroundColor: 'rgba(13,110,253,0.2)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+
+  new Chart(document.getElementById('hoursChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ volunteer_hours_labels | default([]) | tojson }},
+      datasets: [{
+        label: 'Hours',
+        data: {{ volunteer_hours_data | default([]) | tojson }},
+        backgroundColor: '#198754'
+      }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+
+  new Chart(document.getElementById('eventChart'), {
+    type: 'pie',
+    data: {
+      labels: {{ event_participation_labels | default([]) | tojson }},
+      datasets: [{
+        data: {{ event_participation_data | default([]) | tojson }},
+        backgroundColor: ['#0dcaf0', '#ffc107', '#fd7e14']
+      }]
+    },
+    options: { responsive: true }
+  });
+
+  new Chart(document.getElementById('monthlyXpChart'), {
+    type: 'line',
+    data: {
+      labels: {{ monthly_xp_labels | default([]) | tojson }},
+      datasets: [{
+        label: 'XP Gained',
+        data: {{ monthly_xp_data | default([]) | tojson }},
+        borderColor: '#6f42c1',
+        backgroundColor: 'rgba(111, 66, 193, 0.1)',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+
+  new Chart(document.getElementById('badgeChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ badge_labels | default([]) | tojson }},
+      datasets: [{
+        label: 'Earned',
+        data: {{ badge_data | default([]) | tojson }},
+        backgroundColor: '#dc3545'
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      scales: { x: { beginAtZero: true } }
+    }
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const ctx = document.getElementById('impactChartCanvas').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Events', 'Hours', 'Badges', 'Certificates'],
+        datasets: [{
+          label: 'Impact Stats',
+          data: [{{ user.total_events }}, {{ user.total_hours }}, {{ user.total_badges }}, {{ user.total_certificates }}],
+          backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e']
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: document.body.classList.contains('dark-mode') ? 'white' : 'black'
+            }
+          },
+          x: {
+            ticks: {
+              color: document.body.classList.contains('dark-mode') ? 'white' : 'black'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: document.body.classList.contains('dark-mode') ? 'white' : 'black'
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

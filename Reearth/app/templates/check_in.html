@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="card p-4">
+  <h4>Check-In for: {{ event.title }}</h4>
+  <p><i class="bi bi-geo-alt"></i> {{ event.location }}</p>
+  <form method="POST" onsubmit="getLocation(event)">
+    <input type="hidden" name="lat" id="lat">
+    <input type="hidden" name="lon" id="lon">
+    <button type="submit" class="btn btn-success mt-2">Check In Now</button>
+  </form>
+</div>
+
+<script>
+function getLocation(e) {
+  e.preventDefault();
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      document.getElementById("lat").value = position.coords.latitude;
+      document.getElementById("lon").value = position.coords.longitude;
+      e.target.submit();
+    }, function() {
+      alert("Location access is required for check-in.");
+    });
+  } else {
+    alert("Geolocation is not supported by this browser.");
+  }
+}
+</script>
+{% endblock %}

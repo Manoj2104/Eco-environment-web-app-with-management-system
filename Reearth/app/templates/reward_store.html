@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Reward Store{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-success fw-bold"><i class="bi bi-gift-fill me-2"></i> Reward Store</h3>
+    <div class="d-flex gap-2">
+      <input type="text" class="form-control form-control-sm rounded-3 shadow-sm" placeholder="Search rewards..." style="max-width: 200px;">
+      <select class="form-select form-select-sm rounded-3 shadow-sm" style="width: 150px;">
+        <option selected>Sort by</option>
+        <option value="low">Lowest XP</option>
+        <option value="high">Highest XP</option>
+      </select>
+    </div>
+  </div>
+
+  {% if rewards %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for reward in rewards %}
+    <div class="col">
+      <div class="card border-0 shadow rounded-4 h-100 reward-card position-relative">
+        <div class="card-body d-flex flex-column justify-content-between">
+          <div>
+            <h5 class="card-title fw-semibold text-success-emphasis mb-2">
+              <i class="bi bi-box2-heart-fill text-danger me-2"></i>{{ reward.name }}
+            </h5>
+            <p class="card-text text-muted small">{{ reward.description or 'Exclusive reward for EcoNova volunteers.' }}</p>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <span class="badge reward-badge text-white">
+              <i class="bi bi-stars me-1"></i>{{ reward.cost }} XP
+            </span>
+            <button class="btn btn-sm btn-success px-3 rounded-pill shadow-sm" data-bs-toggle="popover" title="Confirm Redeem" data-bs-content="Click again to confirm.">
+              <i class="bi bi-check2-circle me-1"></i>Redeem
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center mt-5">
+    <lottie-player src="https://lottie.host/ca40ed3d-1602-4e94-b8bb-4938475c2636/y4zvS5frhn.json" background="transparent" speed="1" style="width: 280px; height: 280px;" loop autoplay></lottie-player>
+    <p class="lead text-muted mt-3"><i class="bi bi-shop-window"></i> No rewards available yet. Stay tuned!</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script>
+  const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+  popoverTriggerList.map(el => new bootstrap.Popover(el, { trigger: 'focus' }));
+</script>
+
+<style>
+.reward-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: linear-gradient(to bottom right, #f8fff5, #e6ffe6);
+  border-radius: 1.25rem;
+}
+.reward-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 1rem 1.5rem rgba(0, 128, 0, 0.1);
+}
+.reward-badge {
+  background: linear-gradient(135deg, #28a745, #218838);
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 50px;
+}
+</style>
+{% endblock %}

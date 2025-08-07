@@ -1,0 +1,63 @@
+
+
+
+<!-- Booking Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-3">
+        <div class="modal-header border-0">
+          <h5 class="modal-title">Confirm Booking</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">Do you want to join this event?</div>
+        <div class="modal-footer border-0">
+          <form id="bookForm">
+            <input type="hidden" id="appointment_time" name="appointment_time">
+            <button type="submit" class="btn btn-success">Yes, Book</button>
+          </form>
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check-In Modal -->
+  <div class="modal fade" id="verifyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-4">
+        <h5 class="mb-3">Verify Check-In</h5>
+        <div class="mb-3">
+          <label class="form-label">Enter Passcode</label>
+          <input type="text" id="passcodeInput" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">or Upload QR Code</label>
+          <input type="file" id="qrInput" class="form-control" accept="image/*">
+        </div>
+        <button class="btn btn-success w-100" onclick="verifyCheckIn()">✅ Verify</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Modal -->
+  <div class="modal fade" id="taskModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content p-4">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">🧠 Volunteer Tasks - Eco Challenge</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-pills mb-4 justify-content-center" id="taskTabs"></ul>
+          <div class="tab-content" id="taskContent"></div>
+          <div class="progress my-4" style="height: 18px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                 id="taskProgressBar" role="progressbar" style="width: 0%">0%</div>
+          </div>
+          <div class="text-center">
+            <button class="btn btn-lg btn-success d-none" id="finalSubmitBtn" onclick="submitAllTasks()">🎉 Submit All Tasks & Claim XP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

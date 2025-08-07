@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}Volunteer Analytics{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-gradient">
+      <i class="bi bi-bar-chart-steps me-2"></i>Volunteer Analytics
+    </h3>
+    <input type="date" class="form-control w-auto" placeholder="Filter by date">
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="row g-4 mb-5">
+    {% set stats = [
+      ('Live Volunteers', live_volunteer_count, 'success', 'bi-people-fill'),
+      ('Ongoing Events', ongoing_events_count, 'info', 'bi-calendar-event-fill'),
+      ('Avg Hours', avg_hours, 'warning', 'bi-clock-history'),
+      ('Total Volunteers', total_volunteers, 'primary', 'bi-person-fill'),
+      ('Total Bookings', total_bookings, 'dark', 'bi-journal-check'),
+      ('Total Events', total_events, 'danger', 'bi-calendar3'),
+      ('Total XP Earned', total_xp, 'secondary', 'bi-stars')
+    ] %}
+    {% for label, value, color, icon in stats %}
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="card border-0 shadow-sm rounded-4 hover-shadow h-100 text-center">
+        <div class="card-body">
+          <div class="icon-circle bg-{{ color }} bg-opacity-10 text-{{ color }} mb-3">
+            <i class="bi {{ icon }} fs-4"></i>
+          </div>
+          <h6 class="text-muted small">{{ label }}</h6>
+          <h5 class="fw-bold">{{ value }}</h5>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Analytics Tabs -->
+  <div class="card border-0 shadow-sm rounded-4 mb-5">
+    <div class="card-body">
+      <ul class="nav nav-pills mb-4" id="analyticsTabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#progressTab">XP Progress</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#chartTab">Weekly Chart</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#genderTab">Gender Ratio</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#mapTab">Heatmap</button></li>
+      </ul>
+      <div class="tab-content">
+        <!-- XP Progress -->
+        <div class="tab-pane fade show active" id="progressTab">
+          <h6 class="text-muted mb-2"><i class="bi bi-stars text-warning me-2"></i>XP Progress</h6>
+          <div class="progress rounded-pill" style="height: 25px;">
+            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated"
+              role="progressbar" style="width: {{ percent_to_next }}%;">
+              {{ xp }}/{{ next_level }} XP ({{ percent_to_next|round(1) }}%)
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly XP Chart -->
+        <div class="tab-pane fade" id="chartTab">
+          <h6 class="text-muted mb-3"><i class="bi bi-activity text-primary me-2"></i>Weekly XP Activity</h6>
+          <canvas id="xpChart" height="100"></canvas>
+        </div>
+
+        <!-- Gender Chart -->
+        <div class="tab-pane fade" id="genderTab">
+          <div class="card shadow-sm border-0 rounded-4 mb-4 mx-auto" style="max-width: 320px;">
+            <div class="card-body">
+              <h6 class="text-muted mb-3"><i class="bi bi-gender-ambiguous text-info me-2"></i>Gender Ratio</h6>
+              <canvas id="genderChart" width="200" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Volunteer Heatmap -->
+        <div class="tab-pane fade" id="mapTab">
+          <h6 class="text-muted mb-3"><i class="bi bi-geo-alt-fill text-success me-2"></i>Volunteer Heatmap</h6>
+          <div id="heatmap" style="height: 300px;" class="rounded border"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Volunteers -->
+  <div class="card border-0 shadow-sm rounded-4 mb-5">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="text-muted"><i class="bi bi-trophy-fill text-warning me-2"></i>Top Volunteers</h6>
+        <input type="text" id="searchInput" class="form-control w-25" placeholder="Search volunteer...">
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle table-hover" id="volunteerTable">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Total Hours</th>
+              <th>XP</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for volunteer in top_volunteers %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ volunteer.name }}</td>
+              <td>{{ volunteer.email }}</td>
+              <td>{{ volunteer.total_hours or 0 }}</td>
+              <td>{{ volunteer.xp or 0 }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted">No data available.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rewards -->
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body">
+      <h6 class="text-muted mb-3"><i class="bi bi-gift-fill text-danger me-2"></i>Available Rewards</h6>
+      <div class="row g-4">
+        {% for reward in rewards %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm rounded-4 hover-shadow">
+            <div class="card-body">
+              <h5 class="card-title text-primary"><i class="bi bi-gem me-2"></i>{{ reward.name }}</h5>
+              <p class="card-text text-muted">{{ reward.description }}</p>
+              <span class="badge bg-success">XP: {{ reward.required_xp }}</span>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="col text-center text-muted">No rewards available.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Styles -->
+<style>
+  .icon-circle {
+    width: 50px;
+    height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.4rem;
+  }
+  .hover-shadow:hover {
+    box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-4px);
+    transition: 0.3s ease;
+  }
+  .text-gradient {
+    background: linear-gradient(90deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+</style>
+
+<!-- Chart.js + Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Scripts -->
+<script>
+  // XP Chart
+  new Chart(document.getElementById("xpChart"), {
+    type: 'bar',
+    data: {
+      labels: {{ xp_labels|tojson }},
+      datasets: [{
+        label: 'XP Earned',
+        data: {{ xp_values|tojson }},
+        backgroundColor: '#0d6efd'
+      }]
+    }
+  });
+
+  // Gender Chart
+  new Chart(document.getElementById("genderChart"), {
+    type: 'pie',
+    data: {
+      labels: ['Male', 'Female', 'Other'],
+      datasets: [{
+        data: [{{ gender_ratio.male }}, {{ gender_ratio.female }}, {{ gender_ratio.other }}],
+
+        backgroundColor: ['#0dcaf0', '#d63384', '#6f42c1']
+      }]
+    }
+  });
+
+  // Heatmap
+  const map = L.map('heatmap').setView([20.5937, 78.9629], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  const markers = {{ heatmap_data|tojson }};
+  markers.forEach(loc => L.circleMarker([loc.lat, loc.lng], {
+    radius: 8,
+    fillColor: "#0d6efd",
+    color: "#fff",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.8
+  }).addTo(map));
+
+  // Volunteer table search
+  document.getElementById('searchInput').addEventListener('keyup', function () {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll('#volunteerTable tbody tr').forEach(row => {
+      const name = row.cells[1].textContent.toLowerCase();
+      const email = row.cells[2].textContent.toLowerCase();
+      row.style.display = name.includes(filter) || email.includes(filter) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

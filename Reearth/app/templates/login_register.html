@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ReEarth | Login / Register</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9fb;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      display: flex;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      overflow: hidden;
+      max-width: 900px;
+      width: 100%;
+    }
+    .form-container, .info-container {
+      padding: 40px;
+      flex: 1;
+    }
+    h2 {
+      margin-bottom: 5px;
+      font-size: 28px;
+    }
+    p {
+      font-size: 14px;
+      color: #555;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      margin: 8px 0;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    form input[type="text"],
+    form input[type="email"],
+    form input[type="password"],
+    form select {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      margin: 10px 0;
+    }
+    .checkbox-container input {
+      margin-right: 8px;
+    }
+    .checkbox-container a {
+      color: #6a5acd;
+      text-decoration: none;
+    }
+    .continue-btn {
+      background: #6a5acd;
+      color: #fff;
+    }
+    .login-link {
+      text-align: center;
+      font-size: 13px;
+    }
+    .login-link a {
+      color: #6a5acd;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .info-container {
+      background: #f0f4ff;
+      text-align: center;
+    }
+    .form-section {
+      display: none;
+    }
+    .form-section.active {
+      display: block;
+    }
+    .flash-container {
+      margin-bottom: 15px;
+    }
+    .flash-message {
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="form-container">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% endwith %}
+
+<!-- Register -->
+<div id="signupSection" class="form-section {% if show_register %}active{% endif %}">
+  <h2>✦ Sign Up</h2>
+  <p>Join the movement for a cleaner world.</p>
+  <form method="POST" action="{{ url_for('auth.register') }}">
+    <input type="text" name="name" placeholder="Full Name" required />
+    <input type="email" name="email" placeholder="Your Email" required />
+    <input type="password" name="password" placeholder="Password (min 8 chars)" required minlength="8" />
+
+    <!-- Role Dropdown -->
+    <select name="role" required>
+      <option value="">Register as...</option>
+      <option value="volunteer">Volunteer</option>
+      <option value="host">Host</option>
+    </select>
+
+    <!-- Gender Dropdown -->
+    <select name="gender" required>
+      <option value="">Select Gender</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+      <option value="Prefer not to say">Prefer not to say</option>
+    </select>
+
+    <label class="checkbox-container">
+      <input type="checkbox" required />
+      <span>I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</span>
+    </label>
+    <button type="submit" class="continue-btn">Create Account</button>
+  </form>
+  <p class="login-link">Already have an account? <a href="#" onclick="toggleForm('login')">Login</a></p>
+</div>
+
+
+    <!-- Login -->
+    <div id="loginSection" class="form-section {% if not show_register %}active{% endif %}">
+      <h2>🔐 Sign In</h2>
+      <p>Welcome back! Please login below.</p>
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        <input type="email" name="email" placeholder="Your Email" required />
+        <input type="password" name="password" placeholder="Your Password" required />
+        <button type="submit" class="continue-btn">Login</button>
+      </form>
+      <p class="login-link">New here? <a href="#" onclick="toggleForm('signup')">Sign Up</a></p>
+    </div>
+  </div>
+
+  <div class="info-container">
+    <h3>ReEarth Platform</h3>
+    <p>Connect. Act. Earn badges. Be a hero to the Earth.</p>
+  </div>
+</div>
+
+<script>
+  function toggleForm(formType) {
+    const signup = document.getElementById('signupSection');
+    const login = document.getElementById('loginSection');
+    if (formType === 'login') {
+      signup.classList.remove('active');
+      login.classList.add('active');
+    } else {
+      login.classList.remove('active');
+      signup.classList.add('active');
+    }
+  }
+
+  // Auto-hide flash messages
+  setTimeout(() => {
+    document.querySelectorAll('.flash-message').forEach(msg => {
+      msg.style.transition = 'opacity 0.5s';
+      msg.style.opacity = 0;
+      setTimeout(() => msg.remove(), 500);
+    });
+  }, 3000);
+</script>
+</body>
+</html>

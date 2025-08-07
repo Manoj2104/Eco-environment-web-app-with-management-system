@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section py-5">
+  <div class="container rounded-4 shadow-sm p-4" style="background: linear-gradient(135deg, #f8f9fa, #ffffff);">
+
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-lg-10 mx-auto text-center">
+        <h2 class="fw-bold text-success">🎛 Manage Your Events</h2>
+        <p class="text-muted">Edit, delete, or analyze your event activity and impact.</p>
+        <a href="{{ url_for('events.create_event') }}" class="btn btn-success mt-3 shadow">
+          <i class="bi bi-plus-circle me-2"></i> Create New Event
+        </a>
+      </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="row">
+          <div class="col-md-10 mx-auto">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% if events %}
+    <!-- Search + Filter -->
+    <div class="row mb-4 align-items-center">
+      <div class="col-md-6">
+        <input type="text" class="form-control" id="searchInput" placeholder="🔍 Search events by title...">
+      </div>
+      <div class="col-md-6 text-end">
+        <div class="btn-group" role="group">
+          <button class="btn btn-outline-dark btn-sm" onclick="filterEvents('all')">All</button>
+          <button class="btn btn-outline-success btn-sm" onclick="filterEvents('upcoming')">Upcoming</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="filterEvents('past')">Past</button>
+        </div>
+        <button class="btn btn-outline-primary btn-sm ms-2" onclick="downloadExcel()">⬇️ Export</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row text-center mb-5">
+      <div class="col-md-3">
+        <div class="card text-white bg-primary shadow-sm border-0 rounded-4 p-3">
+          <div class="card-body">
+            <h2><i class="bi bi-calendar2-check"></i></h2>
+            <h5 class="card-title">{{ events|length }}</h5>
+            <p class="card-text">Total Events</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-white bg-success shadow-sm border-0 rounded-4 p-3">
+          <div class="card-body">
+            <h2><i class="bi bi-clock-history"></i></h2>
+            <h5 class="card-title">{{ events|selectattr('date', 'ge', now)|list|length }}</h5>
+            <p class="card-text">Upcoming</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-white bg-secondary shadow-sm border-0 rounded-4 p-3">
+          <div class="card-body">
+            <h2><i class="bi bi-calendar-x"></i></h2>
+            <h5 class="card-title">{{ events|selectattr('date', 'lt', now)|list|length }}</h5>
+            <p class="card-text">Past</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-white bg-warning shadow-sm border-0 rounded-4 p-3">
+          <div class="card-body">
+            <h2><i class="bi bi-stars"></i></h2>
+            <h5 class="card-title">{{ events|map(attribute='xp_reward')|select|sum if events|length > 0 else 0 }}</h5>
+            <p class="card-text">XP Offered</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="row mb-5">
+      <div class="col-md-8 mx-auto">
+        <canvas id="participationChart" height="100"></canvas>
+      </div>
+    </div>
+
+    <!-- Events Section -->
+    <form method="POST" action="{{ url_for('events.bulk_delete') }}" onsubmit="return confirm('Delete selected events?')">
+      <div class="mb-2 d-flex justify-content-between align-items-center">
+        <div class="form-check">
+          <input type="checkbox" id="selectAll" class="form-check-input">
+          <label class="form-check-label" for="selectAll">Select All</label>
+        </div>
+        <button type="submit" class="btn btn-danger btn-sm">
+          <i class="bi bi-trash3-fill me-1"></i> Delete Selected
+        </button>
+      </div>
+
+      <!-- Grid -->
+      <div class="row g-4" id="eventList">
+        {% for event in events %}
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 event-card" data-title="{{ event.title|lower }}" data-status="{{ 'upcoming' if event.date >= now else 'past' }}">
+          <div class="card shadow-sm h-100 position-relative border-0 rounded-4 hover-card">
+            <div class="position-absolute top-0 end-0 m-2">
+              <input type="checkbox" class="form-check-input bulk-check" name="delete_ids" value="{{ event.id }}">
+            </div>
+            <img src="{{ url_for('static', filename='uploads/' ~ (event.thumbnail or 'default.jpg')) }}" class="card-img-top rounded-top" style="height:180px; object-fit:cover;">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">{{ event.title }}</h5>
+              <p class="text-muted small mb-1"><i class="bi bi-geo-alt"></i> {{ event.location }}</p>
+              <p class="text-muted small mb-1"><i class="bi bi-calendar3"></i> {{ event.date.strftime('%d %b %Y, %I:%M %p') }}</p>
+
+              {% if event.date >= now %}
+              <span class="badge bg-light text-dark mb-1 countdown-badge" data-time="{{ event.date.isoformat() }}">⏳ Loading...</span>
+              {% endif %}
+
+              {% if event.distance %}
+              <span class="badge bg-secondary text-white mb-1">📍 {{ '%.1f' % event.distance }} km</span>
+              {% endif %}
+
+              <span class="badge bg-{{ 'success' if event.date >= now else 'secondary' }} mb-1">{{ 'Upcoming' if event.date >= now else 'Past' }}</span>
+              <span class="badge bg-info text-dark mb-1">{{ event.bookings|length }} Bookings</span>
+
+              {% if event.bookings|length > 10 %}
+              <span class="badge bg-warning text-dark mb-2">🔥 Trending</span>
+              {% endif %}
+
+              {% if event.xp_reward %}
+              <span class="badge bg-dark text-white mb-1">🎖 {{ event.xp_reward }} XP</span>
+              {% endif %}
+
+              {% if event.qr_code %}
+              <button type="button" class="btn btn-outline-dark btn-sm mb-2" data-bs-toggle="modal" data-bs-target="#qrModal{{ event.id }}">
+                <i class="bi bi-qr-code me-1"></i> QR & Passcode
+              </button>
+              {% endif %}
+
+              <!-- Dropdown -->
+              <div class="dropdown mt-auto">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                  ⚙️ Actions
+                </button>
+                <ul class="dropdown-menu w-100">
+                  <li><a class="dropdown-item" href="{{ url_for('events.edit_event', event_id=event.id) }}">✏️ Edit</a></li>
+                  <li>
+  <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#bookingsModal{{ event.id }}">
+    👥 View Bookings
+  </button>
+</li>
+                  <li>
+                    <form method="POST" action="{{ url_for('events.delete_event', event_id=event.id) }}" onsubmit="return confirm('Delete this event?')">
+                      <button type="submit" class="dropdown-item text-danger">🗑 Delete</button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Bookings Modal -->
+<div class="modal fade" id="bookingsModal{{ event.id }}" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content p-3">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">👥 Booked Volunteers for "{{ event.title }}"</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if event.bookings %}
+          <table class="table table-hover table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Booked At</th>
+                <th>Status</th>
+                <th>Manual Check-in</th>
+              </tr>
+            </thead>
+            <tbody>
+  {% for b in event.bookings %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ b.user.name }}</td>  {# Use name, not full_name #}
+    <td>{{ b.user.email }}</td>
+    <td>{{ b.timestamp.strftime('%d %b %Y, %I:%M %p') }}</td>
+    <td>
+      {% if b.checked_in %}
+        <span class="badge bg-success">Checked In</span>
+      {% else %}
+        <span class="badge bg-secondary">Not Checked In</span>
+      {% endif %}
+    </td>
+    <td>
+      {% if not b.checked_in %}
+        <form method="POST" action="{{ url_for('dashboard.manual_checkin', booking_id=b.id) }}">
+          <button type="submit" class="btn btn-sm btn-outline-primary">
+            ✅ Mark as Checked In
+          </button>
+        </form>
+      {% else %}
+        <span class="text-muted">—</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</tbody>
+
+          </table>
+        {% else %}
+          <p class="text-muted">No volunteers have booked this event yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+        <!-- QR Modal -->
+        {% if event.qr_code %}
+        <div class="modal fade" id="qrModal{{ event.id }}" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-3">
+              <div class="modal-header border-0">
+                <h5 class="modal-title">QR & Passcode</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body text-center">
+                <img src="{{ url_for('static', filename='qr_codes/' ~ event.qr_code) }}" class="img-fluid mb-3" style="max-width:200px;">
+                <p class="fw-bold">
+                  🔐 Passcode: 
+                  <code id="passcode{{ event.id }}">{{ event.passcode }}</code>
+                  <button class="btn btn-outline-secondary btn-sm ms-2" onclick="copyPasscode('{{ event.id }}')">📋 Copy</button>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </form>
+
+    {% else %}
+    <div class="text-center mt-5">
+      <h5 class="text-muted">You haven’t created any events yet.</h5>
+      <a href="{{ url_for('events.create_event') }}" class="btn btn-success mt-3">Create Your First Event</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+
+<!-- Custom Style -->
+<style>
+.hover-card:hover {
+  transform: translateY(-4px);
+  transition: 0.3s ease-in-out;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+}
+</style>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const searchInput = document.getElementById("searchInput");
+  const cards = document.querySelectorAll(".event-card");
+
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      const value = this.value.toLowerCase();
+      cards.forEach(card => {
+        card.style.display = card.dataset.title.includes(value) ? "block" : "none";
+      });
+    });
+  }
+
+  document.getElementById("selectAll").addEventListener("change", function () {
+    document.querySelectorAll(".bulk-check").forEach(cb => cb.checked = this.checked);
+  });
+
+  window.filterEvents = function (type) {
+    cards.forEach(card => {
+      card.style.display = (type === 'all' || card.dataset.status === type) ? "block" : "none";
+    });
+  };
+
+  window.copyPasscode = function(id) {
+    const pass = document.getElementById('passcode' + id).innerText;
+    navigator.clipboard.writeText(pass).then(() => alert('Passcode copied!'));
+  };
+
+  const ctx = document.getElementById("participationChart");
+  if (ctx) {
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: [{% for e in events %}"{{ e.title|truncate(15) }}",{% endfor %}],
+        datasets: [{
+          label: "Bookings",
+          data: [{% for e in events %}{{ e.bookings|length }},{% endfor %}],
+          backgroundColor: "rgba(13, 110, 253, 0.5)",
+          borderColor: "rgba(13, 110, 253, 1)",
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  function updateCountdowns() {
+    document.querySelectorAll(".countdown-badge").forEach(badge => {
+      const time = new Date(badge.dataset.time);
+      const now = new Date();
+      const diff = time - now;
+      if (diff > 0) {
+        const hrs = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        badge.innerText = `⏳ Starts in ${hrs}h ${mins}m`;
+      } else {
+        badge.innerText = `✅ Live or Started`;
+        badge.classList.remove("bg-light");
+        badge.classList.add("bg-success", "text-white");
+      }
+    });
+  }
+
+  updateCountdowns();
+  setInterval(updateCountdowns, 60000);
+
+  window.downloadExcel = function () {
+    const rows = [["Title", "Location", "Date", "Bookings"]];
+    {% for e in events %}
+    rows.push(["{{ e.title }}", "{{ e.location }}", "{{ e.date.strftime('%Y-%m-%d %H:%M') }}", "{{ e.bookings|length }}"]);
+    {% endfor %}
+    const csv = "data:text/csv;charset=utf-8," + rows.map(r => r.join(",")).join("\n");
+    const link = document.createElement("a");
+    link.href = encodeURI(csv);
+    link.download = "EcoNova_Events.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+});
+</script>
+{% endblock %}

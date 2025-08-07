@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Impact Timeline{% endblock %}
+
+{% block content %}
+<style>
+  .timeline {
+    position: relative;
+    margin: 2rem 0;
+    padding-left: 30px;
+    border-left: 4px solid #4caf50;
+  }
+  .timeline-event {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+  .timeline-event::before {
+    content: "";
+    position: absolute;
+    left: -16px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    background-color: #fff;
+    border: 3px solid #4caf50;
+    border-radius: 50%;
+    z-index: 2;
+  }
+  .timeline-card {
+    background: #fff;
+    border-left: 5px solid #4caf50;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .timeline-date {
+    font-size: 0.9rem;
+    color: #999;
+    margin-bottom: 0.25rem;
+  }
+  .timeline-icon {
+    font-size: 1.2rem;
+    color: #43a047;
+    margin-right: 0.5rem;
+  }
+  .timeline-badge {
+    font-size: 0.75rem;
+    background: #e8f5e9;
+    color: #388e3c;
+    padding: 0.25rem 0.6rem;
+    border-radius: 5px;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 0.3rem;
+  }
+  .level-up-glow {
+    animation: glow 1.5s ease-in-out infinite alternate;
+    border-left-color: gold !important;
+  }
+  @keyframes glow {
+    from { box-shadow: 0 0 5px 2px rgba(255, 215, 0, 0.3); }
+    to { box-shadow: 0 0 10px 4px rgba(255, 215, 0, 0.6); }
+  }
+</style>
+
+<div class="container mt-4">
+  <h3 class="mb-3 text-success"><i class="bi bi-clock-history me-2"></i>Impact Timeline</h3>
+  <p class="text-muted">Track your journey and achievements with EcoNova.</p>
+  <div class="timeline">
+    <p class="text-muted">Loading your impact timeline...</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const socket = io();
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to Socket.IO");
+      socket.emit("request_timeline");
+    });
+
+    socket.on("receive_timeline", function(entries) {
+      console.log("📦 Timeline data received:", entries);
+      const container = document.querySelector(".timeline");
+      container.innerHTML = "";
+
+      if (!entries.length) {
+        container.innerHTML = '<div class="alert alert-info">No impact entries found yet.</div>';
+        return;
+      }
+
+      entries.forEach(entry => {
+        const icon = {
+          plantation: "bi-tree-fill",
+          cleanup: "bi-trash-fill",
+          orientation: "bi-person-check-fill",
+          education: "bi-journal-check"
+        }[entry.type] || "bi-award-fill";
+
+        const glow = entry.level_up ? "level-up-glow" : "";
+
+        const badgeHTML = entry.badge ? `
+          <span class="timeline-badge ms-2" data-bs-toggle="popover" title="Badge Unlocked" data-bs-content="${entry.badge}">
+            <i class="bi bi-patch-check-fill me-1 text-warning"></i>${entry.badge}
+          </span>` : "";
+
+        const html = `
+          <div class="timeline-event">
+            <div class="timeline-card ${glow}">
+              <div class="timeline-date">${entry.date}</div>
+              <h5><i class="timeline-icon bi ${icon}"></i> ${entry.title}</h5>
+              <p class="text-muted">${entry.description}</p>
+              <span class="timeline-badge"><i class="bi bi-stars me-1"></i>${entry.xp} XP</span>
+              ${badgeHTML}
+            </div>
+          </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+      });
+
+      // Bootstrap popovers
+      document.querySelectorAll('[data-bs-toggle="popover"]').forEach(el => {
+        new bootstrap.Popover(el);
+      });
+    });
+  });
+</script>
+{% endblock %}

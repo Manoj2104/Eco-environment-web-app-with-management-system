@@ -1,0 +1,71 @@
+<!-- Join Confirmation Modal -->
+<div class="modal fade" id="joinModal" tabindex="-1" aria-labelledby="joinModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Booking</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p>Are you sure you want to join this event?</p>
+        <input type="hidden" id="joinEventId">
+        <button class="btn btn-success" onclick="confirmJoin()">Yes, Book</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 🕑 Check-In Modal -->
+<div class="modal fade" id="verifyModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">🔐 Verify Check-In</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Enter Passcode</label>
+          <input type="text" id="passcodeInput" class="form-control" placeholder="Enter event passcode">
+        </div>
+        <div class="text-center text-muted mb-3">— OR —</div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Upload QR Code</label>
+          <input type="file" id="qrInput" class="form-control" accept="image/*">
+        </div>
+        <div id="checkin-error" class="text-danger small mb-2 d-none">Invalid passcode or QR.</div>
+        <button class="btn btn-success w-100" onclick="verifyCheckIn()">✅ Verify & Check-In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🧠 Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content p-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">🧠 Eco Challenge Tasks</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="nav nav-pills mb-4 justify-content-center" id="taskTabs">
+          <!-- Dynamic task tabs will be inserted here -->
+        </ul>
+        <div class="tab-content" id="taskContent">
+          <!-- Dynamic task content will be inserted here -->
+        </div>
+
+        <div class="progress my-4" style="height: 20px;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+               id="taskProgressBar" role="progressbar" style="width: 0%">0%</div>
+        </div>
+
+        <div class="text-center">
+          <button class="btn btn-lg btn-success d-none" id="finalSubmitBtn" onclick="submitAllTasks()">🎉 Submit All Tasks & Claim XP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

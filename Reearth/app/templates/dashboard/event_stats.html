@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4"><i class="bi bi-bar-chart-line"></i> EcoNova Event Analytics</h2>
+
+  <div class="row g-4">
+
+    <!-- Total Overview Cards -->
+    <div class="col-md-3">
+      <div class="card text-white bg-primary shadow-sm p-3 text-center">
+        <h5>Total Events</h5>
+        <h3>{{ stats.total_events }}</h3>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-success shadow-sm p-3 text-center">
+        <h5>Attended</h5>
+        <h3>{{ stats.attended_events }}</h3>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-warning shadow-sm p-3 text-center">
+        <h5>Hosted</h5>
+        <h3>{{ stats.hosted_events }}</h3>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-danger shadow-sm p-3 text-center">
+        <h5>Badges</h5>
+        <h3>{{ stats.earned_badges }}</h3>
+      </div>
+    </div>
+
+    <!-- XP Progress -->
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4">
+        <h5>XP Progress</h5>
+        <div class="progress" style="height: 25px;">
+          <div class="progress-bar bg-success" style="width: {{ stats.completion_rate }}%;">
+            {{ stats.completion_rate }}%
+          </div>
+        </div>
+        <small class="text-muted d-block mt-2">Completion Rate (Check-ins vs Tasks)</small>
+      </div>
+    </div>
+
+    <!-- Top Locations -->
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4">
+        <h5>Top Locations</h5>
+        <ul class="list-group list-group-flush">
+          {% for loc in stats.top_locations %}
+          <li class="list-group-item">📍 {{ loc }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Popular Categories -->
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4">
+        <h5>Popular Event Categories</h5>
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Monthly Attendance -->
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4">
+        <h5>Monthly Attendance</h5>
+        <canvas id="attendanceChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Participation Distribution -->
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4">
+        <h5>Participation Distribution</h5>
+        <canvas id="participationChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Highest XP -->
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4 text-center">
+        <h5>Highest XP in One Event</h5>
+        <div class="display-5 text-primary">{{ stats.highest_xp }}</div>
+      </div>
+    </div>
+
+    <!-- Top 5 Attended Events -->
+    <div class="col-md-12">
+      <div class="card shadow-sm p-4">
+        <h5>Your Top 5 Attended Events</h5>
+        <ul class="list-group list-group-flush">
+          {% for title, count in stats.event_data_zipped %}
+          <li class="list-group-item d-flex justify-content-between">
+            {{ title }} <span class="badge bg-info">{{ count }} times</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Total Volunteers -->
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4 text-center">
+        <h5>EcoNova Community</h5>
+        <p class="display-6">👥 {{ stats.total_volunteers }} Volunteers</p>
+      </div>
+    </div>
+
+    <!-- Calendar Sync -->
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4 text-center">
+        <h5>📅 Sync Calendar</h5>
+        <a href="/add_to_calendar/1" class="btn btn-outline-success">Download ICS</a>
+        <small class="text-muted d-block mt-2">Add events to Google/Outlook</small>
+      </div>
+    </div>
+
+    <!-- Feedback Prompt -->
+    <div class="col-md-12">
+      <div class="card shadow-sm p-4 text-center bg-light">
+        <h5>💬 Help us improve EcoNova</h5>
+        <a href="/event-feedback" class="btn btn-primary mt-2">Give Feedback</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  new Chart(document.getElementById("categoryChart"), {
+    type: 'bar',
+    data: {
+      labels: {{ stats.category_labels | safe }},
+      datasets: [{
+        label: 'Events',
+        data: {{ stats.category_counts | safe }},
+        backgroundColor: '#0dcaf0'
+      }]
+    },
+    options: {
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  new Chart(document.getElementById("attendanceChart"), {
+    type: 'line',
+    data: {
+      labels: {{ stats.attendance_months | safe }},
+      datasets: [{
+        label: 'Attendance',
+        data: {{ stats.attendance_values | safe }},
+        fill: true,
+        borderColor: '#198754',
+        backgroundColor: 'rgba(25, 135, 84, 0.2)',
+        tension: 0.4
+      }]
+    }
+  });
+
+  new Chart(document.getElementById("participationChart"), {
+    type: 'doughnut',
+    data: {
+      labels: ['Attended', 'Hosted', 'Missed'],
+      datasets: [{
+        data: [{{ stats.attended_events }}, {{ stats.hosted_events }}, {{ stats.total_events - stats.attended_events - stats.hosted_events }}],
+        backgroundColor: ['#198754', '#0d6efd', '#dc3545']
+      }]
+    }
+  });
+</script>
+{% endblock %}

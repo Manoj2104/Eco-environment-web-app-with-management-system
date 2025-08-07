@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Set Weekly Goal{% endblock %}
+{% block content %}
+
+<div class="container mt-5" style="max-width: 760px;">
+
+  <!-- ✅ Flash Success Message -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+          <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- ✅ Goal Form Card -->
+  <div class="card shadow border-0 rounded-4">
+    <div class="card-header bg-success text-white rounded-top-4 d-flex align-items-center justify-content-between">
+      <h4 class="mb-0"><i class="bi bi-bullseye me-2"></i>Set Weekly Goal</h4>
+      <span class="badge bg-light text-dark fw-semibold">📅 {{ current_week_range }}</span>
+    </div>
+
+    <div class="card-body p-4">
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label fw-bold">🎯 Goal Title</label>
+          <input type="text" name="title" class="form-control rounded-pill" placeholder="E.g. Complete volunteer outreach" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">📝 Description</label>
+          <textarea name="description" class="form-control rounded-3" rows="3" placeholder="Add details about what this goal entails..."></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">⏳ Deadline</label>
+          <input type="date" name="deadline" class="form-control rounded-pill">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">🔥 Priority</label>
+          <select name="priority" class="form-select rounded-pill">
+            <option value="Low">🟢 Low</option>
+            <option value="Medium">🟡 Medium</option>
+            <option value="High">🔴 High</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">🏷 Tags <span class="text-muted small">(comma-separated)</span></label>
+          <input type="text" name="tags" class="form-control rounded-pill" placeholder="e.g. outreach, awareness, training">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">💡 Motivational Quote</label>
+          <input type="text" name="quote" class="form-control rounded-pill" placeholder="e.g. 'Small acts make a big difference.'">
+        </div>
+
+        <div class="d-grid mt-4">
+          <button type="submit" class="btn btn-success btn-lg rounded-pill">
+            <i class="bi bi-send-check-fill me-2"></i>Assign to Volunteers
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Footer Tip -->
+    <div class="card-footer bg-light text-muted small text-center rounded-bottom-4">
+      🌱 Tip: Set realistic and measurable goals to boost volunteer motivation and clarity!
+    </div>
+  </div>
+
+  <!-- ✅ Create Another Weekly Goal -->
+  <div class="text-center mt-5">
+    <hr class="mb-4">
+    <h6 class="text-muted mb-3">Want to add another goal?</h6>
+    <a href="{{ url_for('dashboard.weekly_goals') }}" class="btn btn-outline-primary rounded-pill">
+      <i class="bi bi-plus-circle me-1"></i> Create Another Weekly Goal
+    </a>
+  </div>
+</div>
+
+<!-- ✅ Optional Styling -->
+<style>
+  .form-label {
+    font-weight: 600;
+  }
+  .card-header h4 {
+    font-weight: bold;
+  }
+  .rounded-pill {
+    border-radius: 50rem !important;
+  }
+</style>
+
+{% endblock %}

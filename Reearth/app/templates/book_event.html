@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Book Event{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow rounded-4 p-4">
+    <h3 class="mb-4 text-center">📅 Book Appointment for: <strong>{{ event.title }}</strong></h3>
+
+    <div class="mb-3">
+      <p><strong>Location:</strong> {{ event.location }}</p>
+      <p><strong>Date:</strong> {{ event.date.strftime('%Y-%m-%d %H:%M') }}</p>
+      <p><strong>Description:</strong> {{ event.description }}</p>
+    </div>
+
+    <form method="POST">
+      <div class="mb-3">
+        <label for="appointment_time" class="form-label">Select Appointment Time</label>
+        <input type="datetime-local" class="form-control" id="appointment_time" name="appointment_time" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="message" class="form-label">Message (optional)</label>
+        <textarea class="form-control" id="message" name="message" rows="3" placeholder="Any specific note..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-success">✅ Confirm Booking</button>
+      <a href="{{ url_for('dashboard.home') }}" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

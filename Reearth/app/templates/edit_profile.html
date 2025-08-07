@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="edit-profile-hero text-white py-5 text-center">
+  <div class="container">
+    <h1 class="display-5 fw-bold">Edit Your EcoNova Profile</h1>
+    <p class="lead">Update your info & personalize your experience 🌿</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body p-4">
+          <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <!-- Profile Picture -->
+            <div class="text-center mb-4">
+              <img src="{{ url_for('static', filename='uploads/' ~ current_user.profile_pic) }}"
+                   alt="Profile Picture"
+                   class="rounded-circle shadow"
+                   width="120" height="120">
+              <div class="mt-2">
+                {{ form.profile_pic.label(class="form-label fw-semibold") }}
+                {{ form.profile_pic(class="form-control") }}
+              </div>
+            </div>
+
+            <!-- Name -->
+            <div class="mb-3">
+              {{ form.name.label(class="form-label fw-semibold") }}
+              {{ form.name(class="form-control rounded-pill") }}
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+              {{ form.email.label(class="form-label fw-semibold") }}
+              {{ form.email(class="form-control rounded-pill") }}
+            </div>
+
+            <!-- Bio -->
+            <div class="mb-3">
+              {{ form.bio.label(class="form-label fw-semibold") }}
+              {{ form.bio(class="form-control", rows="3") }}
+            </div>
+
+            <!-- Location -->
+            <div class="mb-3">
+              {{ form.location.label(class="form-label fw-semibold") }}
+              {{ form.location(class="form-control rounded-pill") }}
+            </div>
+
+            <!-- Social -->
+            <div class="mb-3">
+              {{ form.instagram.label(class="form-label fw-semibold") }}
+              {{ form.instagram(class="form-control rounded-pill") }}
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-success btn-lg px-5 rounded-pill shadow-sm">
+                <i class="bi bi-check-circle me-1"></i> Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        <a href="{{ url_for('dashboard.view_volunteer_profile', user_id=user.id) }}" class="btn btn-outline-secondary rounded-pill">
+
+
+          <i class="bi bi-arrow-left me-1"></i> Back to Profile
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .edit-profile-hero {
+    background: linear-gradient(135deg, #2e7d32, #66bb6a);
+    color: white;
+  }
+
+  .form-control {
+    transition: all 0.3s ease;
+  }
+
+  .form-control:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+  }
+
+  .card:hover {
+    transform: scale(1.01);
+    transition: 0.3s ease;
+  }
+
+  .rounded-circle {
+    border: 3px solid white;
+    object-fit: cover;
+  }
+</style>
+{% endblock %}

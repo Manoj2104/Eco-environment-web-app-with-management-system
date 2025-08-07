@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}Manage Volunteers{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold text-primary"><i class="bi bi-person-lines-fill me-2"></i>Manage Volunteers</h4>
+    
+    <div>
+      <button class="btn btn-outline-secondary btn-sm me-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#bulkUploadModal">
+        <i class="bi bi-upload me-1"></i> Bulk Upload
+      </button>
+      <button class="btn btn-primary btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#createVolunteerModal">
+        <i class="bi bi-person-plus-fill me-1"></i> Create Volunteer
+      </button>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <form method="get" class="mb-4">
+    <div class="input-group shadow-sm">
+      <input type="text" name="q" class="form-control" placeholder="Search by name or email" value="{{ request.args.get('q', '') }}">
+      <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+  </form>
+
+  <div class="row">
+    {% for v in all_volunteers %}
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card shadow-sm border-0 h-100 hover-shadow" style="transition: 0.2s;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="fw-semibold text-dark mb-1">
+                {{ v.name }}
+                {% if v.is_active %}
+                  <span class="badge bg-success ms-1">Active</span>
+                {% else %}
+                  <span class="badge bg-secondary ms-1">Inactive</span>
+                {% endif %}
+              </h6>
+              <p class="mb-1 text-muted small"><i class="bi bi-envelope me-1"></i>{{ v.email }}</p>
+              <p class="mb-1 text-muted small"><i class="bi bi-person-badge me-1"></i>ID: {{ v.id }}</p>
+              <p class="mb-1 text-muted small"><i class="bi bi-gender-ambiguous me-1"></i>Gender: {{ v.gender or 'N/A' }}</p>
+            </div>
+
+            <!-- Dropdown -->
+            <div class="dropdown text-end">
+              <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                {% if v in managed %}
+                <li>
+                  <form method="post" action="{{ url_for('dashboard.remove_volunteer', volunteer_id=v.id) }}">
+                    <button type="submit" class="dropdown-item text-danger"><i class="bi bi-x-circle me-1"></i>Remove from group</button>
+                  </form>
+                </li>
+                {% else %}
+                <li>
+                  <form method="post" action="{{ url_for('dashboard.add_volunteer', volunteer_id=v.id) }}">
+                    <button type="submit" class="dropdown-item text-success"><i class="bi bi-person-plus me-1"></i>Add to group</button>
+                  </form>
+                </li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#assignEventModal{{ v.id }}">
+                    <i class="bi bi-calendar-plus me-1"></i>Assign to Event
+                  </button>
+                </li>
+                <li>
+                  <form method="post" action="{{ url_for('dashboard.reset_volunteer_password', volunteer_id=v.id) }}">
+                    <button type="submit" class="dropdown-item"><i class="bi bi-key me-1"></i>Reset Password</button>
+                  </form>
+                </li>
+                <li>
+                  <form method="post" action="{{ url_for('dashboard.toggle_volunteer_status', volunteer_id=v.id) }}">
+                    <button type="submit" class="dropdown-item"><i class="bi bi-power me-1"></i>Toggle Active</button>
+                  </form>
+                </li>
+                <li>
+                  <form method="post" action="{{ url_for('dashboard.delete_volunteer_account', volunteer_id=v.id) }}"
+                        onsubmit="return confirm('Are you sure you want to delete this volunteer?');">
+                    <button type="submit" class="dropdown-item text-secondary"><i class="bi bi-trash me-1"></i>Delete Account</button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Assign to Event -->
+    <div class="modal fade" id="assignEventModal{{ v.id }}" tabindex="-1" aria-labelledby="assignEventModalLabel{{ v.id }}" aria-hidden="true">
+      <div class="modal-dialog">
+        <form method="post" action="{{ url_for('dashboard.assign_volunteer_to_event', volunteer_id=v.id) }}" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="assignEventModalLabel{{ v.id }}"><i class="bi bi-calendar-plus me-2"></i>Assign to Event</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="event_id" class="form-label">Select Event</label>
+              <select name="event_id" class="form-select" required>
+                <option value="">-- Choose Event --</option>
+                {% for event in host_events %}
+                <option value="{{ event.id }}">{{ event.title }} ({{ event.date.strftime('%b %d, %Y') }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Assign</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal: Create Volunteer -->
+<div class="modal fade" id="createVolunteerModal" tabindex="-1" aria-labelledby="createVolunteerModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{{ url_for('dashboard.create_volunteer_account') }}" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createVolunteerModalLabel"><i class="bi bi-person-plus me-2"></i>Create Volunteer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="name" class="form-label">Full Name</label>
+          <input type="text" class="form-control" name="name" id="name" required>
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email Address</label>
+          <input type="email" class="form-control" name="email" id="email" required>
+        </div>
+        <div class="mb-3">
+          <label for="gender" class="form-label">Gender</label>
+          <select name="gender" class="form-select" required>
+            <option value="">-- Select Gender --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Temporary Password</label>
+          <input type="text" class="form-control" name="password" id="password" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Create</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Bulk Upload Volunteers -->
+<div class="modal fade" id="bulkUploadModal" tabindex="-1" aria-labelledby="bulkUploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{{ url_for('dashboard.bulk_upload_volunteers') }}" enctype="multipart/form-data" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bulkUploadModalLabel"><i class="bi bi-upload me-2"></i>Bulk Upload Volunteers</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="csv_file" class="form-label">CSV File</label>
+          <input type="file" class="form-control" name="csv_file" id="csv_file" accept=".csv" required>
+          <div class="form-text mt-1">Format: <code>Name,Email,Gender[,Password]</code></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success"><i class="bi bi-cloud-arrow-up me-1"></i>Upload</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

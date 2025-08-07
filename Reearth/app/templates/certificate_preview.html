@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EcoNova Certificate Preview</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Roboto:wght@400;700&display=swap');
+
+    body {
+      background: linear-gradient(135deg, #e0f7fa, #f1f8e9);
+      font-family: 'Roboto', sans-serif;
+      padding: 50px 20px;
+      text-align: center;
+      margin: 0;
+    }
+
+    .certificate {
+      position: relative;
+      background: #fff;
+      border: 14px solid #aed581;
+      border-radius: 20px;
+      padding: 60px 40px 40px;
+      display: inline-block;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      animation: scaleIn 1s ease-out;
+      width: 100%;
+      max-width: 920px;
+    }
+
+    .preview-watermark {
+      position: absolute;
+      top: 42%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-20deg);
+      font-size: 4rem;
+      color: rgba(180, 180, 180, 0.1);
+      font-weight: bold;
+      z-index: 0;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .seal {
+      position: absolute;
+      top: -35px;
+      right: -35px;
+      width: 85px;
+      height: 85px;
+      background: radial-gradient(#fdd835, #fbc02d);
+      border-radius: 50%;
+      box-shadow: 0 0 0 8px #fff, 0 0 12px rgba(0,0,0,0.2);
+      font-size: 13px;
+      color: #212121;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(-15deg);
+      z-index: 2;
+    }
+
+    h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3rem;
+      color: #2e7d32;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 2.2rem;
+      margin: 15px 0 10px;
+      color: #00695c;
+      animation: fadeInUp 0.8s ease-in-out;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      color: #1b5e20;
+      margin-bottom: 20px;
+      animation: fadeInUp 1s ease-in-out;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #444;
+      margin: 10px auto;
+    }
+
+    .description {
+      font-size: 1rem;
+      color: #555;
+      max-width: 720px;
+      margin: 25px auto;
+      line-height: 1.6;
+    }
+
+    .meta {
+      font-size: 0.95rem;
+      color: #555;
+      margin-top: 10px;
+    }
+
+    .signature-block {
+      margin-top: 50px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      font-size: 0.9rem;
+      color: #666;
+      flex-wrap: wrap;
+    }
+
+    .signature {
+      border-top: 1px solid #999;
+      width: 160px;
+      margin: 10px auto 5px;
+    }
+
+    .qr {
+      margin-top: 40px;
+      animation: fadeIn 1.2s ease-in;
+    }
+
+    .qr img {
+      border: 4px solid #b2dfdb;
+      border-radius: 10px;
+      padding: 5px;
+      background: #ffffff;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .qr img:hover {
+      transform: scale(1.05);
+    }
+
+    .small {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 8px;
+    }
+
+    .footer-note {
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 30px;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scaleIn {
+      0% { transform: scale(0.95); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @media(max-width: 768px) {
+      .signature-block {
+        flex-direction: column;
+        gap: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="certificate">
+    <div class="preview-watermark">PREVIEW</div>
+    <div class="seal">EcoNova<br>Awarded</div>
+
+    <h1>Certificate of Appreciation</h1>
+    <p>This is to proudly certify that</p>
+    <h2>{{ name }}</h2>
+    <p>Volunteer ID: <strong>{{ volunteer_id }}</strong></p>
+    <p>has actively contributed to</p>
+    <h3>{{ event }}</h3>
+
+    <p class="description">
+      In sincere recognition of your environmental initiative, passion, and commitment
+      towards creating a greener world, we express our heartfelt gratitude through this certificate.
+    </p>
+
+    <p class="meta">Issued on: {{ issued_date or "July 14, 2025" }}</p>
+
+    <div class="signature-block">
+      <div>
+        <div class="signature"></div>
+        <span>Event Coordinator</span>
+      </div>
+      <div>
+        <div class="signature"></div>
+        <span>EcoNova Director</span>
+      </div>
+    </div>
+
+    <div class="qr">
+      <img src="{{ qr_image }}" width="120" alt="QR Code">
+      <p class="small">Scan to verify authenticity</p>
+    </div>
+
+    <div class="footer-note">
+      This certificate was digitally generated and verified by EcoNova Initiative.
+    </div>
+  </div>
+</body>
+</html>

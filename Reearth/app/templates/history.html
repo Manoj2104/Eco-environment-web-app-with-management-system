@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section py-5">
+  <div class="container">
+    <div class="row mb-4">
+      <div class="col-lg-8 mx-auto text-center">
+        <h2 class="fw-bold">Past & Created Events</h2>
+        <p class="text-muted">This section shows all the events you created or joined that are already over.</p>
+
+        <!-- Filter Buttons -->
+        <div class="btn-group mb-3" role="group">
+          <button class="btn btn-outline-primary" onclick="filterRecords('all')">All</button>
+          <button class="btn btn-outline-success" onclick="filterRecords('booked')">Booked</button>
+          <button class="btn btn-outline-primary" onclick="filterRecords('created')">Created</button>
+        </div>
+
+        <!-- Export -->
+        <div class="mb-3">
+          <button class="btn btn-sm btn-outline-secondary me-2" onclick="downloadCSV()">Download CSV</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="downloadStyledPDF()">Download PDF</button>
+        </div>
+
+        <!-- Chart -->
+        <canvas id="analyticsChart" height="100" class="mb-4"></canvas>
+
+        <!-- Info -->
+        <div class="alert alert-info py-2 small">
+          <strong>Progress:</strong> {{ user_badges|length }} Badges | {{ history_records|length }} Events Tracked
+        </div>
+      </div>
+    </div>
+
+    {% if history_records %}
+    <div class="table-responsive">
+      <table id="historyTable" class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Log</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in history_records %}
+          {% if record.status == 'past' %}
+          <tr data-type="{{ record.type }}">
+            <td>{{ record.title }}</td>
+            <td>
+              {% if record.type == 'created' %}
+              <span class="badge bg-primary">Created</span>
+              {% elif record.type == 'booked' %}
+              <span class="badge bg-success">Booked</span>
+              {% endif %}
+            </td>
+            <td>{{ record.date.strftime('%d %b %Y, %I:%M %p') }}</td>
+            <td>{{ record.location }}</td>
+            <td><span class="text-muted">Past</span></td>
+            <td class="small text-muted">{{ record.timestamp.strftime('%d %b %Y, %I:%M %p') }} – {{ record.action }}</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center mt-5">
+      <h5 class="text-muted">No past events found.</h5>
+      <p class="text-secondary small">You haven't participated in or created any past events yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function filterRecords(type) {
+  const rows = document.querySelectorAll("#historyTable tbody tr");
+  rows.forEach(row => {
+    const rowType = row.getAttribute("data-type");
+    row.style.display = (type === 'all' || rowType === type) ? '' : 'none';
+  });
+}
+
+function downloadCSV() {
+  let csv = 'Title,Type,Date,Location,Status,Log\n';
+  document.querySelectorAll("#historyTable tbody tr").forEach(row => {
+    const cells = row.querySelectorAll("td");
+    const values = Array.from(cells).map(cell => cell.innerText.trim().replace(/\n/g, ' '));
+    csv += values.join(',') + '\n';
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'past_events.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function downloadStyledPDF() {
+  const win = window.open('', '', 'height=800,width=1100');
+  win.document.write('<html><head><title>Past Events Report</title><style>');
+  win.document.write('table { width: 100%; border-collapse: collapse; }');
+  win.document.write('th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 12px; }');
+  win.document.write('th { background-color: #f8f9fa; }');
+  win.document.write('</style></head><body>');
+  win.document.write('<h3>Past Events History</h3>');
+  win.document.write(document.getElementById("historyTable").outerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+  win.print();
+}
+
+// Chart.js
+const ctx = document.getElementById('analyticsChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ['Created', 'Booked'],
+    datasets: [{
+      label: 'Event Type',
+      data: [
+        {{ history_records | selectattr('type', 'equalto', 'created') | selectattr('status', 'equalto', 'past') | list | length }},
+        {{ history_records | selectattr('type', 'equalto', 'booked') | selectattr('status', 'equalto', 'past') | list | length }}
+      ],
+      backgroundColor: ['#0d6efd', '#198754']
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: 'Past Events Distribution' }
+    }
+  }
+});
+</script>
+{% endblock %}

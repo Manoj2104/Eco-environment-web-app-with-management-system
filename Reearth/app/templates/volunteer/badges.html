@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}My Badges{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold text-primary"><i class="bi bi-award me-2"></i>My Badge Collection</h4>
+    {% if current_user.role in ['host', 'admin'] %}
+    <a href="{{ url_for('dashboard.create_badge') }}" class="btn btn-outline-success btn-sm rounded-pill shadow-sm">
+      <i class="bi bi-plus-circle me-1"></i> Create Badge
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Filter Tabs -->
+  <ul class="nav nav-pills mb-4" id="badgeFilterTabs">
+    <li class="nav-item">
+      <button class="nav-link active rounded-pill" data-filter="all"><i class="bi bi-grid me-1"></i> All</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link rounded-pill" data-filter="unlocked"><i class="bi bi-unlock me-1"></i> Unlocked</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link rounded-pill" data-filter="locked"><i class="bi bi-lock me-1"></i> Locked</button>
+    </li>
+  </ul>
+
+  {% if badges %}
+<div class="row g-4" id="badgeContainer">
+  {% for badge in badges %}
+  <div class="col-md-4 badge-item" data-status="{{ 'unlocked' if badge.unlocked else 'locked' }}">
+    <div class="card border-0 shadow-sm rounded-4 p-3 {% if not badge.unlocked %}opacity-75{% endif %}">
+      <div class="d-flex align-items-center gap-3">
+        <div class="flex-shrink-0">
+          <img src="{{ badge.image_url }}"
+               onerror="this.onerror=null;this.src='{{ url_for('static', filename='default_badge.png') }}';"
+               alt="{{ badge.name }}"
+               class="rounded-circle shadow-sm"
+               width="80" height="80"
+               style="object-fit: cover; filter: {% if not badge.unlocked %}grayscale(1){% endif %};"
+               data-bs-toggle="tooltip" title="{{ badge.name }}">
+        </div>
+
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="fw-bold mb-1 text-dark">{{ badge.name }}</h6>
+              <p class="text-muted small mb-1">{{ badge.description }}</p>
+
+              {% if badge.level %}
+                <p class="mb-1"><span class="badge bg-primary">Level: {{ badge.level }}</span></p>
+              {% endif %}
+
+              {% if badge.tags %}
+              <p class="text-muted small mb-1">Tags:
+                {% for tag in badge.tags %}
+                <span class="badge bg-info text-dark me-1">{{ tag }}</span>
+                {% endfor %}
+              </p>
+              {% endif %}
+
+              {% if badge.unlocked %}
+              <span class="badge bg-success rounded-pill px-3 py-1">
+                <i class="bi bi-check-circle me-1"></i>Unlocked
+              </span>
+              {% else %}
+              <div class="progress mb-2" style="height: 6px; max-width: 220px;">
+                <div class="progress-bar bg-success" role="progressbar"
+                     style="width: {{ badge.progress }}%;"
+                     aria-valuenow="{{ badge.progress }}"
+                     aria-valuemin="0" aria-valuemax="100">
+                </div>
+              </div>
+
+              {% if badge.progress == 100 %}
+              <form method="post" action="{{ url_for('dashboard.unlock_badge', badge_id=badge.id) }}" class="unlock-form mt-1">
+                <button type="submit" class="btn btn-sm btn-outline-success">
+                  <i class="bi bi-unlock"></i> Unlock Badge
+                </button>
+              </form>
+              {% else %}
+              <span class="badge bg-secondary rounded-pill px-3 py-1">
+                <i class="bi bi-lock me-1"></i>Locked
+              </span>
+              {% endif %}
+
+              <div class="mt-2 small text-muted">
+                {% if badge.condition_type and badge.condition_value %}
+                <i class="bi bi-info-circle me-1 text-warning"></i>
+                <strong>Requirement:</strong>
+                {% if badge.condition_type == 'event_attendance' %}
+                  Attend <strong>{{ badge.condition_value }}</strong> event{{ 's' if badge.condition_value > 1 else '' }}
+                {% else %}
+                  {{ badge.condition_type.replace('_', ' ')|capitalize }}: <strong>{{ badge.condition_value }}</strong>
+                {% endif %}
+                <br>
+                {% endif %}
+                <i class="bi bi-star me-1 text-warning"></i>
+                XP Reward: <strong>{{ badge.xp_reward or 0 }}</strong><br>
+                <i class="bi bi-person-badge me-1 text-warning"></i>
+                Set by: <strong>{{ badge.set_by or 'Host' }}</strong>
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="dropdown">
+              <button class="btn btn-light btn-sm rounded-circle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#badgeModal{{ badge.id }}">
+                    <i class="bi bi-eye me-2"></i> View
+                  </button>
+                </li>
+                {% if current_user.role in ['host', 'admin'] %}
+                <li>
+                  <form method="POST" action="{{ url_for('dashboard.delete_badge', badge_id=badge.id) }}">
+                    <button type="submit" class="dropdown-item text-danger"
+                            onclick="return confirm('Delete this badge?')">
+                      <i class="bi bi-trash3 me-2"></i> Delete
+                    </button>
+                  </form>
+                </li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="badgeModal{{ badge.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-award me-2"></i>{{ badge.name }}</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img src="{{ badge.image_url }}" class="img-fluid mb-3" style="max-height: 180px;"
+               onerror="this.onerror=null;this.src='{{ url_for('static', filename='default_badge.png') }}';">
+
+          {% if badge.level %}
+          <p><span class="badge bg-primary">Level: {{ badge.level }}</span></p>
+          {% endif %}
+
+          {% if badge.tags %}
+          <p class="small text-muted">
+            <strong>Tags:</strong>
+            {% for tag in badge.tags %}
+            <span class="badge bg-info text-dark me-1">{{ tag }}</span>
+            {% endfor %}
+          </p>
+          {% endif %}
+
+          {% if badge.unlocked %}
+          <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Unlocked</span>
+          {% else %}
+          <span class="badge bg-secondary mb-2"><i class="bi bi-lock me-1"></i>Locked</span>
+          <div class="progress mt-2 mb-3" style="height: 6px;">
+            <div class="progress-bar bg-success" role="progressbar"
+                 style="width: {{ badge.progress }}%;"
+                 aria-valuenow="{{ badge.progress }}"
+                 aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+
+          {% if badge.progress == 100 %}
+          <form method="post" action="{{ url_for('dashboard.unlock_badge', badge_id=badge.id) }}">
+            <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-unlock"></i> Unlock Badge</button>
+          </form>
+          {% endif %}
+
+          <div class="text-start px-2">
+            {% if badge.condition_type and badge.condition_value %}
+            <p class="mb-1 small text-muted">
+              <i class="bi bi-info-circle me-1 text-warning"></i>
+              <strong>Requirement:</strong> {{ badge.condition_type.replace('_', ' ')|capitalize }}: {{ badge.condition_value }}
+            </p>
+            {% endif %}
+            <p class="mb-1 small text-muted">
+              <i class="bi bi-star me-1 text-warning"></i>
+              <strong>XP Reward:</strong> {{ badge.xp_reward or 0 }}
+            </p>
+            <p class="mb-0 small text-muted">
+              <i class="bi bi-person-badge me-1 text-warning"></i>
+              <strong>Set By:</strong> {{ badge.set_by or 'Host' }}
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-light border text-muted mt-4">
+  <i class="bi bi-info-circle me-1"></i> No badges yet. Keep participating to earn your first one!
+</div>
+{% endif %}
+
+<script>
+  const tooltipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipList.forEach(el => new bootstrap.Tooltip(el));
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const filterButtons = document.querySelectorAll('.nav-link[data-filter]');
+    const badgeItems = document.querySelectorAll('.badge-item');
+
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        const filter = button.getAttribute('data-filter');
+        badgeItems.forEach(item => {
+          const status = item.getAttribute('data-status');
+          item.style.display = (filter === 'all' || filter === status) ? 'block' : 'none';
+        });
+      });
+    });
+  });
+</script>
+<style>
+  body {
+    background-color: #f8f9fc;
+  }
+  .card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+  }
+  .progress-bar {
+    transition: width 0.4s ease;
+  }
+  .dropdown-toggle::after {
+    display: none;
+  }
+</style>
+{% endblock %}

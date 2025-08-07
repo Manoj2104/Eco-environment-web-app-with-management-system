@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5" style="max-width: 960px;">
+  <div class="card shadow border-0 rounded-4">
+    <div class="card-body p-4">
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-primary fw-bold">
+          <i class="bi bi-check2-circle me-2"></i> Check-In Panel
+        </h4>
+        <span class="badge rounded-pill bg-success shadow-sm" id="socketStatus">
+          <i class="bi bi-wifi"></i> Connected
+        </span>
+      </div>
+
+      <input type="text" class="form-control mb-4 shadow-sm" placeholder="🔍 Search attendee by name or email..." id="searchInput" onkeyup="filterTable()">
+
+      <div class="table-responsive rounded">
+        <table class="table table-hover align-middle shadow-sm border">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Avatar</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Checked-In At</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="checkinTable"></tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <button id="prevPage" class="btn btn-outline-secondary btn-sm" disabled>« Previous</button>
+        <span id="pageInfo" class="text-muted small"></span>
+        <button id="nextPage" class="btn btn-outline-primary btn-sm">Next »</button>
+      </div>
+
+      <!-- Feedback -->
+      <div id="liveFeedback" class="alert alert-success mt-4 d-none shadow-sm" role="alert">
+        ✅ Attendee checked-in successfully!
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  let allData = [];
+  let currentPage = 1;
+  const pageSize = 50;
+
+  socket.on('connect', () => {
+    document.getElementById("socketStatus").innerHTML = '<i class="bi bi-wifi"></i> Connected';
+    document.getElementById("socketStatus").className = 'badge rounded-pill bg-success shadow-sm';
+  });
+
+  socket.on('disconnect', () => {
+    document.getElementById("socketStatus").innerHTML = '<i class="bi bi-wifi-off"></i> Offline';
+    document.getElementById("socketStatus").className = 'badge rounded-pill bg-danger shadow-sm';
+  });
+
+  function renderTable(data) {
+    const tbody = document.getElementById("checkinTable");
+    tbody.innerHTML = "";
+
+    const start = (currentPage - 1) * pageSize;
+    const paginated = data.slice(start, start + pageSize);
+
+    paginated.forEach((user, index) => {
+      const row = document.createElement("tr");
+      const initials = user.name
+        .split(" ")
+        .map(w => w.charAt(0).toUpperCase())
+        .slice(0, 2)
+        .join("") || "??";
+
+      const avatarHTML = `
+        <div class="avatar-initial rounded-circle text-white fw-bold d-flex align-items-center justify-content-center"
+             title="${user.name}" style="width: 40px; height: 40px;">
+          ${initials}
+        </div>`;
+
+      const checkinTime = user.checkin_time
+        ? new Date(user.checkin_time).toLocaleString('en-IN', {
+            hour: '2-digit', minute: '2-digit', hour12: true,
+            day: '2-digit', month: 'short', year: 'numeric'
+          })
+        : '—';
+
+      row.innerHTML = `
+        <td>${start + index + 1}</td>
+        <td>${avatarHTML}</td>
+        <td>${user.name}</td>
+        <td>${user.email}</td>
+        <td class="status">
+          ${user.checked_in
+            ? '<span class="badge rounded-pill bg-success">Checked-In</span>'
+            : '<span class="badge rounded-pill bg-warning text-dark">Pending</span>'
+          }
+        </td>
+        <td class="checkin-time">${checkinTime}</td>
+        <td>
+          ${user.checked_in
+            ? '<span class="text-success fw-bold small"><i class="bi bi-check2-circle"></i> Done</span>'
+            : `<button class="btn btn-sm btn-outline-primary rounded-pill checkin-btn" data-id="${user.id}">
+                <i class="bi bi-check-circle me-1"></i> Check-In
+              </button>`}
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    attachCheckinHandlers();
+
+    // Pagination UI
+    document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${Math.ceil(data.length / pageSize)}`;
+    document.getElementById('prevPage').disabled = currentPage === 1;
+    document.getElementById('nextPage').disabled = currentPage * pageSize >= data.length;
+  }
+
+  function loadCheckins() {
+    fetch('/realtime-attendance')
+      .then(res => res.json())
+      .then(data => {
+        allData = data;
+        currentPage = 1;
+        renderTable(allData);
+      });
+  }
+
+  function attachCheckinHandlers() {
+    document.querySelectorAll('.checkin-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const row = this.closest('tr');
+        const statusCell = row.querySelector('.status');
+        const timeCell = row.querySelector('.checkin-time');
+
+        const now = new Date();
+        const nowFormatted = now.toLocaleString('en-IN', {
+          hour: '2-digit', minute: '2-digit', hour12: true,
+          day: '2-digit', month: 'short', year: 'numeric'
+        });
+
+        statusCell.innerHTML = `<span class="badge rounded-pill bg-success">Checked-In</span>`;
+        timeCell.innerText = nowFormatted;
+        this.outerHTML = '<span class="text-success fw-bold small"><i class="bi bi-check2-circle"></i> Done</span>';
+
+        socket.emit('checkin', {
+          name: row.cells[2].innerText,
+          time: nowFormatted
+        });
+
+        const alertBox = document.getElementById('liveFeedback');
+        alertBox.classList.remove('d-none');
+        setTimeout(() => alertBox.classList.add('d-none'), 2500);
+      });
+    });
+  }
+
+  function filterTable() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const filtered = allData.filter(u =>
+      u.name.toLowerCase().includes(input) || u.email.toLowerCase().includes(input)
+    );
+    currentPage = 1;
+    renderTable(filtered);
+  }
+
+  // Pagination controls
+  document.addEventListener("DOMContentLoaded", () => {
+    loadCheckins();
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable(allData);
+      }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+      if ((currentPage * pageSize) < allData.length) {
+        currentPage++;
+        renderTable(allData);
+      }
+    });
+  });
+
+  socket.on('new_checkin', data => {
+    const rows = document.querySelectorAll("#checkinTable tr");
+    rows.forEach(row => {
+      if (row.cells[2].innerText === data.name) {
+        row.querySelector('.status').innerHTML = '<span class="badge rounded-pill bg-success">Checked-In</span>';
+        row.querySelector('.checkin-time').innerText = data.time;
+        row.querySelector('td:last-child').innerHTML = '<span class="text-success fw-bold small"><i class="bi bi-check2-circle"></i> Done</span>';
+      }
+    });
+  });
+</script>
+
+<style>
+  .table td, .table th { vertical-align: middle; }
+  .checkin-btn:hover { background-color: #0d6efd; color: white; }
+  .table-hover tbody tr:hover { background-color: #f2f6ff; transition: 0.2s ease; }
+  .alert { transition: all 0.4s ease-in-out; }
+
+  .avatar-initial {
+    font-size: 0.9rem;
+    background: linear-gradient(135deg, #42c168, #2c9457);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
+    text-transform: uppercase;
+  }
+
+  .badge { font-size: 0.85rem; }
+  .text-success.fw-bold.small i {
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+</style>
+{% endblock %}

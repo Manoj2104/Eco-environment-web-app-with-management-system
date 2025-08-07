@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div>
+        <h4 class="fw-bold mb-0 text-success">
+          <i class="bi bi-people-fill me-2"></i>Volunteers in Your Events
+        </h4>
+        <p class="text-muted">Track all volunteers who joined or attended your events</p>
+      </div>
+      <div class="w-100 w-md-auto">
+        <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search by name or email...">
+      </div>
+    </div>
+
+    {% if volunteers %}
+      <div class="table-responsive shadow rounded bg-white">
+        <table class="table table-hover align-middle mb-0" id="volunteerTable">
+          <thead class="table-success">
+            <tr>
+              <th>#</th>
+              <th>Volunteer</th>
+              <th>Email</th>
+              <th>Location</th>
+              <th>XP</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in volunteers %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <img src="https://ui-avatars.com/api/?name={{ v.name }}" class="rounded-circle" width="40" height="40">
+                    <span class="fw-semibold">{{ v.name }}</span>
+                  </div>
+                </td>
+                <td class="text-muted">{{ v.email }}</td>
+                <td>
+                  {% if v.latitude and v.longitude %}
+                    📍 {{ v.latitude|round(3) }}, {{ v.longitude|round(3) }}
+                  {% else %}
+                    <span class="text-muted">Not Shared</span>
+                  {% endif %}
+                </td>
+                <td><span class="badge bg-warning text-dark">{{ v.xp or 0 }} XP</span></td>
+                <td>
+                  {% if v.badges and v.badges|length > 3 %}
+                    <span class="badge bg-primary">Top Contributor</span>
+                  {% elif v.badges %}
+                    <span class="badge bg-info text-dark">Active</span>
+                  {% else %}
+                    <span class="badge bg-secondary">New</span>
+                  {% endif %}
+                </td>
+                <td>{{ v.created_at.strftime('%d %b %Y') if v.created_at else 'N/A' }}</td>
+                <td class="text-end">
+                  <div class="btn-group">
+                    <a href="{{ url_for('dashboard.view_volunteer_profile', user_id=v.id) }}" class="btn btn-sm btn-outline-success" title="View Profile">
+                      <i class="bi bi-person-lines-fill"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li><a class="dropdown-item" href="{{ url_for('dashboard.view_volunteer_profile', user_id=v.id) }}#xp">📊 View XP Stats</a></li>
+                      <li><a class="dropdown-item" href="{{ url_for('dashboard.view_volunteer_profile', user_id=v.id) }}#badges">🏆 View Badges</a></li>
+                      <li><a class="dropdown-item" href="{{ url_for('dashboard.view_volunteer_profile', user_id=v.id) }}#events">📅 Event History</a></li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="alert alert-info mt-4 text-center">
+        <i class="bi bi-emoji-frown me-2"></i>No volunteers found in your events.
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+  // Live search filter
+  document.getElementById('searchInput').addEventListener('keyup', function () {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll('#volunteerTable tbody tr').forEach(row => {
+      const name = row.cells[1].innerText.toLowerCase();
+      const email = row.cells[2].innerText.toLowerCase();
+      row.style.display = name.includes(filter) || email.includes(filter) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Create Badge{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-lg-9 mx-auto">
+      <div class="card border-success shadow-sm">
+        <div class="card-body p-4">
+          <h3 class="text-success mb-4"><i class="bi bi-award-fill me-2"></i>Create a New Badge</h3>
+          <form method="POST" enctype="multipart/form-data" action="{{ url_for('dashboard.create_badge') }}">
+            {{ form.hidden_tag() }}
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                {{ form.name.label(class="form-label") }}
+                {{ form.name(class="form-control", placeholder="e.g. Eco Warrior") }}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.level.label(class="form-label") }}
+                {{ form.level(class="form-select") }}
+              </div>
+
+              <div class="col-12">
+                {{ form.description.label(class="form-label") }}
+                {{ form.description(class="form-control", id="markdownDesc", placeholder="Describe this badge...") }}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Upload Image</label>
+                {{ form.image_file(class="form-control", onchange="previewBadgeFile(this)") }}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Or Enter Image URL</label>
+                <input type="url" class="form-control" id="imageUrlInput" placeholder="https://example.com/badge.png" oninput="previewBadgeURL(this)">
+              </div>
+
+              <div class="col-md-6">
+                {{ form.tags.label(class="form-label") }}
+                {{ form.tags(class="form-control", placeholder="e.g. environment, teamwork") }}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.xp_reward.label(class="form-label") }}
+                {{ form.xp_reward(class="form-control", placeholder="e.g. 100") }}
+              </div>
+
+              <div class="col-md-6">
+                <label for="conditionType" class="form-label">Condition Type</label>
+                <select name="condition_type" class="form-select" id="conditionType">
+                  <optgroup label="Event-based">
+                    <option value="event_attendance">Attend X Events</option>
+                    <option value="event_host">Host X Events</option>
+                  </optgroup>
+                  <optgroup label="Activity-based">
+                    <option value="checkins">Check-in X Times</option>
+                    <option value="hours_volunteered">Volunteer X Hours</option>
+                    <option value="weekly_goals_met">Meet Weekly Goal X Times</option>
+                  </optgroup>
+                  <optgroup label="XP / Level">
+                    <option value="xp_earned">Earn X XP</option>
+                    <option value="level_reached">Reach Level X</option>
+                  </optgroup>
+                  <optgroup label="Milestones">
+                    <option value="badges_collected">Collect X Badges</option>
+                    <option value="certificates_earned">Earn X Certificates</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                {{ form.condition_value.label(class="form-label") }}
+                {{ form.condition_value(class="form-control", placeholder="e.g. 3") }}
+              </div>
+
+              <div class="col-12 d-grid">
+                {{ form.submit(class="btn btn-success btn-lg rounded-pill") }}
+              </div>
+            </div>
+          </form>
+
+          <!-- Live Preview -->
+          <div class="mt-5" id="badgeLivePreview" style="display:none;">
+            <label class="text-muted mb-2">Live Preview:</label>
+            <div class="d-inline-flex align-items-center p-3 rounded shadow-sm" id="badgePreviewBox" style="border: 3px solid green;">
+              <img id="previewIcon" src="#" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+              <div>
+                <strong id="previewName">Badge Name</strong><br>
+                <span class="text-muted small">+<span id="previewXP">XP</span> XP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CSV Upload -->
+          <hr class="my-5">
+          <h5><i class="bi bi-upload me-2"></i>Bulk Upload (CSV)</h5>
+          <form method="POST" action="{{ url_for('dashboard.bulk_badge_upload') }}" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label class="form-label">Upload CSV file</label>
+              <input type="file" class="form-control" name="csv_file" accept=".csv" required>
+              <div class="form-text">CSV Columns: name, description, level, tags, xp_reward, condition_type, condition_value</div>
+            </div>
+            <button type="submit" class="btn btn-outline-success rounded-pill"><i class="bi bi-cloud-arrow-up"></i> Upload CSV</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Badge List -->
+      <hr class="my-5">
+      <h5><i class="bi bi-award me-1"></i> Your Created Badges</h5>
+      <div class="row">
+        {% for badge in badges %}
+        <div class="col-md-4 col-sm-6 mb-4">
+          <div class="card text-center shadow-sm border-success border-2">
+            <div class="card-body">
+              <img src="{{ badge.icon_url }}" class="mb-2 rounded-circle shadow-sm" style="width: 60px; height: 60px;">
+              <h6 class="fw-bold mb-1 text-success">{{ badge.name }}</h6>
+              <p class="text-muted small mb-0">{{ badge.level|capitalize }} | +{{ badge.xp_reward }} XP</p>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="col">
+          <p class="text-muted">No badges created yet.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Markdown Editor & Preview Scripts -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+<script>
+  var simplemde = new SimpleMDE({ element: document.getElementById("markdownDesc") });
+
+  const previewIcon = document.getElementById('previewIcon');
+  const previewBox = document.getElementById('badgePreviewBox');
+  const previewSection = document.getElementById('badgeLivePreview');
+
+  function previewBadgeFile(input) {
+    const file = input.files[0];
+    if (file) {
+      previewIcon.src = URL.createObjectURL(file);
+      previewSection.style.display = 'block';
+    }
+  }
+
+  function previewBadgeURL(input) {
+    const url = input.value.trim();
+    if (url.startsWith('http')) {
+      previewIcon.src = url;
+      previewSection.style.display = 'block';
+    }
+  }
+
+  document.querySelector('[name="name"]').addEventListener('input', function () {
+    document.getElementById('previewName').textContent = this.value || "Badge Name";
+  });
+
+  document.querySelector('[name="xp_reward"]').addEventListener('input', function () {
+    document.getElementById('previewXP').textContent = this.value || "XP";
+  });
+
+  document.querySelector('[name="level"]').addEventListener('change', function () {
+    const level = this.value;
+    const colorMap = {
+      beginner: 'green',
+      intermediate: '#f39c12',
+      pro: '#c0392b'
+    };
+    previewBox.style.borderColor = colorMap[level] || 'green';
+  });
+</script>
+{% endblock %}

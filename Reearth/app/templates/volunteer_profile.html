@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section py-5" style="background: linear-gradient(to right, #f8f9fa, #eef2f7); min-height: 100vh;">
+  <div class="container">
+    <a href="{{ url_for('dashboard.see_volunteers') }}" class="btn btn-outline-secondary mb-4 btn-animated">
+      <i class="bi bi-arrow-left"></i> Back to Volunteers
+    </a>
+
+    <div class="row g-4">
+      <!-- Profile Card -->
+      <div class="col-md-4">
+        <div class="card shadow-lg border-0 p-4 text-center hover-shadow animate__animated animate__fadeInLeft" style="border-radius: 1rem;">
+          <div class="position-relative mx-auto" style="width: 110px;">
+            <div class="rounded-circle mx-auto mb-3 border border-4 border-primary-subtle" style="padding: 5px;">
+              <img src="https://ui-avatars.com/api/?name={{ volunteer.name }}" class="rounded-circle" width="100">
+            </div>
+          </div>
+          <h5 class="fw-bold">{{ volunteer.name }}</h5>
+          <p class="text-muted small">{{ volunteer.email }}</p>
+          <span class="badge bg-success-subtle text-success fw-medium mb-2">✔ Verified Volunteer</span>
+
+          <hr class="my-3">
+
+          <p class="mb-1"><strong>Location:</strong><br>
+            {% if volunteer.latitude and volunteer.longitude %}
+              <small>Lat: {{ volunteer.latitude }}<br>Lng: {{ volunteer.longitude }}</small>
+            {% else %}
+              <span class="text-muted">Not shared</span>
+            {% endif %}
+          </p>
+
+          <p><strong>Joined:</strong><br>
+            {{ volunteer.created_at.strftime('%d %b %Y') if volunteer.created_at else 'N/A' }}
+          </p>
+
+          <div class="d-grid gap-2 mt-3">
+            <a href="mailto:{{ volunteer.email }}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-envelope-fill me-1"></i> Email
+            </a>
+            <a href="#" class="btn btn-outline-dark btn-sm">
+              <i class="bi bi-chat-dots-fill me-1"></i> Chat
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Section -->
+      <div class="col-md-8">
+        <!-- Stats -->
+        <div class="card shadow-lg border-0 p-4 mb-4 animate__animated animate__fadeInUp" style="border-radius: 1rem;">
+          <h5 class="mb-3 text-primary"><i class="bi bi-bar-chart-steps me-2"></i> Volunteer Stats</h5>
+          <div class="row text-center g-4">
+            <div class="col-md-4">
+              <div class="progress-circle shadow-sm" style="background: conic-gradient(#6a5acd {{ progress|default(60) }}%, #f0f0f0 {{ progress|default(60) }}%); width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #6a5acd;">
+                {{ progress or 60 }}%
+              </div>
+              <small class="d-block mt-2 text-muted">XP Progress</small>
+            </div>
+            <div class="col-md-4">
+              <h3 class="fw-bold text-success" id="xp-counter">0</h3>
+              <p class="mb-0 text-muted">XP Earned</p>
+            </div>
+            <div class="col-md-4">
+              <h3 class="fw-bold text-info">{{ events_attended|length }}</h3>
+              <p class="mb-0 text-muted">Events Attended</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="card shadow-lg border-0 p-4 mb-4 animate__animated animate__fadeInUp" style="border-radius: 1rem;">
+          <h6 class="mb-3 text-warning"><i class="bi bi-stars me-2"></i> Earned Badges</h6>
+          <div class="d-flex flex-wrap gap-3">
+            {% if earned_badges %}
+              {% for b, badge in earned_badges %}
+                <div class="text-center badge-hover" title="{{ badge.name }}">
+                  <img src="{{ badge.icon }}" width="50" class="rounded shadow-sm mb-1 animate__animated animate__bounceIn" data-bs-toggle="tooltip" title="{{ badge.description }}">
+                  <div class="small text-muted">{{ badge.name }}</div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted">No badges earned yet.</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card shadow-lg border-0 p-4 mb-4 animate__animated animate__fadeInUp" style="border-radius: 1rem;">
+          <h6 class="mb-3 text-secondary"><i class="bi bi-clock-history me-2"></i> Recent Event Participation</h6>
+          {% if events_attended %}
+            <ul class="timeline list-unstyled overflow-auto" style="max-height: 250px;">
+              {% for record in events_attended[:5] %}
+              <li class="mb-3 border-start ps-3 position-relative timeline-item">
+                <span class="timeline-dot bg-primary"></span>
+                <div class="d-flex justify-content-between">
+                  <strong>{{ record.event.name }}</strong>
+                  <small class="text-muted">{{ record.timestamp.strftime('%d %b %Y') }}</small>
+                </div>
+                <p class="mb-0 small text-muted">{{ record.event.description[:80] }}...</p>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No recent activity found.</p>
+          {% endif %}
+        </div>
+
+        <!-- XP Chart -->
+        <div class="card shadow-lg border-0 p-4 animate__animated animate__fadeInUp" style="border-radius: 1rem;">
+          <h6 class="mb-3 text-dark"><i class="bi bi-graph-up-arrow me-2"></i> Activity Graph</h6>
+          <canvas id="xpChart" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const ctx = document.getElementById('xpChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ xp_chart_labels|safe if xp_chart_labels else ['Week 1', 'Week 2', 'Week 3', 'Week 4'] }},
+      datasets: [{
+        label: 'XP Earned',
+        data: {{ xp_chart_data|safe if xp_chart_data else [10, 20, 40, 60] }},
+        backgroundColor: 'rgba(106,90,205,0.2)',
+        borderColor: 'rgba(106,90,205,1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#6a5acd'
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  const xpValue = {{ volunteer.xp or 0 }};
+  const counter = document.getElementById('xp-counter');
+  let current = 0;
+  const increment = Math.ceil(xpValue / 50);
+  const interval = setInterval(() => {
+    current += increment;
+    counter.textContent = current >= xpValue ? xpValue : current;
+    if (current >= xpValue) clearInterval(interval);
+  }, 20);
+
+  new bootstrap.Tooltip(document.body, {
+    selector: '[data-bs-toggle="tooltip"]'
+  });
+});
+</script>
+
+<!-- Styles -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<style>
+  .hover-shadow:hover {
+    box-shadow: 0 0 25px rgba(106, 90, 205, 0.3) !important;
+    transition: 0.3s ease-in-out;
+  }
+  .badge-hover:hover img {
+    transform: scale(1.1);
+    transition: 0.3s;
+  }
+  .timeline-item {
+    position: relative;
+    padding-left: 20px;
+  }
+  .timeline-dot {
+    position: absolute;
+    left: -8px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .btn-animated:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: 0.3s ease-in-out;
+  }
+</style>
+{% endblock %}

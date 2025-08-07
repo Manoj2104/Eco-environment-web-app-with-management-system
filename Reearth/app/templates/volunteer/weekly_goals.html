@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}Weekly Goals{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-4 text-success"><i class="bi bi-bullseye"></i> Weekly Volunteer Goals</h3>
+
+  <!-- Real-time goals injected here -->
+  <div id="goal-list">
+    <noscript>
+      <div class="alert alert-info">Enable JavaScript to see real-time goal updates.</div>
+    </noscript>
+  </div>
+</div>
+
+<!-- Floating Add Goal Button -->
+<button class="btn btn-success rounded-circle shadow position-fixed" 
+        style="bottom: 30px; right: 30px; width: 60px; height: 60px;" 
+        data-bs-toggle="modal" data-bs-target="#addGoalModal">
+  <i class="bi bi-plus-lg fs-4"></i>
+</button>
+
+<!-- Add Goal Modal -->
+<div class="modal fade" id="addGoalModal" tabindex="-1" aria-labelledby="addGoalModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="goalForm">
+      <div class="modal-header">
+        <h5 class="modal-title text-success"><i class="bi bi-plus-circle me-2"></i>Add New Goal</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Goal Title</label>
+          <input type="text" class="form-control" name="title" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" name="description" rows="2" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Deadline</label>
+          <input type="date" class="form-control" name="deadline">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Priority</label>
+          <select name="priority" class="form-select">
+            <option value="High">🔴 High</option>
+            <option value="Medium">🟡 Medium</option>
+            <option value="Low" selected>🟢 Low</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Tags (comma separated)</label>
+          <input type="text" class="form-control" name="tags">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Save Goal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+<script>
+const socket = io();
+socket.emit("get_goals");
+
+socket.on("update_goals", (goals) => {
+  const container = document.getElementById("goal-list");
+
+  if (!goals || goals.length === 0) {
+    container.innerHTML = `
+      <div class="text-center mt-5">
+        <lottie-player src="https://lottie.host/c2f6d401-6bfb-49a2-8236-40b7c3f1c2bc/N0o1vccEB7.json"
+                       background="transparent" speed="1"
+                       style="width: 300px; height: 300px; margin: auto;" loop autoplay>
+        </lottie-player>
+        <p class="lead text-muted mt-3"><i class="bi bi-emoji-neutral"></i> No weekly goals assigned yet.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      ${goals.map(goal => `
+        <div class="col">
+          <div class="card shadow-sm border-0 rounded-4 goal-card position-relative">
+            <div class="card-body pb-4">
+              <h5 class="card-title fw-bold text-success">${goal.title}</h5>
+              <p class="card-text text-muted">${goal.description}</p>
+
+              <p class="mb-1 text-success">
+                <i class="bi bi-calendar-event me-1"></i>
+                <strong>Due:</strong> ${goal.deadline || "Sunday"}
+              </p>
+
+              <div class="mb-2">
+                <small class="text-muted">Progress: <span class="text-success">${goal.progress}%</span></small>
+                <div class="progress" style="height: 8px;">
+                  <div class="progress-bar 
+                    ${goal.status === "Completed" ? "bg-success"
+                    : goal.status === "Pending" ? "bg-warning"
+                    : "bg-danger"}" 
+                    style="width: ${goal.progress}%;"></div>
+                </div>
+              </div>
+
+              <span class="badge 
+                ${goal.status === "Completed" ? "bg-success"
+                : goal.status === "Pending" ? "bg-warning text-dark"
+                : "bg-danger"}">
+                ${goal.status === "Completed" ? "✔️ Completed"
+                : goal.status === "Pending" ? "❗ Pending"
+                : "❌ Missed"}
+              </span>
+
+              ${goal.priority === "High" ? `<span class="badge bg-danger ms-2">🔴 High</span>`
+                : goal.priority === "Medium" ? `<span class="badge bg-warning text-dark ms-2">🟡 Medium</span>`
+                : `<span class="badge bg-success ms-2">🟢 Low</span>`}
+
+              ${goal.tags?.length ? `<div class="mt-2">
+                ${goal.tags.map(tag => `<span class="badge rounded-pill bg-light text-success border me-1">#${tag}</span>`).join("")}
+              </div>` : ""}
+
+              <blockquote class="blockquote mt-3 mb-0">
+                <footer class="blockquote-footer fst-italic text-muted">
+                  "${goal.quote || 'Keep pushing your limits!'}"
+                </footer>
+              </blockquote>
+
+              <div class="position-absolute top-0 end-0 p-2">
+                <a href="#" class="text-success me-2" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                <a href="#" class="text-danger" title="Delete"><i class="bi bi-trash"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  const tooltips = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
+  tooltips.forEach(el => new bootstrap.Tooltip(el));
+});
+
+// Goal Form Submit
+document.getElementById("goalForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  const data = Object.fromEntries(formData.entries());
+  data.tags = data.tags.split(',').map(t => t.trim()).filter(t => t !== "");
+
+  socket.emit("add_goal", data);
+  this.reset();
+  bootstrap.Modal.getInstance(document.getElementById("addGoalModal")).hide();
+});
+</script>
+
+<style>
+.goal-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.goal-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

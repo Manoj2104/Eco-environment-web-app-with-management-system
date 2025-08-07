@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <!-- Page Header -->
+  <div class="text-center mb-5">
+    <h2 class="text-success fw-bold">📷 EcoNova Gallery</h2>
+    <p class="text-muted fs-6">Upload, tag, and explore event memories from our eco-heroes.</p>
+    <hr class="w-25 mx-auto border-success opacity-50">
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+          {{ message }}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Upload Form -->
+  <div class="row justify-content-center mb-5" id="upload">
+    <div class="col-md-8">
+      <div class="card border-success shadow-lg">
+        <div class="card-body p-4">
+          <h5 class="card-title text-success fw-semibold">📤 Upload New Image</h5>
+          <p class="text-muted small mb-3">Only .jpg, .png, or .jpeg files under 5MB are supported.</p>
+          <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label class="form-label">Select Image</label>
+              <input type="file" name="gallery_image" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Caption (Optional)</label>
+              <input type="text" name="caption" class="form-control" placeholder="Enter image caption">
+            </div>
+            <button type="submit" class="btn btn-success w-100">📥 Upload Image</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🌟 Main 5 Features -->
+  <div class="text-center mb-4">
+    <h4 class="fw-semibold text-primary">✨ Top Gallery Features</h4>
+    <p class="text-muted small">Explore and manage your media easily with these powerful tools.</p>
+  </div>
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="card border-success shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">📤 Easy Upload</h5>
+          <p class="card-text text-muted">Upload new memories from your events in seconds.</p>
+          <a href="#upload" class="btn btn-success btn-sm">Start Uploading</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-primary shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">🌐 Public Gallery</h5>
+          <p class="card-text text-muted">View all approved photos shared with the community.</p>
+          <a href="#" class="btn btn-primary btn-sm">Explore Gallery</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-warning shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">🔍 Smart Filters</h5>
+          <p class="card-text text-muted">Easily find photos by event, tags, or people.</p>
+          <a href="#" class="btn btn-warning btn-sm">Apply Filters</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-info shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">🏷️ Event Tagging</h5>
+          <p class="card-text text-muted">Organize your uploads by linking them to events.</p>
+          <a href="#" class="btn btn-info btn-sm">Tag Now</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-dark shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">📊 Gallery Insights</h5>
+          <p class="card-text text-muted">Track views, likes, and top contributors.</p>
+          <a href="#" class="btn btn-dark btn-sm">View Analytics</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📸 Uploaded Images -->
+  <hr class="my-5">
+  <h4 class="text-primary mb-4">📁 Your Uploaded Images</h4>
+  {% if images %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+      {% for image in images %}
+        <div class="col">
+          <div class="card shadow-sm h-100">
+            <img src="{{ url_for('static', filename='uploads/' ~ image.filename) }}" class="card-img-top rounded-top" alt="Uploaded Image">
+            <div class="card-body">
+              <p class="card-text">{{ image.caption or 'No caption provided.' }}</p>
+              <a href="{{ url_for('dashboard.delete_gallery_image', image_id=image.id) }}" class="btn btn-outline-danger btn-sm float-end">🗑 Delete</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-light border text-muted mt-3">
+      No images uploaded yet. Be the first to share your experience!
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

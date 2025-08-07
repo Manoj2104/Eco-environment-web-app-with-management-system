@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+  /* Container padding */
+  .profile-container {
+    padding: 3rem 2rem;
+  }
+  /* Left content styles */
+  .profile-main {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 2rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    min-height: 500px;
+  }
+  /* Right sidebar styles */
+  .attendance-sidebar {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 2rem;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .attendance-sidebar h4 {
+    border-bottom: 2px solid #6a5acd;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    color: #4b3d8a;
+  }
+  .table thead {
+    background-color: #6a5acd;
+    color: white;
+  }
+  .badge.present {
+    background-color: #198754;
+  }
+  .badge.absent {
+    background-color: #dc3545;
+  }
+</style>
+
+<div class="container profile-container">
+  <div class="row">
+    <!-- Left: Profile main content -->
+    <div class="col-lg-8">
+      <div class="profile-main">
+        <h2>Welcome, {{ current_user.name }}</h2>
+        <p>Email: {{ current_user.email }}</p>
+        <!-- Add more profile details here -->
+
+        <!-- Example: User bio -->
+        {% if current_user.bio %}
+        <p><strong>Bio:</strong> {{ current_user.bio }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right: Attendance sidebar -->
+    <div class="col-lg-4">
+      <div class="attendance-sidebar">
+        <h4>My Attendance</h4>
+
+        {% if records %}
+        <div class="table-responsive" style="max-height: 50vh; overflow-y: auto;">
+          <table class="table table-sm table-bordered mb-3">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Event</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in records|slice(0, 10) %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ record.event.title }}</td>
+                <td>
+                  {% if record.status == 'present' %}
+                    <span class="badge present">Present</span>
+                  {% else %}
+                    <span class="badge absent">{{ record.status|capitalize }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <a href="{{ url_for('attendance.view_all') }}" class="btn btn-primary btn-sm w-100">View All Attendance</a>
+        {% else %}
+        <p class="text-muted">No attendance records found.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

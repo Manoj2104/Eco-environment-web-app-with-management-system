@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="card shadow-sm p-4">
+    <h4 class="mb-3">Event QR & Passcode Preview</h4>
+
+    <p><strong>Event:</strong> {{ event.title }}</p>
+    <p><strong>Passcode:</strong> <span class="text-success">{{ event.passcode or 'N/A' }}</span></p>
+
+    {% if event.qr_code %}
+      <p><strong>QR Code:</strong></p>
+      <img src="{{ url_for('static', filename='qr_codes/' ~ event.qr_code) }}" alt="QR Code" width="200">
+    {% else %}
+      <p>No QR code generated.</p>
+    {% endif %}
+
+    <a href="{{ url_for('events.manage_events') }}" class="btn btn-secondary mt-3">⬅ Back</a>
+  </div>
+</div>
+{% endblock %}

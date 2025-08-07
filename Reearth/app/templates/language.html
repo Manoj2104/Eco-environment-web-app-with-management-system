@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5" style="max-width: 600px;">
+  <div class="card shadow rounded-4 border-0 overflow-hidden">
+    <div class="bg-gradient p-4 text-white" style="background: linear-gradient(135deg, #0d6efd, #3b82f6);">
+      <h4 class="mb-0"><i class="bi bi-translate-globe me-2 glow-icon"></i>Language Settings</h4>
+    </div>
+    <div class="card-body p-4">
+
+      <!-- Toast-like Alert -->
+      <div id="langSuccess" class="alert alert-success d-none" role="alert">
+        ✅ Language preference saved successfully!
+      </div>
+
+      <form method="post" action="#" onsubmit="showSuccess(); return false;">
+        <!-- Language Dropdown -->
+        <div class="mb-3">
+          <label for="languageSelect" class="form-label fw-semibold">
+            🌐 Select Your Language:
+          </label>
+          <select class="form-select" id="languageSelect" name="language" onchange="updatePreview()" title="Choose your preferred language">
+            <option value="en" selected>🇺🇸 English</option>
+            <option value="ta">🇮🇳 Tamil</option>
+            <option value="hi">🇮🇳 Hindi</option>
+            <option value="es">🇪🇸 Spanish</option>
+            <option value="ar" dir="rtl">🇸🇦 Arabic</option>
+          </select>
+        </div>
+
+        <!-- Toggle Auto Save -->
+        <div class="form-check form-switch mb-4">
+          <input class="form-check-input" type="checkbox" id="autoSaveToggle" checked>
+          <label class="form-check-label" for="autoSaveToggle" title="Automatically save language preference">
+            Auto-save changes
+          </label>
+        </div>
+
+        <!-- Language Preview -->
+        <div class="card bg-light border-0 rounded-3 shadow-sm mb-4">
+          <div class="card-body" id="langPreview">
+            <p class="mb-0 text-muted">
+              <i class="bi bi-chat-left-dots-fill text-primary"></i> Preview: Hello! Welcome to EcoNova.
+            </p>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary rounded-pill w-100 fw-semibold">
+          <i class="bi bi-save2 me-1"></i> Save Preferences
+        </button>
+
+        <!-- Advanced Settings Collapse -->
+        <div class="text-center mt-3">
+          <a class="text-decoration-none small" data-bs-toggle="collapse" href="#advancedSettings" role="button">
+            <i class="bi bi-gear-wide-connected me-1"></i>Advanced Options
+          </a>
+        </div>
+
+        <div class="collapse mt-3" id="advancedSettings">
+          <div class="card card-body bg-body-tertiary border-0 rounded-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="syncLang">
+              <label class="form-check-label" for="syncLang">
+                Sync language across all devices
+              </label>
+            </div>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="sendAnalytics">
+              <label class="form-check-label" for="sendAnalytics">
+                Send language preference for analytics
+              </label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Script for Preview + Success Alert -->
+<script>
+  function updatePreview() {
+    const lang = document.getElementById('languageSelect').value;
+    const previewBox = document.getElementById('langPreview');
+    const messages = {
+      en: "Hello! Welcome to EcoNova.",
+      ta: "வணக்கம்! எகோநோவாவுக்கு வரவேற்கிறோம்.",
+      hi: "नमस्ते! इकोनोवा में आपका स्वागत है।",
+      es: "¡Hola! Bienvenido a EcoNova.",
+      ar: "مرحبًا! مرحبًا بك في إكونوفا."
+    };
+    previewBox.innerHTML = `<p class="mb-0 text-muted"><i class="bi bi-chat-left-dots-fill text-primary"></i> Preview: ${messages[lang]}</p>`;
+  }
+
+  function showSuccess() {
+    const alert = document.getElementById("langSuccess");
+    alert.classList.remove("d-none");
+    setTimeout(() => alert.classList.add("d-none"), 3000);
+  }
+</script>
+
+<!-- Optional Glow Icon Style -->
+<style>
+  .glow-icon {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+  }
+</style>
+{% endblock %}

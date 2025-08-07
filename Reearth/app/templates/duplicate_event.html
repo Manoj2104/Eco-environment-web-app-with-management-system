@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5" style="max-width: 800px;">
+  <div class="card shadow-lg border-0 rounded-4">
+    <div class="card-body p-4">
+      <h3 class="text-primary fw-bold mb-4">
+        <i class="bi bi-files me-2"></i> Duplicate an Existing Event
+      </h3>
+
+      <!-- Step 1 -->
+      <div class="timeline-step mb-3">
+        <span class="badge bg-primary rounded-pill me-2"><i class="bi bi-1-circle"></i></span>
+        <span>Select event to duplicate</span>
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Choose an event:</label>
+        <select class="form-select shadow-sm" id="eventSelect">
+          <option selected disabled>-- Select an event --</option>
+          {% for event in upcoming_events %}
+          <option value="{{ event.id }}"
+            data-title="{{ event.title }}"
+            data-date="{{ event.date.strftime('%Y-%m-%d') }}"
+            data-thumbnail="{{ url_for('static', filename=(event.thumbnail or 'images/default_event.jpg')) }}">
+            {{ event.title }} - {{ event.date.strftime('%b %d, %Y') }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="timeline-step mb-3">
+        <span class="badge bg-secondary rounded-pill me-2"><i class="bi bi-2-circle"></i></span>
+        <span>Preview and edit</span>
+      </div>
+
+      <div id="previewCard" class="card bg-light border-start border-4 border-primary shadow-sm d-none animate__animated animate__fadeIn">
+        <div class="card-body d-flex flex-wrap align-items-start">
+          <div class="me-4 flex-grow-1">
+            <div class="mb-2">
+              <label class="form-label small">Title</label>
+              <input type="text" class="form-control form-control-sm" id="previewTitle">
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label small">Date</label>
+                <input type="date" class="form-control form-control-sm" id="previewDate">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Location</label>
+                <input type="text" class="form-control form-control-sm" id="previewLocation" value="EcoNova Venue">
+              </div>
+            </div>
+            <div class="mt-3 small">
+              <button class="btn btn-sm btn-outline-secondary" onclick="copyEventLink()">
+                <i class="bi bi-clipboard me-1"></i> Copy original event link
+              </button>
+            </div>
+          </div>
+          <img id="previewImage" src="" alt="Preview" class="rounded shadow-sm" style="width: 120px; height: 80px; object-fit: cover;">
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="timeline-step mt-4 mb-3">
+        <span class="badge bg-success rounded-pill me-2"><i class="bi bi-3-circle"></i></span>
+        <span>Confirm and duplicate</span>
+      </div>
+
+      <div class="text-end">
+        <button id="dupBtn" class="btn btn-outline-primary px-4 rounded-pill d-inline-flex align-items-center" disabled onclick="simulateDuplicate()">
+          <span id="dupIcon"><i class="bi bi-copy me-2"></i></span>
+          <span id="dupText">Duplicate Event</span>
+        </button>
+      </div>
+
+      <!-- Loading spinner -->
+      <div id="dupLoader" class="text-center my-4 d-none">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Duplicating... Please wait</p>
+      </div>
+
+      <!-- Success alert -->
+      <div id="dupSuccess" class="alert alert-success d-none mt-4">
+        ✅ Event duplicated! <a href="#" class="alert-link">Edit it here</a>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<script>
+const eventSelect = document.getElementById("eventSelect");
+const previewCard = document.getElementById("previewCard");
+const previewTitle = document.getElementById("previewTitle");
+const previewDate = document.getElementById("previewDate");
+const previewLocation = document.getElementById("previewLocation");
+const previewImage = document.getElementById("previewImage");
+const dupBtn = document.getElementById("dupBtn");
+const baseURL = "{{ request.url_root }}";
+
+eventSelect.addEventListener("change", function () {
+  const selected = this.options[this.selectedIndex];
+  previewTitle.value = selected.dataset.title;
+  previewDate.value = selected.dataset.date;
+  previewLocation.value = "EcoNova Venue";
+  previewImage.src = selected.dataset.thumbnail;
+  previewCard.classList.remove("d-none");
+  dupBtn.disabled = false;
+});
+
+function simulateDuplicate() {
+  const selected = eventSelect.options[eventSelect.selectedIndex];
+  const newTitle = previewTitle.value;
+  const newDate = previewDate.value;
+  const newLocation = previewLocation.value;
+
+  document.getElementById("dupLoader").classList.remove("d-none");
+  dupBtn.disabled = true;
+
+  fetch(`/api/duplicate-event/${selected.value}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ title: newTitle, date: newDate, location: newLocation }),
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("dupLoader").classList.add("d-none");
+    document.getElementById("dupSuccess").classList.remove("d-none");
+    document.getElementById("dupIcon").innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>`;
+    document.getElementById("dupText").textContent = "Duplicated!";
+  })
+  .catch(error => {
+    alert("❌ Error duplicating event.");
+    console.error(error);
+  });
+}
+
+function copyEventLink() {
+  const selected = eventSelect.options[eventSelect.selectedIndex];
+  const eventId = selected.value;
+  const eventURL = `${baseURL}event/${eventId}`;
+  navigator.clipboard.writeText(eventURL).then(() => {
+    alert("🔗 Event link copied!");
+  });
+}
+</script>
+
+<style>
+.timeline-step {
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+input.form-control:focus, select.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25);
+}
+</style>
+{% endblock %}

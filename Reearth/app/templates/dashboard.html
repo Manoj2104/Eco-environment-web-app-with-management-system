@@ -1,0 +1,1105 @@
+
+<!DOCTYPE html>
+<!--
+Template name: Nova
+Template author: FreeBootstrap.net
+Author website: https://freebootstrap.net/
+License: https://freebootstrap.net/license
+-->
+<html lang="en">
+ <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EcoAction - Join Local Environmental Clean-up Events</title>
+  <meta name="description" content="EcoAction connects volunteers with local environmental events like clean-ups and tree planting. Make an impact today.">
+  <meta name="keywords" content="eco, clean-up, environment, volunteering, events, nature, sustainability">
+  <meta name="author" content="EcoAction by Netvora Solutions">
+
+  <!-- ======= Google Font =======-->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+
+  <!-- ======= Styles =======-->
+  <link href="/static/assets/vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <link href="/static/assets/vendors/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/static/assets/vendors/glightbox/glightbox.min.css" rel="stylesheet">
+  <link href="/static/assets/vendors/swiper/swiper-bundle.min.css" rel="stylesheet">
+  <link href="/static/assets/vendors/aos/aos.css" rel="stylesheet">
+
+  <!-- ======= Theme Style =======-->
+  <link href="/static/assets/css/style.css" rel="stylesheet">
+
+  <!-- ======= Apply theme =======-->
+  <script>
+    (function() {
+      const storedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-bs-theme', storedTheme);
+    })();
+  </script>
+
+  <style>
+
+    #locationSearchForm input {
+  font-size: 14px;
+  padding: 0.5rem;
+}
+#locationSearchForm .input-group-text {
+  background-color: #f8f9fa;
+}
+
+.card-custom.event-card {
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s;
+}
+.card-custom.event-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0, 128, 0, 0.15);
+}
+.hover-zoom img {
+  transition: transform 0.3s ease;
+}
+.hover-zoom:hover img {
+  transform: scale(1.05);
+}
+.event-scroll {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.event-card {
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+}
+
+.event-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+  </style>
+</head>
+<!-- ======= Header =======-->
+<header class="navbar navbar-expand-lg bg-white shadow-sm py-3 sticky-top" aria-label="EcoAction Navbar">
+  <div class="container d-flex align-items-center justify-content-between">
+
+    <!-- Logo -->
+    <a class="navbar-brand d-flex align-items-center me-4" href="index.html">
+      <img src="/static/assets/images/re-earth5.png" alt="Nova Logo" style="height: 36px;">
+    </a>
+
+    <!-- Location + Search bar -->
+    <form class="d-none d-lg-flex flex-grow-1 align-items-center mx-3" style="max-width: 450px;">
+      <div class="input-group rounded-pill shadow-sm w-100 bg-white border" style="overflow: hidden;">
+        <!-- Location -->
+        <span class="input-group-text bg-white border-0">
+          <i class="bi bi-geo-alt-fill text-danger"></i>
+        </span>
+        <span class="form-control border-0 bg-white px-0 text-truncate" id="user-location" style="max-width: 70px;">
+          Detecting location...
+        </span>
+        <span class="input-group-text border-0 bg-white"><i class="bi bi-chevron-down text-muted"></i></span>
+
+        <div class="vr mx-1"></div>
+
+        <!-- Search -->
+        <span class="input-group-text bg-white border-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" class="form-control border-0 bg-white" placeholder="Search events near you..." id="eventSearch">
+      </div>
+    </form>
+
+    <!-- Navigation Links -->
+    <div class="d-none d-lg-flex align-items-center ms-auto">
+      <ul class="navbar-nav me-3">
+        <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#events">Events</a></li>
+        <li class="nav-item"><a class="nav-link" href="#badges">Badges</a></li>
+        <li class="nav-item"><a class="nav-link" href="#volunteer">Volunteer</a></li>
+        <li class="nav-item"><a class="nav-link" href="/profile">Profile</a></li>
+      </ul>
+      <a class="btn btn-success px-4" href="{{ url_for('auth.logout') }}">Join Now</a>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <div class="d-lg-none">
+      <button class="btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav">
+        <i class="bi bi-list fs-3"></i>
+      </button>
+    </div>
+  </div>
+</header>
+<!-- End Header -->
+
+
+<!-- ======= Geolocation Script =======-->
+<!-- ======= Geolocation Script =======-->
+<script>
+function getCurrentLocation() {
+  const locEl = document.getElementById("user-location");
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function (position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+          .then(response => response.json())
+          .then(data => {
+            const address = data.address;
+
+            // Prioritize most relevant area-level labels
+            const locationParts = [
+              address.neighbourhood,
+              address.suburb,
+              address.city_district,
+              address.city || address.town || address.village
+            ];
+
+            const locationText = locationParts.filter(Boolean)[0]; // Just show the first valid part
+            locEl.innerText = locationText || "Unknown Area";
+          })
+          .catch(() => {
+            locEl.innerText = "Failed to fetch location";
+          });
+      },
+      function (error) {
+        locEl.innerText = "Location unavailable";
+        console.warn(error.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  } else {
+    locEl.innerText = "Geolocation not supported";
+  }
+}
+
+
+window.onload = getCurrentLocation;
+</script>
+
+   <!-- ======= Main =======-->
+      <main>
+        
+        
+        <!-- ======= Hero =======-->
+<section class="hero__v6 section" id="home">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-6 mb-4 mb-lg-0">
+        <div class="row">
+          <div class="col-lg-11">
+            <span class="hero-subtitle text-uppercase" data-aos="fade-up" data-aos-delay="0">Join the Green Movement</span>
+            <h1 class="hero-title mb-3" data-aos="fade-up" data-aos-delay="100">Unite for a Cleaner, Greener Planet</h1>
+            <p class="hero-description mb-4 mb-lg-5" data-aos="fade-up" data-aos-delay="200">
+              Re-Earth connects local environmental heroes to organize and attend clean-up events. Earn badges, track impact, and make a difference — one cleanup at a time.
+            </p>
+            <div class="cta d-flex gap-2 mb-4 mb-lg-5" data-aos="fade-up" data-aos-delay="300">
+              <a class="btn" href="/register">Join Re-Earth Now</a>
+              <a class="btn btn-white-outline" href="#about">
+                Learn More
+                <svg class="lucide lucide-arrow-up-right" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 7h10v10"></path>
+                  <path d="M7 17 17 7"></path>
+                </svg>
+              </a>
+            </div>
+            <div class="logos mb-4" data-aos="fade-up" data-aos-delay="400">
+              <span class="logos-title text-uppercase mb-4 d-block">Partnered with changemakers</span>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="hero-img">
+          <img class="img-card img-fluid" src="/static/assets/images/FF3.png" alt="Image card" data-aos="fade-down" data-aos-delay="600">
+          <img class="img-main img-fluid rounded-4" src="/static/assets/images/F2.jpg" alt="Eco Volunteer" data-aos="fade-in" data-aos-delay="500">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End Hero-->
+
+<!-- ======= About =======-->
+<section class="about__v4 section" id="about">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6 order-md-2">
+        <div class="row justify-content-end">
+          <div class="col-md-11 mb-4 mb-md-0">
+            <span class="subtitle text-uppercase mb-3" data-aos="fade-up" data-aos-delay="0">About Re-Earth</span>
+            <h2 class="mb-4" data-aos="fade-up" data-aos-delay="100">
+              Building a sustainable tomorrow through community-driven clean-up missions.
+            </h2>
+            <div data-aos="fade-up" data-aos-delay="200">
+              <p>
+                Re-Earth is a social platform for environmental volunteers to share, discover, and participate in local eco-events like clean-up drives, tree planting, and awareness campaigns.
+              </p>
+              <p>
+                Whether you're a solo volunteer or part of a group, Re-Earth empowers you to track contributions, earn badges, and inspire others to protect our planet.
+              </p>
+            </div>
+            <h4 class="small fw-bold mt-4 mb-3" data-aos="fade-up" data-aos-delay="300">Our Vision & Values</h4>
+            <ul class="d-flex flex-row flex-wrap list-unstyled gap-3 features" data-aos="fade-up" data-aos-delay="400">
+              <li class="d-flex align-items-center gap-2"><span class="icon rounded-circle text-center"><i class="bi bi-check"></i></span><span class="text">Sustainability</span></li>
+              <li class="d-flex align-items-center gap-2"><span class="icon rounded-circle text-center"><i class="bi bi-check"></i></span><span class="text">Community Action</span></li>
+              <li class="d-flex align-items-center gap-2"><span class="icon rounded-circle text-center"><i class="bi bi-check"></i></span><span class="text">Transparency</span></li>
+              <li class="d-flex align-items-center gap-2"><span class="icon rounded-circle text-center"><i class="bi bi-check"></i></span><span class="text">Innovation</span></li>
+              <li class="d-flex align-items-center gap-2"><span class="icon rounded-circle text-center"><i class="bi bi-check"></i></span><span class="text">Volunteer Recognition</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6"> 
+        <div class="img-wrap position-relative">
+          <img class="img-fluid rounded-4" src="/static/assets/images/FF1.png" alt="Environmental mission" data-aos="fade-up" data-aos-delay="0">
+          <div class="mission-statement p-4 rounded-4 d-flex gap-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="mission-icon text-center rounded-circle"><i class="bi bi-tree fs-4"></i></div>
+            <div>
+              <h3 class="text-uppercase fw-bold">Our Mission</h3>
+              <p class="fs-5 mb-0">Empowering local communities to create real environmental change through action, education, and technology.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End About-->
+{% block content %}
+<section class="section events__v2 py-5" id="events">
+  <div class="container">
+    <div class="row mb-4">
+      <div class="col-lg-6 mx-auto text-center">
+        <span class="subtitle text-uppercase text-success">Dashboard</span>
+        <h2 class="fw-bold">Your Local Eco Events</h2>
+        <p class="text-muted">Track, join, and explore eco campaigns in your area.</p>
+        {% if user.latitude and user.longitude %}
+        <p class="text-muted small">📍 Your Location: <span id="user-location-name">Loading...</span></p>
+        {% endif %}
+        <button class="btn btn-outline-success btn-sm mt-2" onclick="setUserLocation()">📍 Use My Current Location</button>
+        <div id="location-status" class="text-muted small mt-2"></div>
+      </div>
+    </div>
+
+    {% if events %}
+    <div class="d-flex overflow-auto gap-4 pb-2 event-scroll flex-nowrap">
+      {% for e in events %}
+        {% set event = e["event"] %}
+        {% set status = e["status"] if e["status"] is defined else namespace(booked=False, checked_in=False, task_started=False, task_completed=False) %}
+        {% set now = current_time + timedelta(hours=5, minutes=30) %}
+
+        <div class="card flex-shrink-0 p-3 rounded-4 shadow border-0 position-relative event-card bg-white" style="width: 260px;" id="event-card-{{ event.id }}">
+          <div class="position-relative mb-2">
+            <img src="{{ url_for('static', filename='uploads/' ~ (event.thumbnail or 'default.jpg')) }}"
+                 class="img-fluid rounded-3 shadow-sm w-100"
+                 style="height: 140px; object-fit: cover;">
+            <span class="badge position-absolute top-0 start-0 m-2 px-2 py-1 rounded-2
+              {% if event.date.date() == now.date() %}bg-warning text-dark
+              {% elif event.date > now %}bg-success
+              {% else %}bg-secondary{% endif %}">
+              {% if event.date.date() == now.date() %}Today
+              {% elif event.date > now %}Upcoming
+              {% else %}Past{% endif %}
+            </span>
+          </div>
+
+          <h6 class="fw-bold fs-6 mb-1 text-truncate" title="{{ event.title }}">{{ event.title }}</h6>
+          <p class="text-muted small text-truncate mb-1"><i class="bi bi-geo-alt me-1"></i> {{ event.location }}</p>
+          <p class="text-muted small mb-2"><i class="bi bi-calendar3 me-1"></i> {{ event.date.strftime('%d %b %Y %I:%M %p') }}</p>
+          <div class="small text-muted mb-2" id="distance-{{ event.id }}">📍 Calculating...</div>
+
+          {% if event.badge %}
+            <div class="badge bg-info text-white small mb-2"><i class="bi bi-award me-1"></i>{{ event.badge }}</div>
+          {% endif %}
+
+          <div class="mb-2 small text-muted">
+            <i class="bi bi-stars me-1"></i>{{ event.xp_reward or 0 }} XP
+          </div>
+
+          {% if current_user.role == 'volunteer' %}
+          <div id="btn-container-{{ event.id }}">
+            {% if status.task_completed %}
+              <button class="btn btn-outline-success btn-sm w-100" disabled>✅ Completed</button>
+            {% elif status.task_started %}
+              <button class="btn btn-info btn-sm w-100" onclick="launchTaskModal({{ event.id }})">🧠 Start Task</button>
+            {% elif status.checked_in %}
+              <button class="btn btn-outline-success btn-sm w-100" disabled>✅ Checked In</button>
+              <script> setTimeout(() => showAssigningTask({{ event.id }}), 10000); </script>
+            {% elif status.booked %}
+              <button class="btn btn-warning btn-sm w-100 countdown-btn"
+                      id="event-btn-{{ event.id }}"
+                      data-event-id="{{ event.id }}"
+                      data-event-time="{{ event.date.isoformat() }}"
+                      data-lat="{{ event.latitude }}"
+                      data-lon="{{ event.longitude }}">
+                ⏳ Booked
+              </button>
+            {% else %}
+              <button class="btn btn-primary btn-sm w-100"
+                      onclick="showBookingModal({{ event.id }}, '{{ event.date.strftime('%Y-%m-%dT%H:%M') }}')">
+                ➕ Join
+              </button>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center mt-5">
+      <h5 class="text-muted">No nearby eco events found within <strong>8 km</strong>.</h5>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Map Modal -->
+  <div class="modal fade" id="mapModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content rounded-4">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">📍 Map View</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div id="map-container" style="height: 400px; width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  {% include 'partials/modals.html' %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard_logic.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    {% for e in events %}
+      calculateDistance('{{ user.latitude }}', '{{ user.longitude }}', '{{ e.event.latitude }}', '{{ e.event.longitude }}', 'distance-{{ e.event.id }}');
+    {% endfor %}
+  });
+</script>
+{% endblock %}
+
+
+    <!-- ======= Features =======-->
+<section class="section features__v2" id="features">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-lg-flex p-5 rounded-4 content" data-aos="fade-in" data-aos-delay="0">
+          <div class="row">
+            <div class="col-lg-5 mb-5 mb-lg-0" data-aos="fade-up" data-aos-delay="0">
+              <div class="row"> 
+                <div class="col-lg-11">
+                  <div class="h-100 flex-column justify-content-between d-flex">
+                    <div>
+                      <h2 class="mb-4">Why Choose Re-Earth</h2>
+                      <p class="mb-5">
+                        Re-Earth empowers local heroes to make a global difference. From organizing clean-up events to earning badges and connecting with like-minded individuals, our platform is built for positive environmental action.
+                      </p>
+                    </div>
+                    <div class="align-self-start">
+                      <a class="glightbox btn btn-play d-inline-flex align-items-center gap-2" href="https://www.youtube.com/watch?v=DQx96G4yHd8" data-gallery="video">
+                        <i class="bi bi-play-fill"></i> Watch Our Mission
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-7">
+              <div class="row justify-content-end">
+                <div class="col-lg-11">
+                  <div class="row">
+                    <div class="col-sm-6" data-aos="fade-up" data-aos-delay="0">
+                      <div class="icon text-center mb-4"><i class="bi bi-geo-alt fs-4"></i></div>
+                      <h3 class="fs-6 fw-bold mb-3">Location-Based Events</h3>
+                      <p>Discover clean-up drives, tree planting, and eco-meetups near you.</p>
+                    </div>
+                    <div class="col-sm-6" data-aos="fade-up" data-aos-delay="100">
+                      <div class="icon text-center mb-4"><i class="bi bi-award fs-4"></i></div>
+                      <h3 class="fs-6 fw-bold mb-3">Badge Rewards</h3>
+                      <p>Earn badges for each mission completed and showcase your impact.</p>
+                    </div>
+                    <div class="col-sm-6" data-aos="fade-up" data-aos-delay="200">
+                      <div class="icon text-center mb-4"><i class="bi bi-people fs-4"></i></div>
+                      <h3 class="fs-6 fw-bold mb-3">Community Driven</h3>
+                      <p>Join forces with local groups, schools, and NGOs for maximum reach.</p>
+                    </div>
+                    <div class="col-sm-6" data-aos="fade-up" data-aos-delay="300">
+                      <div class="icon text-center mb-4"><i class="bi bi-shield-check fs-4"></i></div>
+                      <h3 class="fs-6 fw-bold mb-3">Safe & Verified</h3>
+                      <p>All events and users are verified to ensure community trust and safety.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End Features-->
+
+
+<!-- ======= Pricing =======
+<section class="section pricing__v2" id="pricing">
+  <div class="container">
+    <div class="row mb-5">
+      <div class="col-md-6 mx-auto text-center">
+        <span class="subtitle text-uppercase mb-3" data-aos="fade-up" data-aos-delay="0">Support Re-Earth</span>
+        <h2 class="mb-3" data-aos="fade-up" data-aos-delay="100">Volunteer & Support Plans</h2>
+        <p data-aos="fade-up" data-aos-delay="200">
+          Join for free or support us through optional plans to unlock premium features and help us grow greener communities.
+        </p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-4 mb-md-0" data-aos="fade-up" data-aos-delay="300">
+        <div class="p-5 rounded-4 price-table h-100">
+          <h3>Eco Volunteer</h3>
+          <p>Perfect for individuals who want to find and join local clean-up events.</p>
+          <div class="price mb-4"><strong>Free</strong></div>
+          <div><a class="btn" href="/register">Get Started</a></div>
+        </div>
+      </div>
+      <div class="col-md-8" data-aos="fade-up" data-aos-delay="400">
+        <div class="p-5 rounded-4 price-table popular h-100">
+          <div class="row">
+            <div class="col-md-6">
+              <h3 class="mb-3">Eco Leader</h3>
+              <p>For groups, schools, or NGOs looking to organize verified events and track volunteers.</p>
+              <div class="price mb-4"><strong class="me-1">₹399</strong><span>/ month</span></div>
+              <div><a class="btn btn-white hover-outline" href="/register">Get Started</a></div>
+            </div>
+            <div class="col-md-6 pricing-features">
+              <h4 class="text-uppercase fw-bold mb-3">Includes</h4>
+              <ul class="list-unstyled d-flex flex-column gap-3">
+                <li><span class="icon"><i class="bi bi-check"></i></span> Create unlimited clean-up events</li>
+                <li><span class="icon"><i class="bi bi-check"></i></span> Access volunteer stats & badges</li>
+                <li><span class="icon"><i class="bi bi-check"></i></span> Event verification and support</li>
+                <li><span class="icon"><i class="bi bi-check"></i></span> Custom banners & sharing tools</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+End Pricing-->
+<!-- ======= How it works =======-->
+<section class="section howitworks__v1" id="how-it-works">
+  <div class="container">
+    <div class="row mb-5">
+      <div class="col-md-6 text-center mx-auto">
+        <span class="subtitle text-uppercase mb-3" data-aos="fade-up" data-aos-delay="0">Get Started</span>
+        <h2 data-aos="fade-up" data-aos-delay="100">How Re-Earth Works</h2>
+        <p data-aos="fade-up" data-aos-delay="200">
+          Whether you're a volunteer or an event host, Re-Earth makes environmental action easy, meaningful, and trackable.
+        </p>
+      </div>
+    </div>
+    <div class="row g-md-5">
+      <div class="col-md-6 col-lg-3">
+        <div class="step-card text-center h-100 d-flex flex-column justify-content-start position-relative" data-aos="fade-up" data-aos-delay="0">
+          <div><img class="arch-line" src="/static/assets/images/arch-line.svg" alt="arch-line"></div>
+          <span class="step-number rounded-circle text-center fw-bold mb-5 mx-auto">1</span>
+          <h3 class="fs-5 mb-4">Create Your Account</h3>
+          <p>Sign up as a volunteer or an organizer and set up your eco profile.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+        <div class="step-card reverse text-center h-100 d-flex flex-column justify-content-start position-relative">
+          <div><img class="arch-line reverse" src="/static/assets/images/arch-line-reverse.svg" alt="arch-line-reverse"></div>
+          <span class="step-number rounded-circle text-center fw-bold mb-5 mx-auto">2</span>
+          <h3 class="fs-5 mb-4">Discover Events</h3>
+          <p>Use GPS search to find events nearby or browse by city and theme.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="600">
+        <div class="step-card text-center h-100 d-flex flex-column justify-content-start position-relative">
+          <div><img class="arch-line" src="/static/assets/images/arch-line.svg" alt="arch-line"></div>
+          <span class="step-number rounded-circle text-center fw-bold mb-5 mx-auto">3</span>
+          <h3 class="fs-5 mb-4">Join or Host</h3>
+          <p>Register for an event or create your own with all necessary details.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="900">
+        <div class="step-card last text-center h-100 d-flex flex-column justify-content-start position-relative">
+          <span class="step-number rounded-circle text-center fw-bold mb-5 mx-auto">4</span>
+          <h3 class="fs-5 mb-4">Track & Earn</h3>
+          <p>Earn badges, track your eco impact, and build your environmental legacy.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End How it works-->
+
+<!-- ======= Stats =======-->
+<section class="stats__v3 section">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex flex-wrap content rounded-4" data-aos="fade-up" data-aos-delay="0">
+          <div class="rounded-borders">
+            <div class="rounded-border-1"></div>
+            <div class="rounded-border-2"></div>
+            <div class="rounded-border-3"></div>
+          </div>
+
+          <!-- Stat 1 -->
+          <div class="col-12 col-sm-6 col-md-4 mb-4 mb-md-0 text-center" data-aos="fade-up" data-aos-delay="100">
+            <div class="stat-item">
+              <h3 class="fs-1 fw-bold">
+                <span class="purecounter" 
+                      data-purecounter-start="0" 
+                      data-purecounter-end="{{ volunteers }}" 
+                      data-purecounter-duration="2">0</span><span>+</span>
+              </h3>
+              <p class="mb-0">Volunteers Engaged</p>
+            </div>
+          </div>
+
+          <!-- Stat 2 -->
+          <div class="col-12 col-sm-6 col-md-4 mb-4 mb-md-0 text-center" data-aos="fade-up" data-aos-delay="200">
+            <div class="stat-item">
+              <h3 class="fs-1 fw-bold">
+                <span class="purecounter" 
+                      data-purecounter-start="0" 
+                      data-purecounter-end="{{ events }}" 
+                      data-purecounter-duration="2">0</span><span>+</span>
+              </h3>
+              <p class="mb-0">Clean-up Events Hosted</p>
+            </div>
+          </div>
+
+          <!-- Stat 3 -->
+          <div class="col-12 col-sm-6 col-md-4 mb-4 mb-md-0 text-center" data-aos="fade-up" data-aos-delay="300">
+            <div class="stat-item">
+              <h3 class="fs-1 fw-bold">
+                <span class="purecounter" 
+                      data-purecounter-start="0" 
+                      data-purecounter-end="{{ cities }}" 
+                      data-purecounter-duration="2">0</span><span>+</span>
+              </h3>
+              <p class="mb-0">Cities Covered</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End Stats-->
+
+        
+       <!-- ======= Services =======-->
+<section class="section services__v3" id="services">
+  <div class="container">
+    <div class="row mb-5">
+      <div class="col-md-8 mx-auto text-center">
+        <span class="subtitle text-uppercase mb-3" data-aos="fade-up" data-aos-delay="0">Our Services</span>
+        <h2 class="mb-3" data-aos="fade-up" data-aos-delay="100">Driving Environmental Action Through Smart Features</h2>
+      </div>
+    </div>
+    <div class="row g-4">
+      <!-- Service 1 -->
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="0">
+        <div class="service-card p-4 rounded-4 h-100 d-flex flex-column justify-content-between gap-5">
+          <div>
+            <span class="icon mb-4"><i class="bi bi-geo-alt-fill fs-1 text-success"></i></span>
+            <h3 class="fs-5 mb-3">Location-Based Events</h3>
+            <p class="mb-4">Discover and join clean-up drives, tree-planting, and eco-activities happening near your location in real time.</p>
+          </div>
+          <a class="special-link d-inline-flex gap-2 align-items-center text-decoration-none" href="#">
+            <span class="icons"><i class="icon-1 bi bi-arrow-right-short"></i><i class="icon-2 bi bi-arrow-right-short"> </i></span><span>Read more</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Service 2 -->
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="service-card p-4 rounded-4 h-100 d-flex flex-column justify-content-between gap-5">
+          <div>
+            <span class="icon mb-4"><i class="bi bi-award fs-1 text-warning"></i></span>
+            <h3 class="fs-5 mb-3">Volunteer Badges</h3>
+            <p class="mb-4">Earn badges and recognition for your contributions to environmental activities and track your impact over time.</p>
+          </div>
+          <a class="special-link d-inline-flex gap-2 align-items-center text-decoration-none" href="#">
+            <span class="icons"><i class="icon-1 bi bi-arrow-right-short"></i><i class="icon-2 bi bi-arrow-right-short"> </i></span><span>Read more</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Service 3 -->
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="service-card p-4 rounded-4 h-100 d-flex flex-column justify-content-between gap-5">
+          <div>
+            <span class="icon mb-4"><i class="bi bi-calendar-event fs-1 text-primary"></i></span>
+            <h3 class="fs-5 mb-3">Event Scheduling</h3>
+            <p class="mb-4">Organizers can schedule eco-events, manage participation, and send updates to attendees easily through the dashboard.</p>
+          </div>
+          <a class="special-link d-inline-flex gap-2 align-items-center text-decoration-none" href="#">
+            <span class="icons"><i class="icon-1 bi bi-arrow-right-short"></i><i class="icon-2 bi bi-arrow-right-short"> </i></span><span>Read more</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Service 4 -->
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="400">
+        <div class="service-card p-4 rounded-4 h-100 d-flex flex-column justify-content-between gap-5">
+          <div>
+            <span class="icon mb-4"><i class="bi bi-people-fill fs-1 text-info"></i></span>
+            <h3 class="fs-5 mb-3">Community Network</h3>
+            <p class="mb-4">Connect with like-minded eco-warriors, form local groups, and collaborate for collective impact and environmental change.</p>
+          </div>
+          <a class="special-link d-inline-flex gap-2 align-items-center text-decoration-none" href="#">
+            <span class="icons"><i class="icon-1 bi bi-arrow-right-short"></i><i class="icon-2 bi bi-arrow-right-short"> </i></span><span>Read more</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Service 5 -->
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="500">
+        <div class="service-card p-4 rounded-4 h-100 d-flex flex-column justify-content-between gap-5">
+          <div>
+            <span class="icon mb-4"><i class="bi bi-bar-chart-line-fill fs-1 text-danger"></i></span>
+            <h3 class="fs-5 mb-3">Impact Tracking</h3>
+            <p class="mb-4">Track your hours, participation frequency, and CO₂ reductions contributed by your green actions and events.</p>
+          </div>
+          <a class="special-link d-inline-flex gap-2 align-items-center text-decoration-none" href="#">
+            <span class="icons"><i class="icon-1 bi bi-arrow-right-short"></i><i class="icon-2 bi bi-arrow-right-short"> </i></span><span>Read more</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Service 6 -->
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="600">
+        <div class="service-card p-4 rounded-4 h-100 d-flex flex-column justify-content-between gap-5">
+          <div>
+            <span class="icon mb-4"><i class="bi bi-chat-left-dots-fill fs-1 text-secondary"></i></span>
+            <h3 class="fs-5 mb-3">Feedback & Suggestions</h3>
+            <p class="mb-4">Share your experience or suggest new ideas to improve the community and bring more people into environmental action.</p>
+          </div>
+          <a class="special-link d-inline-flex gap-2 align-items-center text-decoration-none" href="#">
+            <span class="icons"><i class="icon-1 bi bi-arrow-right-short"></i><i class="icon-2 bi bi-arrow-right-short"> </i></span><span>Read more</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- Services -->
+<!-- ======= Testimonials =======-
+<section class="section testimonials__v2" id="testimonials">
+  <div class="container">
+    <div class="row mb-5">
+      <div class="col-lg-5 mx-auto text-center">
+        <span class="subtitle text-uppercase mb-3" data-aos="fade-up" data-aos-delay="0">Testimonials</span>
+        <h2 class="mb-3" data-aos="fade-up" data-aos-delay="100">What Volunteers Are Saying</h2>
+        <p data-aos="fade-up" data-aos-delay="200">Inspiring stories from people making a difference in their local communities</p>
+      </div>
+    </div>
+    <div class="row g-4" data-masonry="{&quot;percentPosition&quot;: true }">
+      
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="0">
+        <div class="testimonial rounded-4 p-4">
+          <blockquote class="mb-3">
+             &ldquo;
+            Joining this platform helped me connect with passionate individuals in my city who care about the environment. It's empowering to see the real impact we create together!
+            &rdquo;
+          </blockquote>
+          <div class="testimonial-author d-flex gap-3 align-items-center">
+            <div class="author-img"><img class="rounded-circle img-fluid" src="/static/assets/images/person-sq-2-min.jpg" alt="Volunteer image"></div>
+            <div class="lh-base"><strong class="d-block">Riya Mehta</strong><span>Local Volunteer</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="testimonial rounded-4 p-4">
+          <blockquote class="mb-3">
+             &ldquo;
+            The event reminders and location-based search make it so easy to join clean-up drives near me. I love how the app rewards us with badges — it keeps me motivated!
+            &rdquo;
+          </blockquote>
+          <div class="testimonial-author d-flex gap-3 align-items-center">
+            <div class="author-img"><img class="rounded-circle img-fluid" src="/static/assets/images/person-sq-1-min.jpg" alt="Volunteer image"></div>
+            <div class="lh-base"><strong class="d-block">Aditya Kumar</strong><span>Environmental Activist</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="testimonial rounded-4 p-4">
+          <blockquote class="mb-3">
+             &ldquo;
+            I hosted my first tree-planting event through this app and was amazed by the turnout. The dashboard makes organizing everything smooth and stress-free.
+            &rdquo;
+          </blockquote>
+          <div class="testimonial-author d-flex gap-3 align-items-center">
+            <div class="author-img"><img class="rounded-circle img-fluid" src="/static/assets/images/person-sq-5-min.jpg" alt="Volunteer image"></div>
+            <div class="lh-base"><strong class="d-block">Neha Sharma</strong><span>Event Organizer</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="testimonial rounded-4 p-4">
+          <blockquote class="mb-3">
+             &ldquo;
+            This app helped our school organize a campus clean-up. The students were excited to see their participation reflected through badges and rankings!
+            &rdquo;
+          </blockquote>
+          <div class="testimonial-author d-flex gap-3 align-items-center">
+            <div class="author-img"><img class="rounded-circle img-fluid" src="/static/assets/images/person-sq-3-min.jpg" alt="Volunteer image"></div>
+            <div class="lh-base"><strong class="d-block">Rajiv Menon</strong><span>Teacher</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="400">
+        <div class="testimonial rounded-4 p-4">
+          <blockquote class="mb-3">
+             &ldquo;
+            What a brilliant way to connect people who care! I’ve met so many amazing folks while doing good for the environment. Truly fulfilling!
+            &rdquo;
+          </blockquote>
+          <div class="testimonial-author d-flex gap-3 align-items-center">
+            <div class="author-img"><img class="rounded-circle img-fluid" src="/static/assets/images/person-sq-7-min.jpg" alt="Volunteer image"></div>
+            <div class="lh-base"><strong class="d-block">Anjali Rao</strong><span>Nature Enthusiast</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="500">
+        <div class="testimonial rounded-4 p-4">
+          <blockquote class="mb-3">
+             &ldquo;
+            The platform has made environmental action more accessible than ever. Whether it's a beach clean-up or a recycling drive, I can be part of the change.
+            &rdquo;
+          </blockquote>
+          <div class="testimonial-author d-flex gap-3 align-items-center">
+            <div class="author-img"><img class="rounded-circle img-fluid" src="/static/assets/images/person-sq-8-min.jpg" alt="Volunteer image"></div>
+            <div class="lh-base"><strong class="d-block">Karthik S.</strong><span>Community Leader</span></div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</section>
+ End Testimonials -->
+
+        
+     <!-- ======= FAQ =======-->
+<section class="section faq__v2" id="faq">
+  <div class="container">
+    <div class="row mb-4">
+      <div class="col-md-6 col-lg-7 mx-auto text-center">
+        <span class="subtitle text-uppercase mb-3" data-aos="fade-up" data-aos-delay="0">FAQ</span>
+        <h2 class="h2 fw-bold mb-3" data-aos="fade-up" data-aos-delay="0">Frequently Asked Questions</h2>
+        <p data-aos="fade-up" data-aos-delay="100">Learn more about how our platform empowers environmental action in your community.</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-8 mx-auto" data-aos="fade-up" data-aos-delay="200">
+        <div class="faq-content">
+          <div class="accordion custom-accordion" id="accordionPanelsStayOpenExample">
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="true"
+                  aria-controls="panelsStayOpen-collapseOne">
+                  What is this platform about?
+                </button>
+              </h2>
+              <div class="accordion-collapse collapse show" id="panelsStayOpen-collapseOne">
+                <div class="accordion-body">
+                  This platform connects individuals who want to make a positive environmental impact. You can find or host clean-up events, tree planting drives, awareness campaigns, and more — all based on your location.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#panelsStayOpen-collapseTwo" aria-expanded="false"
+                  aria-controls="panelsStayOpen-collapseTwo">
+                  How can I participate in an event?
+                </button>
+              </h2>
+              <div class="accordion-collapse collapse" id="panelsStayOpen-collapseTwo">
+                <div class="accordion-body">
+                  Simply sign up and browse nearby events using your current location. You can register for events with one click, and your participation will be tracked in your profile for rewards.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#panelsStayOpen-collapseThree" aria-expanded="false"
+                  aria-controls="panelsStayOpen-collapseThree">
+                  Can I create my own clean-up or eco-event?
+                </button>
+              </h2>
+              <div class="accordion-collapse collapse" id="panelsStayOpen-collapseThree">
+                <div class="accordion-body">
+                  Yes! Any registered user can create an event. Just provide the event details, date, time, and location. We’ll notify nearby volunteers and help you manage attendees.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#panelsStayOpen-collapseFour" aria-expanded="false"
+                  aria-controls="panelsStayOpen-collapseFour">
+                  Do I get rewards for volunteering?
+                </button>
+              </h2>
+              <div class="accordion-collapse collapse" id="panelsStayOpen-collapseFour">
+                <div class="accordion-body">
+                  Yes, every activity you join earns you points. You can unlock badges and climb up the community leaderboard. Top contributors may also receive certificates or recognition from local organizations.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#panelsStayOpen-collapseFive" aria-expanded="false"
+                  aria-controls="panelsStayOpen-collapseFive">
+                  Is my location and data secure?
+                </button>
+              </h2>
+              <div class="accordion-collapse collapse" id="panelsStayOpen-collapseFive">
+                <div class="accordion-body">
+                  Absolutely. We only use your location to show relevant events near you. All your data is encrypted, and you have full control over your privacy settings at all times.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End FAQ-->
+
+        
+       <!-- ======= Contact =======-->
+<section class="section contact__v2" id="contact">
+  <div class="container">
+    <div class="row mb-5">
+      <div class="col-md-6 col-lg-7 mx-auto text-center">
+        <span class="subtitle text-uppercase mb-3" data-aos="fade-up" data-aos-delay="0">Get In Touch</span>
+        <h2 class="h2 fw-bold mb-3" data-aos="fade-up" data-aos-delay="0">Contact Our Support Team</h2>
+        <p data-aos="fade-up" data-aos-delay="100">Have questions, feedback, or ideas? We’d love to hear from you. Reach out to us and join the movement for a cleaner planet.</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="d-flex gap-5 flex-column">
+          <div class="d-flex align-items-start gap-3" data-aos="fade-up" data-aos-delay="0">
+            <div class="icon d-block"><i class="bi bi-telephone"></i></div>
+            <span><span class="d-block">Phone</span><strong>+91 98765 43210</strong></span>
+          </div>
+          <div class="d-flex align-items-start gap-3" data-aos="fade-up" data-aos-delay="100">
+            <div class="icon d-block"><i class="bi bi-send"></i></div>
+            <span><span class="d-block">Email</span><strong>support@ecoaction.org</strong></span>
+          </div>
+          <div class="d-flex align-items-start gap-3" data-aos="fade-up" data-aos-delay="200">
+            <div class="icon d-block"><i class="bi bi-geo-alt"></i></div>
+            <span><span class="d-block">Head Office</span>
+              <address class="fw-bold">EcoAction HQ, 45 Green Avenue, Chennai, Tamil Nadu, India</address>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-wrapper" data-aos="fade-up" data-aos-delay="300">
+          <form id="contactForm">
+            <div class="row gap-3 mb-3">
+              <div class="col-md-12">
+                <label class="mb-2" for="name">Full Name</label>
+                <input class="form-control" id="name" type="text" name="name" required="">
+              </div>
+              <div class="col-md-12">
+                <label class="mb-2" for="email">Email Address</label>
+                <input class="form-control" id="email" type="email" name="email" required="">
+              </div>
+            </div>
+            <div class="row gap-3 mb-3">
+              <div class="col-md-12">
+                <label class="mb-2" for="subject">Subject</label>
+                <input class="form-control" id="subject" type="text" name="subject">
+              </div>
+            </div>
+            <div class="row gap-3 gap-md-0 mb-3">
+              <div class="col-md-12">
+                <label class="mb-2" for="message">Message</label>
+                <textarea class="form-control" id="message" name="message" rows="5" required=""></textarea>
+              </div>
+            </div>
+            <button class="btn btn-success fw-semibold" type="submit">Send Message</button>
+          </form>
+          <div class="mt-3 d-none alert alert-success" id="successMessage">Thank you! Your message has been sent.</div>
+          <div class="mt-3 d-none alert alert-danger" id="errorMessage">Oops! Something went wrong. Please try again.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End Contact-->
+
+        
+        <!-- ======= Footer =======-->
+<footer class="footer pt-5 pb-5">
+  <div class="container">
+    <div class="row mb-5 pb-4">
+      <div class="col-md-7">
+        <h2 class="fs-5">Subscribe to Our Newsletter</h2>
+        <p>Be the first to know about upcoming clean-up events, volunteer stories, and environmental tips. Join our community today!</p>
+      </div>
+      <div class="col-md-5">
+        <form class="d-flex gap-2">
+          <input class="form-control" type="email" placeholder="Enter your email" required="">
+          <button class="btn btn-success fs-6" type="submit">Subscribe</button>
+        </form>
+      </div>
+    </div>
+    <div class="row justify-content-between mb-5 g-xl-5">
+      <div class="col-md-4 mb-5 mb-lg-0">
+        <h3 class="mb-3">About EcoAction</h3>
+        <p class="mb-4">EcoAction is a platform for people who care about the planet. Join hands with volunteers near you and make a difference in your local community.</p>
+      </div>
+      <div class="col-md-7">
+        <div class="row g-2">
+          <div class="col-md-6 col-lg-4 mb-4 mb-lg-0">
+            <h3 class="mb-3">Quick Links</h3>
+            <ul class="list-unstyled">
+              <li><a href="about.html">About Us</a></li>
+              <li><a href="events.html">Events</a></li>
+              <li><a href="volunteer.html">Become a Volunteer</a></li>
+              <li><a href="privacy-policy.html">Privacy Policy</a></li>
+              <li><a href="terms.html">Terms of Service</a></li>
+            </ul>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4 mb-lg-0">
+            <h3 class="mb-3">Your Account</h3>
+            <ul class="list-unstyled">
+              <li><a href="register.html">Register</a></li>
+              <li><a href="login.html">Login</a></li>
+              <li><a href="dashboard.html">Dashboard</a></li>
+              <li><a href="badges.html">My Badges</a></li>
+              <li><a href="support.html">Support</a></li>
+            </ul>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4 mb-lg-0 quick-contact">
+            <h3 class="mb-3">Contact</h3>
+            <p class="d-flex mb-3"><i class="bi bi-geo-alt-fill me-3"></i><span>EcoAction, 45 Green Avenue, Chennai, Tamil Nadu, India</span></p>
+            <a class="d-flex mb-3" href="mailto:support@ecoaction.org"><i class="bi bi-envelope-fill me-3"></i><span>support@ecoaction.org</span></a>
+            <a class="d-flex mb-3" href="tel:+919876543210"><i class="bi bi-telephone-fill me-3"></i><span>+91 98765 43210</span></a>
+            <a class="d-flex mb-3" href="https://ecoaction.org"><i class="bi bi-globe me-3"></i><span>www.ecoaction.org</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row credits pt-3">
+      <div class="col-xl-8 text-center text-xl-start mb-3 mb-xl-0">
+        &copy; <script>document.write(new Date().getFullYear());</script> EcoAction. 
+        All rights reserved. Made with <i class="bi bi-heart-fill text-danger"></i> for nature lovers.
+      </div>
+      <div class="col-xl-4 justify-content-start justify-content-xl-end quick-links d-flex flex-column flex-xl-row text-center text-xl-start gap-1">
+        Built with ❤️ by <a href="https://netvora.com" target="_blank">Netvora Solutions</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- End Footer-->
+
+        
+      </main>
+    </div>
+    
+    <!-- ======= Back to Top =======-->
+    <button id="back-to-top"><i class="bi bi-arrow-up-short"></i></button>
+    <!-- End Back to top-->
+    
+    <!-- ======= Javascripts =======-->
+    <script src="/static/assets/vendors/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/static/assets/vendors/gsap/gsap.min.js"></script>
+    <script src="/static/assets/vendors/imagesloaded/imagesloaded.pkgd.min.js"></script>
+    <script src="/static/assets/vendors/isotope/isotope.pkgd.min.js"></script>
+    <script src="/static/assets/vendors/glightbox/glightbox.min.js"></script>
+    <script src="/static/assets/vendors/swiper/swiper-bundle.min.js"></script>
+    <script src="/static/assets/vendors/aos/aos.js"></script>
+    <script src="/static/assets/vendors/purecounter/purecounter.js"></script>
+    <script src="/static/assets/js/custom.js"></script>
+    <script src="/static/assets/js/send_email.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- End JavaScripts-->
+
+    <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          const data = await res.json();
+          const location = data.display_name || "Location found";
+          document.getElementById('locationInput').value = location;
+        } catch (err) {
+          document.getElementById('locationInput').value = "Unable to fetch location";
+        }
+      }, () => {
+        document.getElementById('locationInput').value = "Permission denied";
+      });
+    } else {
+      document.getElementById('locationInput').value = "Geolocation not supported";
+    }
+  });
+</script>
+
+<script>
+navigator.geolocation.getCurrentPosition(function(position) {
+  fetch(`/nearby-events?lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log('Nearby Events:', data);
+      // Render events in UI dynamically
+    });
+});
+</script>
+
+
+  </body>
+</html>

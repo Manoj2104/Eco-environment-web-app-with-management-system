@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Volunteer Reviews{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-success fw-bold"><i class="bi bi-chat-quote-fill me-1"></i> Volunteer Reviews</h3>
+    <div class="d-flex gap-2">
+      <select class="form-select form-select-sm border-success" id="sortOption" style="width: 160px;">
+        <option value="recent" selected>Most Recent</option>
+        <option value="rating">Highest Rated</option>
+      </select>
+      <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#reviewModal">
+        <i class="bi bi-plus-circle"></i> Add Review
+      </button>
+    </div>
+  </div>
+
+  <div id="review-list"></div>
+</div>
+
+<!-- Add Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="reviewForm" class="modal-content border border-success border-2 rounded-4">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i> Submit Review</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Your Name</label>
+          <input type="text" name="name" class="form-control border-success" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Review</label>
+          <textarea name="text" class="form-control border-success" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Rating</label>
+          <select name="rating" class="form-select border-success" required>
+            <option value="5">⭐⭐⭐⭐⭐</option>
+            <option value="4">⭐⭐⭐⭐</option>
+            <option value="3">⭐⭐⭐</option>
+            <option value="2">⭐⭐</option>
+            <option value="1">⭐</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Tags (comma-separated)</label>
+          <input type="text" name="tags" class="form-control border-success">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-check-circle-fill me-1"></i> Post Review
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Socket + Scripts -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+<script>
+const socket = io();
+let currentReviews = [];
+
+function renderReviews(reviews) {
+  const container = document.getElementById("review-list");
+
+  if (!reviews || reviews.length === 0) {
+    container.innerHTML = `
+      <div class="text-center mt-5">
+        <lottie-player src="https://lottie.host/4d407a8d-a38f-4b9e-a7de-104cc7dc7a8d/NaGHYxb1V5.json"
+                       background="transparent" speed="1"
+                       style="width: 300px; height: 300px;" loop autoplay>
+        </lottie-player>
+        <p class="lead text-muted mt-3"><i class="bi bi-emoji-neutral"></i> No reviews available yet.</p>
+      </div>`;
+    return;
+  }
+
+  const sort = document.getElementById("sortOption").value;
+  const sorted = [...reviews];
+  if (sort === "rating") {
+    sorted.sort((a, b) => b.rating - a.rating);
+  } else {
+    sorted.sort((a, b) => new Date(b.timestamp_raw) - new Date(a.timestamp_raw));
+  }
+
+  container.innerHTML = `
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      ${sorted.map(review => `
+        <div class="col">
+          <div class="card shadow-sm border-0 rounded-4 h-100 review-card">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-3">
+                <div class="avatar bg-success bg-opacity-10 text-success fw-bold rounded-circle me-3 d-flex align-items-center justify-content-center"
+                     style="width: 45px; height: 45px;">
+                  ${review.name[0]}
+                </div>
+                <div>
+                  <h6 class="mb-0 text-success">${review.name}</h6>
+                  <small class="text-muted">${review.timestamp}</small>
+                </div>
+              </div>
+              <p class="mb-2 text-muted fst-italic">“${review.text}”</p>
+              <div class="d-flex flex-wrap align-items-center gap-1">
+                <span class="badge bg-warning text-dark">
+                  <i class="bi bi-star-fill me-1"></i> ${review.rating}/5
+                </span>
+                ${review.tags?.map(tag => `<span class="badge bg-success-subtle text-success border border-success-subtle">#${tag}</span>`).join("")}
+              </div>
+            </div>
+          </div>
+        </div>`).join("")}
+    </div>`;
+}
+
+socket.emit("get_reviews");
+socket.on("update_reviews", (reviews) => {
+  currentReviews = reviews;
+  renderReviews(reviews);
+});
+
+document.getElementById("sortOption").addEventListener("change", () => renderReviews(currentReviews));
+
+document.getElementById("reviewForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  const data = Object.fromEntries(formData.entries());
+  socket.emit("submit_review", data);
+  this.reset();
+  const modal = bootstrap.Modal.getInstance(document.getElementById("reviewModal"));
+  modal.hide();
+});
+</script>
+
+<!-- Styles -->
+<style>
+.review-card {
+  border-left: 4px solid #28a745;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.review-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.75rem 1.5rem rgba(0, 128, 0, 0.15);
+}
+.modal-header {
+  border-bottom: none;
+}
+.modal-footer {
+  border-top: none;
+}
+</style>
+{% endblock %}

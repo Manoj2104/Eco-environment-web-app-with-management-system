@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5" style="max-width: 960px;">
+  <div class="card shadow border-0 rounded-4 bg-white bg-opacity-75 backdrop-blur">
+    <div class="card-body p-4">
+      <h4 class="text-primary fw-bold mb-4">
+        <i class="bi bi-bar-chart me-2"></i> Event Feedback Summary
+      </h4>
+
+      <!-- Metric Overview -->
+      <div class="row g-4 mb-4" id="metric-overview"></div>
+
+      <!-- Rating Breakdown -->
+      <h6 class="fw-bold mb-3">⭐ Rating Breakdown</h6>
+      <div class="mb-4" id="rating-breakdown"></div>
+
+      <!-- Keywords -->
+      <h6 class="fw-bold mb-3"><i class="bi bi-cloud me-1"></i> Common Keywords</h6>
+      <div id="keywords-container" class="bg-light rounded-4 p-3 mb-4 d-flex flex-wrap gap-2 shadow-sm"></div>
+
+      <!-- Feedback Trend Chart -->
+      <h6 class="fw-bold mb-3"><i class="bi bi-graph-up-arrow me-1"></i> Feedback Trend</h6>
+      <canvas id="trendChart" height="120"></canvas>
+
+      <!-- Export -->
+      <div class="text-end mt-4">
+        <button class="btn btn-outline-dark rounded-pill px-4 shadow-sm" onclick="alert('📥 Exporting coming soon...')">
+          <i class="bi bi-download me-1"></i> Export Report
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+
+<!-- JS Logic -->
+<script>
+  const socket = io();
+
+  // Overview Metrics
+  socket.on("feedback_stats", (data) => {
+    const metrics = [
+      { icon: 'bi-star-fill', color: 'success', value: data.avg_rating, label: 'Avg. Rating' },
+      { icon: 'bi-chat-dots', color: 'primary', value: data.total_responses, label: 'Responses' },
+      { icon: 'bi-emoji-smile', color: 'warning', value: data.positive_percent + '%', label: 'Positive' }
+    ];
+    document.getElementById("metric-overview").innerHTML = metrics.map(stat => `
+      <div class="col-md-4">
+        <div class="glass-card card text-center border-0 rounded-4 p-3 shadow-sm">
+          <div class="card-body">
+            <div class="fs-4 text-${stat.color}"><i class="bi ${stat.icon}"></i></div>
+            <h5 class="fw-bold mt-2 mb-1">${stat.value}</h5>
+            <p class="text-muted small mb-0">${stat.label}</p>
+          </div>
+        </div>
+      </div>`).join('');
+  });
+
+  // Rating Breakdown
+  socket.on("rating_breakdown", (ratings) => {
+    let html = "";
+    for (let i = 5; i >= 1; i--) {
+      const percent = ratings[i] || 0;
+      const votes = ratings[i + "_votes"] || 0;
+      const color = i > 3 ? 'success' : i === 3 ? 'warning' : 'danger';
+      html += `
+        <div class="d-flex align-items-center mb-2">
+          <span class="me-2" style="width: 60px;">${i}★</span>
+          <div class="progress flex-grow-1 shadow-sm" style="height: 8px;">
+            <div class="progress-bar bg-${color}" style="width: ${percent}%;" title="${percent}%"></div>
+          </div>
+          <span class="ms-2 text-muted small">${votes} votes</span>
+        </div>`;
+    }
+    document.getElementById("rating-breakdown").innerHTML = html;
+  });
+
+  // Keywords
+  socket.on("feedback_keywords", (keywords) => {
+    const html = keywords.map((word, i) => {
+      const style = i % 2 === 0 ? 'info text-dark' : 'secondary';
+      return `<span class="badge bg-${style}">${word}</span>`;
+    }).join('');
+    document.getElementById("keywords-container").innerHTML = html;
+  });
+
+  // Trend Chart
+  const ctx = document.getElementById("trendChart").getContext("2d");
+  const trendChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Avg Rating",
+        data: [],
+        borderColor: "#0d6efd",
+        backgroundColor: "rgba(13,110,253,0.1)",
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5,
+        pointBackgroundColor: "#0d6efd"
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { min: 3, max: 5 } }
+    }
+  });
+
+  socket.on("trend_data", (trend) => {
+    trendChart.data.labels = trend.labels;
+    trendChart.data.datasets[0].data = trend.values;
+    trendChart.update();
+  });
+</script>
+
+<!-- Styles -->
+<style>
+  .glass-card {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    transition: all 0.2s ease;
+  }
+  .glass-card:hover {
+    transform: scale(1.02);
+  }
+  .progress-bar[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    transform: translateY(-120%);
+    background: #000;
+    color: white;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+</style>
+
+{% endblock %}

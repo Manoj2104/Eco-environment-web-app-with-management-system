@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}Badge Collection{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-stars me-2"></i> Badge Collection</h3>
+    <div class="d-flex gap-2">
+      <input type="text" id="searchBadge" class="form-control" placeholder="🔍 Search badges...">
+      <select id="categoryFilter" class="form-select">
+        <option value="">All</option>
+        <option value="XP">XP</option>
+        <option value="Event">Event</option>
+        <option value="Milestone">Milestone</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="row mb-3 text-center">
+    <div class="col-md-6">
+      <div class="alert alert-success p-2">🏅 Earned Badges: <strong>{{ badges.earned|length }}</strong></div>
+    </div>
+    <div class="col-md-6">
+      <div class="alert alert-secondary p-2">🔒 Locked Badges: <strong>{{ badges.locked|length }}</strong></div>
+    </div>
+    <div class="col-12">
+      <div class="progress" style="height: 20px;">
+        {% set total = badges.earned|length + badges.locked|length %}
+        {% set percent = (badges.earned|length / total * 100) if total else 0 %}
+        <div class="progress-bar bg-success" role="progressbar" style="width: {{ percent }}%;" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">
+          {{ percent|round(1) }}% Collected
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-pills mb-3 justify-content-center" id="badgeTabs">
+    <li class="nav-item"><a class="nav-link active" data-filter="">All</a></li>
+    <li class="nav-item"><a class="nav-link" data-filter="XP">XP</a></li>
+    <li class="nav-item"><a class="nav-link" data-filter="Event">Event</a></li>
+    <li class="nav-item"><a class="nav-link" data-filter="Milestone">Milestone</a></li>
+  </ul>
+
+  <!-- Badges -->
+  <div class="row" id="badgeContainer">
+    {% for badge in badges.earned %}
+      <div class="col-md-3 mb-3 badge-card position-relative" data-name="{{ badge.name|lower }}" data-category="{{ badge.category }}">
+        <div class="card text-center shadow-sm border-0 animate__animated animate__fadeInUp">
+          <div class="card-body">
+            <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-{{ badge.rarity|lower }}">
+              {{ badge.rarity }}
+            </span>
+            <img src="{{ badge.icon_url }}" class="img-fluid badge-img earned" style="max-height: 80px; cursor: pointer;"
+                 data-bs-toggle="popover"
+                 title="{{ badge.name }}"
+                 data-bs-content="{{ badge.description }}">
+            <h6 class="mt-2">{{ badge.name }}</h6>
+            <small class="text-success">🏆 {{ badge.xp or 0 }} XP</small><br>
+            <small class="text-muted">Earned: {{ badge.earned_date.strftime('%b %d, %Y') }}</small><br>
+            <button class="btn btn-sm btn-outline-secondary mt-2 copy-link" data-id="{{ badge.id }}">🔗 Share</button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    {% for badge in badges.locked %}
+      <div class="col-md-3 mb-3 badge-card position-relative" data-name="{{ badge.name|lower }}" data-category="{{ badge.category }}">
+        <div class="card text-center shadow-sm border-0 bg-light locked animate__animated animate__fadeInUp">
+          <div class="card-body">
+            <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-secondary">
+              {{ badge.rarity or "Common" }}
+            </span>
+            <img src="{{ badge.icon_url }}" class="img-fluid badge-img locked-img" style="max-height: 80px; filter: grayscale(100%) opacity(0.6); cursor: pointer;"
+                 data-bs-toggle="popover"
+                 title="🔒 Locked Badge"
+                 data-bs-content="{{ badge.description }}">
+            <h6 class="mt-2 text-muted">{{ badge.name }}</h6>
+            <small class="text-muted">Locked</small>
+            {% if badge.progress %}
+              <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-info" style="width: {{ badge.progress }}%;"></div>
+              </div>
+              <small class="text-muted">Hint: {{ badge.hint }}</small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="d-flex justify-content-center mt-4">
+    <button class="btn btn-outline-secondary me-2" id="prevPage">← Previous</button>
+    <button class="btn btn-outline-secondary" id="nextPage">Next →</button>
+  </div>
+
+  <div class="text-center text-muted mt-3" id="noBadgesMsg" style="display: none;">No badges match your search/filter criteria.</div>
+</div>
+
+<!-- Badge Modal -->
+<div class="modal fade" id="badgeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-3">
+      <div class="modal-header border-0">
+        <h5 class="modal-title w-100" id="badgeModalTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <img id="badgeModalImg" class="mx-auto" style="max-height: 100px;">
+      <div class="modal-body">
+        <p id="badgeModalDesc"></p>
+        <p class="text-muted"><small id="badgeModalMeta"></small></p>
+        <button class="btn btn-outline-primary btn-sm" id="copyBadgeLink">🔗 Copy Link</button>
+        <a class="btn btn-outline-success btn-sm" id="downloadBadge" download target="_blank">⬇️ Download</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<style>
+  .badge.common { background-color: #adb5bd; }
+  .badge.rare { background-color: #17a2b8; }
+  .badge.epic { background-color: #6f42c1; }
+  .badge.legendary { background-color: #fd7e14; }
+</style>
+<script>
+  const badgesPerPage = 8;
+  let currentPage = 1;
+  let badgeCards = Array.from(document.querySelectorAll('.badge-card'));
+
+  function paginate() {
+    let visibleCards = badgeCards.filter(card => card.style.display !== 'none');
+    visibleCards.forEach((card, i) => {
+      card.style.display = (i >= (currentPage - 1) * badgesPerPage && i < currentPage * badgesPerPage) ? 'block' : 'none';
+    });
+    document.getElementById('noBadgesMsg').style.display = visibleCards.length ? 'none' : 'block';
+  }
+
+  function filterBadges() {
+    const keyword = document.getElementById('searchBadge').value.toLowerCase();
+    const category = document.getElementById('categoryFilter').value;
+    badgeCards.forEach(card => {
+      const nameMatch = card.dataset.name.includes(keyword);
+      const categoryMatch = !category || card.dataset.category === category;
+      card.style.display = nameMatch && categoryMatch ? 'block' : 'none';
+    });
+    currentPage = 1;
+    paginate();
+  }
+
+  document.getElementById('searchBadge').addEventListener('input', filterBadges);
+  document.getElementById('categoryFilter').addEventListener('change', filterBadges);
+
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      document.getElementById('categoryFilter').value = link.dataset.filter;
+      filterBadges();
+    });
+  });
+
+  document.getElementById('nextPage').onclick = () => {
+    const visible = badgeCards.filter(card => card.style.display !== 'none');
+    if (currentPage * badgesPerPage < visible.length) {
+      currentPage++; paginate();
+    }
+  };
+  document.getElementById('prevPage').onclick = () => {
+    if (currentPage > 1) {
+      currentPage--; paginate();
+    }
+  };
+
+  document.querySelectorAll('.copy-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const badgeId = btn.dataset.id;
+      const link = `${location.origin}/badge/${badgeId}`;
+      navigator.clipboard.writeText(link).then(() => {
+        btn.textContent = "✅ Copied!";
+        setTimeout(() => btn.textContent = "🔗 Share", 2000);
+      });
+    });
+  });
+
+  const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+  popoverTriggerList.map(el => new bootstrap.Popover(el, { trigger: 'hover focus', delay: { show: 400, hide: 150 } }));
+
+  // Badge modal view
+  document.querySelectorAll('.badge-img').forEach(img => {
+    img.addEventListener('click', () => {
+      const card = img.closest('.badge-card');
+      const title = img.getAttribute('title') || "Badge Preview";
+      const desc = img.getAttribute('data-bs-content');
+      const badgeId = card.querySelector('.copy-link')?.dataset.id || "";
+      const badgeImgSrc = img.getAttribute('src');
+
+      document.getElementById('badgeModalTitle').textContent = title;
+      document.getElementById('badgeModalDesc').textContent = desc;
+      document.getElementById('badgeModalImg').src = badgeImgSrc;
+      document.getElementById('badgeModalMeta').textContent = `ID: ${badgeId}`;
+      document.getElementById('copyBadgeLink').onclick = () => {
+        const link = `${location.origin}/badge/${badgeId}`;
+        navigator.clipboard.writeText(link);
+      };
+      document.getElementById('downloadBadge').href = badgeImgSrc;
+
+      new bootstrap.Modal(document.getElementById('badgeModal')).show();
+    });
+  });
+
+  // Optional: Socket.IO update (if integrated)
+  if (typeof socket !== 'undefined') {
+    socket.on('badge_unlocked', function (data) {
+      location.reload(); // Or update badge in DOM
+    });
+  }
+
+  paginate(); // Initial render
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  /* Certificate container */
+  .certificate {
+    position: relative;
+    background: linear-gradient(135deg, #ffffff 0%, #e8f5e9 100%);
+    border: 12px solid;
+    border-image-slice: 1;
+    border-width: 12px;
+    border-image-source: linear-gradient(45deg, #aed581, #66bb6a);
+    border-radius: 18px;
+    padding: 30px 40px 30px 40px;
+    display: inline-block;
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.12),
+      inset 0 0 60px rgba(255, 255, 255, 0.3);
+    animation: scaleIn 0.8s ease-out;
+    width: 480px;
+    height: 270px;
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .certificate:hover {
+    transform: scale(1.03);
+    box-shadow:
+      0 12px 28px rgba(0, 0, 0, 0.2),
+      inset 0 0 70px rgba(255, 255, 255, 0.35);
+  }
+
+  /* Preview label - ribbon style */
+  .preview-label {
+    position: absolute;
+    top: 15px;
+    left: -40px;
+    background: #43a047;
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 6px 60px;
+    transform: rotate(-45deg);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+    user-select: none;
+    z-index: 10;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  /* Watermark gradient overlay */
+  .preview-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-25deg);
+    font-size: 4rem;
+    color: rgba(100, 180, 100, 0.12);
+    font-weight: 900;
+    user-select: none;
+    pointer-events: none;
+    white-space: nowrap;
+    width: 100%;
+    text-align: center;
+    z-index: 0;
+    text-shadow:
+      2px 2px 6px rgba(255, 255, 255, 0.5);
+  }
+
+  /* Title underline */
+  .certificate h1 {
+    position: relative;
+    font-family: 'Great Vibes', cursive;
+    font-size: 1.8rem;
+    color: #2e7d32;
+    margin-bottom: 6px;
+    z-index: 1;
+  }
+  .certificate h1::after {
+    content: "";
+    position: absolute;
+    width: 70px;
+    height: 3px;
+    background: linear-gradient(90deg, #aed581, #66bb6a);
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+  }
+
+  /* Headings shadow */
+  .certificate h2, .certificate h3 {
+    text-shadow: 0 1px 1px rgba(0,0,0,0.12);
+  }
+
+  /* Font sizes */
+  .certificate h2 {
+    font-size: 1.1rem;
+    margin: 10px 0 4px;
+    color: #00695c;
+    animation: fadeInUp 0.8s ease-in-out;
+    position: relative;
+    z-index: 1;
+  }
+  .certificate h3 {
+    font-size: 0.9rem;
+    color: #1b5e20;
+    margin-bottom: 10px;
+    animation: fadeInUp 1s ease-in-out;
+    position: relative;
+    z-index: 1;
+  }
+  .certificate p {
+    font-size: 0.75rem;
+    color: #444;
+    margin: 6px auto;
+    max-width: 380px;
+    position: relative;
+    z-index: 1;
+  }
+  .certificate .description {
+    font-size: 0.7rem;
+    color: #555;
+    max-width: 380px;
+    margin: 10px auto 16px;
+    line-height: 1.3;
+    position: relative;
+    z-index: 1;
+  }
+  .certificate .meta {
+    font-size: 0.65rem;
+    color: #555;
+    margin-top: 10px;
+    position: relative;
+    z-index: 1;
+  }
+  .certificate .signature-block {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 0.65rem;
+    color: #666;
+    flex-wrap: nowrap;
+    position: relative;
+    z-index: 1;
+    max-width: 380px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .certificate .signature {
+    border-top: 1px solid #999;
+    width: 120px;
+    margin: 0 auto 5px;
+  }
+  .certificate .seal {
+    font-family: 'Georgia', serif;
+    font-weight: 900;
+    font-size: 1rem;
+    color: #28a745;
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    user-select: none;
+    line-height: 1.2;
+    z-index: 2;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .certificate .footer-note {
+    font-size: 0.55rem;
+    color: #888;
+    margin-top: 22px;
+    position: relative;
+    z-index: 1;
+  }
+  .certificate .qr {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 70px;
+    height: 70px;
+    animation: fadeIn 1.2s ease-in;
+    z-index: 2;
+  }
+  .certificate .qr img {
+    width: 100%;
+    height: 100%;
+    border: 3px solid #b2dfdb;
+    border-radius: 8px;
+    background: #fff;
+    transition: transform 0.3s ease-in-out;
+  }
+  .certificate .qr img:hover {
+    transform: scale(1.05);
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scaleIn {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (max-width: 520px) {
+    .certificate {
+      width: 100%;
+      height: auto;
+      padding: 20px 20px 30px;
+    }
+    .qr {
+      position: relative;
+      margin: 15px auto 0;
+      left: auto;
+      bottom: auto;
+      width: 70px;
+      height: 70px;
+    }
+    .signature-block {
+      max-width: 100%;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+  }
+  /* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&family=Playfair+Display&display=swap');
+
+/* Apply fonts inside certificate */
+.certificate {
+  font-family: 'Open Sans', sans-serif;
+}
+.certificate h1,
+.certificate h2,
+.certificate h3 {
+  font-family: 'Playfair Display', serif;
+}
+
+</style>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <h3 class="fw-bold text-success mb-2"><i class="bi bi-patch-check-fill me-2"></i>Certificate Generator</h3>
+    <select id="eventFilter" class="form-select w-auto shadow-sm" onchange="filterByEvent()">
+      <option value="">All Events</option>
+      {% for e in events %}
+        <option value="{{ e.title }}" {% if e.title == selected_event %}selected{% endif %}>{{ e.title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="row gy-4">
+    <!-- Participant Table -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-success text-white fw-semibold">
+          <i class="bi bi-people-fill me-1"></i> Participants
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle text-center">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Event</th>
+                <th scope="col">Hours</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in participants %}
+              <tr>
+                <td class="fw-medium">{{ p.name }}</td>
+                <td><span class="badge bg-success-subtle text-success fw-semibold">{{ p.event }}</span></td>
+                <td><i class="bi bi-clock-history me-1 text-muted"></i>{{ p.hours }}</td>
+                <td>
+                  <a href="{{ url_for('dashboard.download_certificate', name=p.name|urlencode, event=p.event|urlencode) }}" class="btn btn-sm btn-success me-1" title="Download Certificate" aria-label="Download certificate for {{ p.name }}">
+                    <i class="bi bi-download"></i>
+                  </a>
+                  <button onclick="previewCertificate(
+                    '{{ p.name|replace("'", "\\'")|e }}',
+                    '{{ p.volunteer_id|default('') }}',
+                    '{{ p.event|replace("'", "\\'")|e }}',
+                    '{{ p.issued_date|default('July 14, 2025') }}',
+                    '{{ p.qr_image_url|default(url_for('static', filename='images/sample-qr.png')) }}'
+                    )" class="btn btn-outline-primary btn-sm" title="Preview Certificate" aria-label="Preview certificate for {{ p.name }}">
+                    <i class="bi bi-eye-fill"></i>
+                  </button>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-muted fst-italic">No participants found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Certificate Preview -->
+    <div class="col-lg-5 d-flex justify-content-center">
+      <div class="certificate position-relative">
+        <div class="preview-label">PREVIEW</div>
+        <div class="preview-watermark">PREVIEW</div>
+        
+
+        <h1>Certificate of Appreciation</h1>
+        <p>This is to proudly certify that</p>
+        <h2 id="previewName">Select a user</h2>
+        <p>Volunteer ID: <strong id="previewVolunteerId"></strong></p>
+        <p>has actively contributed to</p>
+        <h3 id="previewEvent">[Event]</h3>
+
+        <p class="description">
+          In sincere recognition of your environmental initiative, passion, and commitment
+          towards creating a greener world, we express our heartfelt gratitude through this certificate.
+        </p>
+
+        <p class="meta">Issued on: <span id="previewIssuedDate">July 14, 2025</span></p>
+
+        <div class="signature-block">
+          <div>
+            <div class="signature"></div>
+            <span>Event Coordinator</span>
+          </div>
+          <div>
+            <div class="signature"></div>
+            <span>EcoNova Director</span>
+          </div>
+        </div>
+
+        
+
+        <div class="footer-note">
+          This certificate was digitally generated and verified by EcoNova Initiative.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button id="resetFilterBtn" title="Reset Event Filter" onclick="resetFilter()" aria-label="Reset Event Filter" class="btn btn-success rounded-circle position-fixed bottom-0 end-0 m-4 shadow" style="width: 50px; height: 50px;">
+  <i class="bi bi-arrow-clockwise fs-4"></i>
+</button>
+
+<script>
+  function previewCertificate(name, volunteerId, event, issuedDate, qrImage) {
+    document.getElementById("previewName").textContent = name;
+    document.getElementById("previewVolunteerId").textContent = volunteerId || '';
+    document.getElementById("previewEvent").textContent = event;
+    document.getElementById("previewIssuedDate").textContent = issuedDate;
+    if (qrImage) {
+      document.getElementById("previewQR").src = qrImage;
+    }
+  }
+
+  function filterByEvent() {
+    const event = document.getElementById("eventFilter").value;
+    const url = new URL(window.location.href);
+    if (event) {
+      url.searchParams.set("event", event);
+    } else {
+      url.searchParams.delete("event");
+    }
+    window.location.href = url.toString();
+  }
+
+  function resetFilter() {
+    document.getElementById("eventFilter").value = '';
+    filterByEvent();
+  }
+</script>
+{% endblock %}

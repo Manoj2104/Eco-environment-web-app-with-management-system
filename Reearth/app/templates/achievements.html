@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold"><i class="bi bi-award text-warning me-2"></i>Your Achievements</h4>
+    <span class="badge bg-info-subtle text-dark px-3 py-2 shadow-sm">
+      <i class="bi bi-stars text-warning me-1"></i>Level {{ level or 1 }}
+    </span>
+  </div>
+
+  <!-- XP Progress Bar -->
+  <div class="mb-4">
+    <label class="form-label fw-semibold">XP Progress</label>
+    <div class="progress rounded-pill shadow-sm" style="height: 22px;">
+      <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+           style="width: {{ xp_progress or 0 }}%;" role="progressbar">
+        {{ xp_progress }}/100 XP
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 text-center py-3 bg-light">
+        <div class="card-body">
+          <i class="bi bi-calendar-event text-primary fs-3 mb-2"></i>
+          <h6 class="fw-bold">{{ summary.events }}</h6>
+          <p class="text-muted small">Events Participated</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 text-center py-3 bg-light">
+        <div class="card-body">
+          <i class="bi bi-clock-history text-success fs-3 mb-2"></i>
+          <h6 class="fw-bold">{{ summary.hours }} hrs</h6>
+          <p class="text-muted small">Total Hours Contributed</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 text-center py-3 bg-light">
+        <div class="card-body">
+          <i class="bi bi-check2-square text-danger fs-3 mb-2"></i>
+          <h6 class="fw-bold">{{ summary.tasks }}</h6>
+          <p class="text-muted small">Tasks Completed</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Earned Badges -->
+  <div class="mb-3">
+    <h5 class="fw-semibold mb-3"><i class="bi bi-patch-check text-warning me-2"></i>Earned Badges</h5>
+    {% if earned_badges %}
+    <div class="row g-3">
+      {% for ub, badge in earned_badges %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="card shadow-sm border-0 h-100 text-center badge-card hover-shadow">
+          <div class="card-body py-4">
+            <img src="{{ url_for('static', filename='badges/' + badge.image) }}"
+                 alt="{{ badge.name }}" class="img-fluid mb-3" style="height: 80px;">
+            <h6 class="fw-bold text-dark mb-1">{{ badge.name }}</h6>
+            <p class="small text-muted mb-0">{{ badge.description }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-secondary text-center">No badges earned yet. Keep participating!</div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .badge-card {
+    transition: transform 0.2s ease-in-out;
+    border-radius: 1rem;
+  }
+  .badge-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  }
+</style>
+{% endblock %}

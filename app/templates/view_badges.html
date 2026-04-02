@@ -4,59 +4,66 @@
 {% block content %}
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;800&display=swap');
-
+  /* Premium UI Tokens */
   :root {
-    --bg-primary:     #f0f7f2;
-    --bg-secondary:   #ffffff;
-    --bg-card:        #ffffff;
-    --bg-glass:       rgba(255,255,255,0.85);
-    --border-light:   rgba(34,139,68,0.12);
-    --border-card:    rgba(34,139,68,0.18);
-
-    --green-dark:     #1a6b3a;
-    --green-main:     #228b44;
-    --green-mid:      #2ecc71;
-    --green-light:    #a8edbc;
-    --green-soft:     #e8f7ed;
-    --green-glow:     rgba(46,204,113,0.25);
-
-    --accent-gold:    #e6a817;
-    --accent-teal:    #0891b2;
-    --accent-purple:  #7c3aed;
-    --accent-orange:  #ea580c;
-    --accent-red:     #dc2626;
-
-    --text-primary:   #1a2e1e;
-    --text-secondary: #3a5c42;
-    --text-muted:     #7aab88;
-    --shadow-card:    0 4px 24px rgba(34,139,68,0.09), 0 1px 4px rgba(0,0,0,0.05);
-    --shadow-hover:   0 12px 40px rgba(34,139,68,0.18), 0 2px 8px rgba(0,0,0,0.08);
-
-    /* Rarity */
-    --common:    #64748b;
-    --rare:      #0891b2;
-    --epic:      #7c3aed;
-    --legendary: #e6a817;
-    --mythic:    #dc2626;
+    --primary-green: #10b981;
+    --secondary-green: #059669;
+    --dark-forest: #064e2c;
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
   }
 
-  body { background: var(--bg-primary); font-family: 'Exo 2', sans-serif; color: var(--text-primary); }
-  .main-content, .container, .badge-wrapper { position: relative; z-index: 1; }
-  #sidebar { position: fixed; z-index: 9999; }
-  .overlay, .glass-effect, .bg-animation { pointer-events: none !important; }
+  body { 
+    background: #ffffff; 
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+    color: #0f172a; 
+    overflow-x: hidden;
+  }
+
+  .dot-grid-bg {
+    background-color: #ffffff;
+    background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+    background-size: 32px 32px;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .hero-glow {
+    position: fixed;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1;
+    filter: blur(60px);
+    opacity: 0.8;
+  }
+
+  .mouse-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    filter: blur(40px);
+  }
 
   /* ── PAGE ── */
-  .bc-page { min-height: 100vh; padding: 1.75rem 1.75rem 4rem; position: relative; }
-
-  /* Subtle mesh bg */
-  .bc-mesh {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background:
-      radial-gradient(ellipse 55% 45% at 5% 15%,  rgba(46,204,113,.08) 0%, transparent 65%),
-      radial-gradient(ellipse 45% 35% at 95% 85%, rgba(26,107,58,.07) 0%, transparent 65%),
-      radial-gradient(ellipse 35% 25% at 50% 50%, rgba(168,237,188,.12) 0%, transparent 65%),
-      #f0f7f2;
+  .bc-page { 
+    position: relative; 
+    z-index: 2; 
+    padding: 2.5rem 1.75rem 4rem; 
+    max-width: 1400px;
+    margin: 0 auto;
   }
 
   /* ── HEADER ── */
@@ -102,16 +109,29 @@
 
   /* ── STATS ── */
   .bc-stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-    gap: 1rem; margin-bottom: 2rem; position: relative; z-index: 2;
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem; 
+    margin-bottom: 3rem; 
+    position: relative; 
+    z-index: 2;
   }
   .stat-card {
-    background: var(--bg-card); border: 1.5px solid var(--border-card);
-    border-radius: 18px; padding: 1.1rem 1.25rem;
-    box-shadow: var(--shadow-card); display: flex; align-items: center; gap: .9rem;
-    transition: transform .25s, box-shadow .25s;
+    background: #ffffff; 
+    border: 1px solid #f1f5f9;
+    border-radius: 20px; 
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    display: flex; 
+    align-items: center; 
+    gap: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+  .stat-card:hover { 
+    transform: translateY(-5px); 
+    border-color: var(--primary-green);
+    box-shadow: 0 20px 40px -12px rgba(16, 185, 129, 0.1); 
+  }
   .stat-icon {
     width: 48px; height: 48px; border-radius: 14px;
     display: grid; place-items: center; font-size: 1.4rem; flex-shrink: 0;
@@ -387,34 +407,31 @@
   }
 </style>
 
-<!-- Particle canvas (light green dots) -->
 <canvas id="bc-particles"></canvas>
-<div class="bc-mesh"></div>
+<div class="dot-grid-bg"></div>
+<div class="hero-glow"></div>
+<div id="mouse-glow-bc" class="mouse-glow"></div>
 
 <div class="bc-page">
 
   <!-- HEADER -->
-  <div class="bc-header">
-    <div class="bc-title-group">
-      <div class="bc-title-icon">🌿</div>
-      <div>
-        <div class="bc-title">Badge Collection</div>
-        <div class="bc-subtitle">Your Achievement Vault</div>
+  <div class="row mb-5" data-aos="fade-down">
+    <div class="col-lg-8">
+      <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3"
+           style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.15); color: #059669; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em;">
+        <span class="badge-dot" style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+        BADGE COLLECTION
       </div>
+      <h1 class="fw-black mb-2" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #0f172a;">Your Achievement <span style="color: #10b981;">Vault</span></h1>
+      <p class="text-muted" style="max-width: 600px;">Every eco-achievement you've unlocked on ReEarth. Track your progress, view your rarity, and share your environmental impact.</p>
     </div>
-    <div class="bc-controls">
-      <div class="bc-search-wrap">
-        <i class="bi bi-search"></i>
-        <input type="text" id="searchBadge" class="bc-search" placeholder="Search badges…">
+    <div class="col-lg-4 d-flex align-items-end justify-content-lg-end mt-4 mt-lg-0">
+      <div class="bc-controls w-100">
+        <div class="bc-search-wrap w-100">
+          <i class="bi bi-search"></i>
+          <input type="text" id="searchBadge" class="bc-search w-100" placeholder="Search milestones...">
+        </div>
       </div>
-      <select id="rarityFilter" class="bc-select">
-        <option value="">All Rarities</option>
-        <option value="Common">Common</option>
-        <option value="Rare">Rare</option>
-        <option value="Epic">Epic</option>
-        <option value="Legendary">Legendary</option>
-        <option value="Mythic">Mythic</option>
-      </select>
     </div>
   </div>
 

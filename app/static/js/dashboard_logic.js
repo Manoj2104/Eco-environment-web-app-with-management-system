@@ -142,8 +142,11 @@ function verifyCheckIn() {
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            document.getElementById(`btn-container-${currentCheckinEventId}`).innerHTML =
-              `<button class="btn btn-outline-success btn-sm w-100" disabled>✅ Checked In</button>`;
+            const container = document.getElementById(`btn-container-${currentCheckinEventId}`);
+            if (container) {
+              container.innerHTML = `<button class="btn btn-outline-primary btn-sm w-100 fw-bold rounded-pill" 
+                                             onclick="launchTaskModal(${currentCheckinEventId})">🧠 Start Task</button>`;
+            }
             bootstrap.Modal.getInstance(document.getElementById("verifyModal")).hide();
           } else {
             alert(data.message || "Check-in failed");

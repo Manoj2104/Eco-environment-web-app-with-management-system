@@ -196,8 +196,7 @@
                     <div id="btn-container-{{ event.id }}">
                         {% if current_user.role == 'volunteer' %}
                             {% if status.task_completed %}<span class="text-success small fw-bold">✓ Done</span>
-                            {% elif status.task_started %}<button class="btn btn-success rounded-pill btn-sm fw-bold px-3" onclick="window.location.href='/dashboard'">Task</button>
-                            {% elif status.checked_in %}<span class="text-muted small">Checked In</span>
+                            {% elif status.task_started or status.checked_in %}<button class="btn btn-success rounded-pill btn-sm fw-bold px-3" onclick="window.location.href='/dashboard'">Start Task</button>
                             {% elif status.booked %}<button class="btn btn-warning rounded-pill btn-sm fw-bold px-3">Booked</button>
                             {% else %}
                             <button class="btn btn-forest rounded-pill btn-sm fw-bold px-3" 

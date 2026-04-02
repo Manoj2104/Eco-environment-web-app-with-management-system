@@ -1082,8 +1082,7 @@ License: https://freebootstrap.net/license
                   <div id="btn-container-{{ event.id }}">
                     {% if current_user.role == 'volunteer' %}
                       {% if status.task_completed %}<span class="text-success small fw-bold">✓ Done</span>
-                      {% elif status.task_started %}<button class="btn btn-success rounded-pill btn-sm fw-bold px-3 py-1" style="font-size: 0.75rem;" onclick="launchTaskModal({{ event.id }})">Task</button>
-                      {% elif status.checked_in %}<span class="text-muted small">Checked In</span>
+                      {% elif status.task_started or status.checked_in %}<button class="btn btn-outline-primary rounded-pill btn-sm fw-bold px-3 py-1" style="font-size: 0.75rem;" onclick="launchTaskModal({{ event.id }})">🧠 Start Task</button>
                       {% elif status.booked %}<button class="btn btn-warning rounded-pill btn-sm fw-bold px-3 py-1 shadow-sm countdown-btn" style="font-size: 0.75rem;" id="event-btn-{{ event.id }}" data-event-id="{{ event.id }}" data-event-time="{{ event.date.isoformat() }}" data-lat="{{ event.latitude }}" data-lon="{{ event.longitude }}">Booked</button>
                       {% else %}<button class="btn btn-forest rounded-pill btn-sm fw-bold px-3 py-1 shadow-sm" style="font-size: 0.75rem;" 
                         data-event-id="{{ event.id }}" 
@@ -1165,11 +1164,9 @@ License: https://freebootstrap.net/license
                     {% if current_user.role == 'volunteer' %}
                     {% if status.task_completed %}
                     <span class="text-success small fw-bold">✓ Done</span>
-                    {% elif status.task_started %}
-                    <button class="btn btn-success rounded-pill btn-sm fw-bold px-3 py-1" style="font-size: 0.75rem;"
-                      onclick="launchTaskModal({{ event.id }})">Task</button>
-                    {% elif status.checked_in %}
-                    <span class="text-muted small">Checked In</span>
+                    {% elif status.task_started or status.checked_in %}
+                    <button class="btn btn-outline-primary rounded-pill btn-sm fw-bold px-3 py-1" style="font-size: 0.75rem;"
+                      onclick="launchTaskModal({{ event.id }})">🧠 Start Task</button>
                     {% elif status.booked %}
                     <button class="btn btn-warning rounded-pill btn-sm fw-bold px-3 py-1 shadow-sm countdown-btn"
                       style="font-size: 0.75rem;" id="event-btn-{{ event.id }}" data-event-id="{{ event.id }}"
@@ -2402,17 +2399,13 @@ License: https://freebootstrap.net/license
       .then(r => r.json())
       .then(data => {
         if (data.success) {
-          // XP toast show பண்ணு
-          showToast(`🎉 +${data.xp_earned} XP! Total: ${data.total_xp} XP | Level ${data.level}`);
-
-          // Button update
-          const btn = document.getElementById(`btn-container-${eventId}`);
-          if (btn) btn.innerHTML = `<button class="btn btn-outline-success btn-sm w-100" disabled>✅ Completed</button>`;
-
-          // Badge alert
-          if (data.awarded.length > 0) {
-            setTimeout(() => showToast(`🏅 Badge earned: ${data.awarded.join(', ')}`), 1000);
+          const container = document.getElementById(`btn-container-${currentCheckinEventId}`);
+          if (container) {
+            container.innerHTML = `<button class="btn btn-outline-primary btn-sm w-100 fw-bold rounded-pill" 
+                                           onclick="launchTaskModal(${currentCheckinEventId})">🧠 Start Task</button>`;
           }
+          bootstrap.Modal.getInstance(document.getElementById("verifyModal")).hide();
+          showToast("✅ Checked in! You can now start the task.");
         } else {
           showToast(data.message, 'danger');
         }

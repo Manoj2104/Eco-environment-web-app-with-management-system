@@ -1,0 +1,1470 @@
+{% extends 'base.html' %}
+{% block title %}Achievements — ReEarth{% endblock %}
+{% block page_title %}Achievements{% endblock %}
+{% block page_subtitle %}Badges & XP Progress{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px)
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0)
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0
+    }
+
+    100% {
+      background-position: 200% 0
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .4)
+    }
+
+    70% {
+      box-shadow: 0 0 0 14px rgba(34, 197, 94, 0)
+    }
+
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0)
+    }
+  }
+
+  @keyframes badgePop {
+    0% {
+      transform: scale(.85);
+      opacity: 0
+    }
+
+    60% {
+      transform: scale(1.06)
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 1
+    }
+  }
+
+  @keyframes barGrow {
+    from {
+      width: 0
+    }
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 14px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile.t-red::before {
+    background: #ef4444;
+  }
+
+  .tile:nth-child(1) {
+    animation: fadeUp .4s .05s ease both
+  }
+
+  .tile:nth-child(2) {
+    animation: fadeUp .4s .10s ease both
+  }
+
+  .tile:nth-child(3) {
+    animation: fadeUp .4s .15s ease both
+  }
+
+  .tile:nth-child(4) {
+    animation: fadeUp .4s .20s ease both
+  }
+
+  .tile:nth-child(5) {
+    animation: fadeUp .4s .25s ease both
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .10);
+    color: #10b981;
+  }
+
+  .tile.t-red .tile-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile-change {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+
+  .tile-change.up {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .tile-change.neu {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── HERO ROW ── */
+  .hero-row {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .2s ease both;
+  }
+
+  /* ── XP CARD ── */
+  .xp-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 26px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+  }
+
+  .xp-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .xp-big {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.04em;
+    line-height: 1;
+  }
+
+  .xp-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .74rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 99px;
+    margin-top: 8px;
+  }
+
+  .lv-badge-big {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f0fdf4;
+    border: 1.5px solid #dcfce7;
+    border-radius: 12px;
+    padding: 10px 16px;
+  }
+
+  .lv-badge-big .lv-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #16a34a;
+    line-height: 1;
+  }
+
+  .lv-badge-big .lv-info {
+    font-size: .72rem;
+    color: #6b7280;
+  }
+
+  .lv-badge-big .lv-title {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #15803d;
+  }
+
+  /* Milestone steps */
+  .milestones-strip {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .ms-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 70px;
+  }
+
+  .ms-step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2.5px solid #e4ece6;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .7rem;
+    font-weight: 700;
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all .3s;
+    position: relative;
+    z-index: 1;
+  }
+
+  .ms-step-dot.reached {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, .15);
+  }
+
+  .ms-step-dot.current {
+    background: #fff;
+    border-color: #16a34a;
+    color: #16a34a;
+    animation: pulse-ring 2s infinite;
+  }
+
+  .ms-step-lbl {
+    font-size: .58rem;
+    color: #9ca3af;
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .ms-step-lbl.reached {
+    color: #16a34a;
+    font-weight: 700;
+  }
+
+  .ms-connector {
+    flex: 1;
+    height: 2px;
+    background: #e4ece6;
+    min-width: 28px;
+    position: relative;
+    top: -10px;
+  }
+
+  .ms-connector.filled {
+    background: linear-gradient(90deg, #16a34a, #22c55e);
+  }
+
+  /* XP bar */
+  .xp-track-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: .72rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .xp-track-labels span:last-child {
+    font-family: 'JetBrains Mono', monospace;
+    color: #9ca3af;
+    font-size: .68rem;
+  }
+
+  .xp-track {
+    height: 12px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: visible;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #4ade80, #10b981);
+    border-radius: 99px;
+    position: relative;
+    overflow: visible;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, .35);
+    animation: barGrow 1.2s cubic-bezier(.4, 0, .2, 1) both;
+  }
+
+  .xp-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .45) 50%, transparent 100%);
+    border-radius: 99px;
+    animation: shimmer 2.2s infinite;
+    background-size: 200% 100%;
+  }
+
+  .xp-thumb {
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border: 2.5px solid #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, .18), 0 2px 8px rgba(0, 0, 0, .12);
+    z-index: 2;
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .xp-track:hover .xp-thumb {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, .18), 0 2px 8px rgba(0, 0, 0, .12);
+    transform: translateY(-50%) scale(1.15);
+  }
+
+  .xp-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .xp-pct {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Summary rows */
+  .xp-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .xp-sum-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #f9fafb;
+    border-radius: 10px;
+  }
+
+  .xp-sum-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .xp-sum-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+    flex-shrink: 0;
+  }
+
+  .xp-sum-label {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .xp-sum-sub {
+    font-size: .66rem;
+    color: #9ca3af;
+  }
+
+  .xp-sum-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .8rem;
+    font-weight: 700;
+    color: #16a34a;
+  }
+
+  /* ── LEVEL PANEL ── */
+  .level-panel {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .lp-ring {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 28px rgba(22, 163, 74, .3);
+    animation: pulse-ring 2.5s infinite;
+    position: relative;
+  }
+
+  .lp-ring .lp-star {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #f59e0b;
+    color: #fff;
+    font-size: .56rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 99px;
+    border: 2px solid #fff;
+  }
+
+  .lp-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .lp-role {
+    font-size: .74rem;
+    color: #9ca3af;
+    margin-bottom: 16px;
+  }
+
+  .lp-rank-card {
+    width: 100%;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .lp-rank-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #16a34a;
+  }
+
+  .lp-rank-lbl {
+    font-size: .7rem;
+    color: #15803d;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .lp-divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 12px 0;
+    width: 100%;
+  }
+
+  .lp-mini-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .lp-ms {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  .lp-ms-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .9rem;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .lp-ms-lbl {
+    font-size: .6rem;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  .lp-next-box {
+    width: 100%;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    text-align: left;
+  }
+
+  .lp-next-lbl {
+    font-size: .66rem;
+    color: #b45309;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 4px;
+  }
+
+  .lp-next-val {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #92400e;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* ── BADGES SECTION ── */
+  .badges-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    overflow: hidden;
+    animation: fadeUp .4s .3s ease both;
+    margin-bottom: 20px;
+  }
+
+  .badges-head {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #f3f4f6;
+    flex-wrap: wrap;
+  }
+
+  .badges-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .badge-count {
+    margin-left: auto;
+    font-size: .72rem;
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .filter-strip {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    padding: 5px 13px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .filter-pill:hover {
+    color: #16a34a;
+  }
+
+  .filter-pill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .badges-body {
+    padding: 22px;
+  }
+
+  .badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px;
+  }
+
+  .badge-tile {
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 16px;
+    padding: 18px 12px;
+    text-align: center;
+    transition: transform .22s, box-shadow .22s;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+    animation: badgePop .4s ease both;
+  }
+
+  .badge-tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+    background: linear-gradient(90deg, #16a34a, #10b981);
+  }
+
+  .badge-tile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .13);
+  }
+
+  .badge-tile.locked {
+    opacity: .45;
+    filter: grayscale(1);
+    cursor: not-allowed;
+  }
+
+  .badge-tile.locked::before {
+    background: #e4ece6;
+  }
+
+  .badge-tile img {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+    border: 2px solid #dcfce7;
+  }
+
+  .badge-tile .badge-emoji {
+    font-size: 2.4rem;
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .badge-tile-name {
+    font-size: .76rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.3;
+    margin-bottom: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .badge-tile-desc {
+    font-size: .64rem;
+    color: #9ca3af;
+    line-height: 1.4;
+  }
+
+  .badge-tile-xp {
+    font-size: .68rem;
+    font-weight: 700;
+    color: #f59e0b;
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .badge-tile-earned {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    background: #16a34a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .badge-tile-earned i {
+    font-size: .55rem;
+    color: #fff;
+  }
+
+  .badge-lock-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    background: #e4ece6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .badge-lock-icon i {
+    font-size: .55rem;
+    color: #9ca3af;
+  }
+
+  .badges-empty {
+    padding: 48px 32px;
+    text-align: center;
+  }
+
+  .badges-empty i {
+    font-size: 2.5rem;
+    color: #d1d5db;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .badges-empty p {
+    font-size: .86rem;
+    color: #9ca3af;
+    margin: 0 0 4px;
+  }
+
+  .badges-empty small {
+    font-size: .74rem;
+    color: #d1d5db;
+  }
+
+  /* ── BOTTOM ROW ── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+    animation: fadeUp .4s .46s ease both;
+  }
+
+  .activity-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    overflow: hidden;
+  }
+
+  .activity-head {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .activity-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .activity-body {
+    padding: 8px;
+  }
+
+  .act-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    transition: background .15s;
+  }
+
+  .act-item:hover {
+    background: #f9fafb;
+  }
+
+  .act-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    flex-shrink: 0;
+  }
+
+  .act-dot.green {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .act-dot.blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .act-dot.amber {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .act-label {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .act-sub {
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .act-val {
+    margin-left: auto;
+    font-size: .76rem;
+    font-weight: 700;
+    color: #16a34a;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .act-empty {
+    padding: 32px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: .84rem;
+  }
+
+  @media(max-width:1100px) {
+    .hero-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media(max-width:900px) {
+    .bottom-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media(max-width:700px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .badge-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+{# ─── Compute real values from passed data ─── #}
+{# These come from your dashboard.py achievements() route #}
+{# earned_badges = list of (UserBadge, Badge) tuples #}
+{# summary = {events, hours, tasks} #}
+{# level = int #}
+{# xp_progress = current xp (user.xp % 100) #}
+
+{% set cur_xp = current_user.xp or 0 %}
+{% set cur_level = level or 1 %}
+{% set next_lv = cur_level + 1 %}
+{% set xp_for_next = cur_level * 100 %}
+{% set xp_pct = [((xp_progress or 0) * 100 // xp_for_next), 100] | min if xp_for_next > 0 else 0 %}
+{% set ev_count = summary.events or 0 %}
+{% set hr_count = summary.hours or 0 %}
+{% set tk_count = summary.tasks or 0 %}
+{% set badge_count = earned_badges | length if earned_badges else 0 %}
+
+{# Rank title #}
+{% if cur_level >= 5 %}{% set rank_title = "Eco Master" %}{% set rank_emoji = "🌍" %}
+{% elif cur_level >= 4 %}{% set rank_title = "Green Guardian" %}{% set rank_emoji = "🛡️" %}
+{% elif cur_level >= 3 %}{% set rank_title = "Earth Defender" %}{% set rank_emoji = "⚔️" %}
+{% elif cur_level >= 2 %}{% set rank_title = "Eco Warrior" %}{% set rank_emoji = "🌿" %}
+{% else %}{% set rank_title = "Eco Starter" %}{% set rank_emoji = "🌱" %}{% endif %}
+
+<!-- ── STAT TILES ── -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> Earned</div>
+    <div class="tile-val">{{ cur_xp }}</div>
+    <div class="tile-lbl">Total XP</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-stars"></i></div>
+    <div class="tile-change neu">Current</div>
+    <div class="tile-val">{{ cur_level }}</div>
+    <div class="tile-lbl">Level</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-calendar2-check"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> joined</div>
+    <div class="tile-val">{{ ev_count }}</div>
+    <div class="tile-lbl">Events Joined</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> logged</div>
+    <div class="tile-val">{{ hr_count }}h</div>
+    <div class="tile-lbl">Hours Contributed</div>
+  </div>
+  <div class="tile t-red">
+    <div class="tile-icon"><i class="bi bi-check2-square"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> done</div>
+    <div class="tile-val">{{ tk_count }}</div>
+    <div class="tile-lbl">Tasks Completed</div>
+  </div>
+</div>
+
+<!-- ── HERO ROW ── -->
+<div class="hero-row">
+
+  <!-- XP Progress card -->
+  <div class="xp-card">
+    <div class="xp-card-head">
+      <div>
+        <div class="xp-big">{{ cur_xp }} XP</div>
+        <div class="xp-pill">
+          <i class="bi bi-arrow-up-short"></i>
+          Level {{ cur_level }} → {{ next_lv }}
+        </div>
+      </div>
+      <div class="lv-badge-big">
+        <div class="lv-num">{{ cur_level }}</div>
+        <div>
+          <div class="lv-title">{{ rank_title }}</div>
+          <div class="lv-info">Current rank</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Milestone step strip -->
+    {% set checkpoints = [0, 100, 250, 500, 1000] %}
+    <div class="milestones-strip">
+      {% for i in range(checkpoints|length) %}
+      {% set cp = checkpoints[i] %}
+      {% set prev = checkpoints[i-1] if i > 0 else 0 %}
+      {% if i > 0 %}
+      <div class="ms-connector {% if cur_xp >= prev %}filled{% endif %}"></div>
+      {% endif %}
+      <div class="ms-step">
+        <div class="ms-step-dot
+            {% if cur_xp >= cp %}reached
+            {% elif cur_xp >= prev and i > 0 %}current{% endif %}">
+          {% if cur_xp >= cp %}
+          <i class="bi bi-check-lg" style="font-size:.6rem;"></i>
+          {% else %}
+          {{ cp }}
+          {% endif %}
+        </div>
+        <div class="ms-step-lbl {% if cur_xp >= cp %}reached{% endif %}">{{ cp }} XP</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- XP progress bar -->
+    <div class="xp-track-labels">
+      <span>XP to Next Level</span>
+      <span>{{ xp_progress or 0 }} / {{ xp_for_next }}</span>
+    </div>
+    <div class="xp-track">
+      <div class="xp-fill" data-width="{{ xp_pct }}">
+        <div class="xp-thumb"></div>
+      </div>
+    </div>
+    <div class="xp-meta">
+      <span>Level {{ cur_level }}</span>
+      <span class="xp-pct">{{ xp_pct }}%</span>
+      <span>Level {{ next_lv }}</span>
+    </div>
+
+    <!-- Summary breakdown -->
+    <div class="xp-summary">
+      <div class="xp-sum-row">
+        <div class="xp-sum-left">
+          <div class="xp-sum-icon" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-calendar2-check"></i></div>
+          <div>
+            <div class="xp-sum-label">Events Participated</div>
+            <div class="xp-sum-sub">+10 XP per event</div>
+          </div>
+        </div>
+        <div class="xp-sum-val">{{ ev_count }} events → +{{ ev_count * 10 }} XP</div>
+      </div>
+      <div class="xp-sum-row">
+        <div class="xp-sum-left">
+          <div class="xp-sum-icon" style="background:#eff6ff;color:#3b82f6;"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <div class="xp-sum-label">Hours Contributed</div>
+            <div class="xp-sum-sub">+5 XP per hour</div>
+          </div>
+        </div>
+        <div class="xp-sum-val">{{ hr_count }}h → +{{ hr_count * 5 }} XP</div>
+      </div>
+      <div class="xp-sum-row">
+        <div class="xp-sum-left">
+          <div class="xp-sum-icon" style="background:#fef2f2;color:#ef4444;"><i class="bi bi-check2-square"></i></div>
+          <div>
+            <div class="xp-sum-label">Tasks Completed</div>
+            <div class="xp-sum-sub">+3 XP per task</div>
+          </div>
+        </div>
+        <div class="xp-sum-val">{{ tk_count }} tasks → +{{ tk_count * 3 }} XP</div>
+      </div>
+      <div class="xp-sum-row">
+        <div class="xp-sum-left">
+          <div class="xp-sum-icon" style="background:#fffbeb;color:#f59e0b;"><i class="bi bi-award-fill"></i></div>
+          <div>
+            <div class="xp-sum-label">Badges Earned</div>
+            <div class="xp-sum-sub">Bonus XP per badge</div>
+          </div>
+        </div>
+        <div class="xp-sum-val">{{ badge_count }} badges 🏅</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level panel -->
+  <div class="level-panel">
+    <div class="lp-ring">
+      Lv{{ cur_level }}
+      <span class="lp-star">★</span>
+    </div>
+    <div class="lp-name">{{ current_user.name }}</div>
+    <div class="lp-role">{{ current_user.role|capitalize }} · ReEarth</div>
+
+    <div class="lp-rank-card">
+      <div class="lp-rank-val">{{ rank_emoji }} {{ cur_level }}</div>
+      <div class="lp-rank-lbl">{{ rank_title }}</div>
+    </div>
+
+    <div class="lp-mini-stats">
+      <div class="lp-ms">
+        <div class="lp-ms-val">{{ badge_count }}</div>
+        <div class="lp-ms-lbl">Badges</div>
+      </div>
+      <div class="lp-ms">
+        <div class="lp-ms-val">{{ ev_count }}</div>
+        <div class="lp-ms-lbl">Events</div>
+      </div>
+      <div class="lp-ms">
+        <div class="lp-ms-val">{{ hr_count }}h</div>
+        <div class="lp-ms-lbl">Hours</div>
+      </div>
+      <div class="lp-ms">
+        <div class="lp-ms-val">{{ tk_count }}</div>
+        <div class="lp-ms-lbl">Tasks</div>
+      </div>
+    </div>
+
+    <div class="lp-divider"></div>
+
+    <div class="lp-next-box">
+      <div class="lp-next-lbl">🎯 Next milestone</div>
+      <div class="lp-next-val">
+        {% if cur_xp < 100 %}Reach 100 XP — {{ 100 - cur_xp }} XP away {% elif cur_xp < 250 %}Reach 250 XP — {{ 250 -
+          cur_xp }} XP away {% elif cur_xp < 500 %}Reach 500 XP — {{ 500 - cur_xp }} XP away {% elif cur_xp < 1000
+          %}Reach 1000 XP — {{ 1000 - cur_xp }} XP away {% else %}All milestones reached! 🎉 {% endif %} </div>
+      </div>
+    </div>
+
+  </div><!-- /hero-row -->
+
+  <!-- ── EARNED BADGES ── -->
+  <div class="badges-card">
+    <div class="badges-head">
+      <i class="bi bi-patch-check-fill" style="color:#f59e0b;font-size:1rem;"></i>
+      <span class="badges-title">Earned Badges</span>
+      <div class="filter-strip">
+        <button class="filter-pill active" data-filter="all">All</button>
+        <button class="filter-pill" data-filter="earned">Earned</button>
+        <button class="filter-pill" data-filter="locked">Locked</button>
+      </div>
+      <span class="badge-count">{{ badge_count }} earned</span>
+    </div>
+    <div class="badges-body">
+      {% if earned_badges %}
+      <div class="badge-grid" id="badgeGrid">
+
+        {# ── Real earned badges from DB ── #}
+        {% for ub, badge in earned_badges %}
+        <div class="badge-tile" data-status="earned" data-delay="{{ loop.index0 * 0.06 }}" title="{{ badge.description or badge.name }}">
+          <div class="badge-tile-earned"><i class="bi bi-check-lg"></i></div>
+          {% if badge.image_url %}
+          <img src="{{ badge.image_url }}" alt="{{ badge.name }}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+          <span class="badge-emoji" style="display:none;">🏅</span>
+          {% else %}
+          <span class="badge-emoji">🏅</span>
+          {% endif %}
+          <div class="badge-tile-name">{{ badge.name }}</div>
+          <div class="badge-tile-desc">{{ badge.description or '' }}</div>
+          <div class="badge-tile-xp">⚡ {{ badge.xp_reward or badge.xp or 0 }} XP</div>
+        </div>
+        {% endfor %}
+
+        {# ── Locked placeholder badges ── #}
+        {% set locked_list = [
+        ('🌊','Beach Hero', 'Complete a coastal cleanup event', 50),
+        ('🌲','Forest Keeper', 'Plant 10+ trees in one event', 75),
+        ('☀️','Solar Pioneer', 'Attend a renewable energy event', 60),
+        ('♻️','Recycler', 'Join 3 waste management events', 40),
+        ('🐋','Ocean Guardian','Remove 5 kg of ocean plastic', 100),
+        ] %}
+        {% for emoji, name, desc, xp in locked_list %}
+        <div class="badge-tile locked" data-status="locked" data-delay="{{ (badge_count + loop.index0) * 0.06 }}" title="Locked — {{ desc }}">
+          <div class="badge-lock-icon"><i class="bi bi-lock-fill"></i></div>
+          <span class="badge-emoji">{{ emoji }}</span>
+          <div class="badge-tile-name">{{ name }}</div>
+          <div class="badge-tile-desc">{{ desc }}</div>
+          <div class="badge-tile-xp" style="color:#d1d5db;">⚡ {{ xp }} XP</div>
+        </div>
+        {% endfor %}
+
+      </div><!-- /badge-grid -->
+
+      {% else %}
+      <div class="badges-empty">
+        <i class="bi bi-award"></i>
+        <p>No badges earned yet — keep participating!</p>
+        <small>Complete events and tasks to unlock badges 🌱</small>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── BOTTOM ROW ── -->
+  <div class="bottom-row">
+
+    <!-- Recent Activity (real data) -->
+    <div class="activity-card">
+      <div class="activity-head">
+        <i class="bi bi-activity" style="color:#16a34a;font-size:1rem;"></i>
+        <span class="activity-title">Activity Breakdown</span>
+      </div>
+      <div class="activity-body">
+        {% if ev_count > 0 or hr_count > 0 or tk_count > 0 or badge_count > 0 %}
+
+        <div class="act-item">
+          <div class="act-dot green"><i class="bi bi-calendar-check"></i></div>
+          <div>
+            <div class="act-label">Events Joined</div>
+            <div class="act-sub">{{ ev_count }} event{{ 's' if ev_count != 1 }} participated</div>
+          </div>
+          <div class="act-val">+{{ ev_count * 10 }} XP</div>
+        </div>
+
+        <div class="act-item">
+          <div class="act-dot blue"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <div class="act-label">Hours Logged</div>
+            <div class="act-sub">{{ hr_count }} hour{{ 's' if hr_count != 1 }} contributed</div>
+          </div>
+          <div class="act-val">+{{ hr_count * 5 }} XP</div>
+        </div>
+
+        <div class="act-item">
+          <div class="act-dot amber"><i class="bi bi-check2-all"></i></div>
+          <div>
+            <div class="act-label">Tasks Completed</div>
+            <div class="act-sub">{{ tk_count }} task{{ 's' if tk_count != 1 }} finished</div>
+          </div>
+          <div class="act-val">+{{ tk_count * 3 }} XP</div>
+        </div>
+
+        {% if badge_count > 0 %}
+        <div class="act-item">
+          <div class="act-dot green"><i class="bi bi-award-fill"></i></div>
+          <div>
+            <div class="act-label">Badges Earned</div>
+            <div class="act-sub">{{ badge_count }} badge{{ 's' if badge_count != 1 }} unlocked</div>
+          </div>
+          <div class="act-val">{{ badge_count }} 🏅</div>
+        </div>
+        {% endif %}
+
+        {# Total XP breakdown row #}
+        <div class="act-item" style="margin-top:6px;background:#f0fdf4;border-radius:10px;">
+          <div class="act-dot green"><i class="bi bi-lightning-charge-fill"></i></div>
+          <div>
+            <div class="act-label">Total XP Earned</div>
+            <div class="act-sub">From all activities combined</div>
+          </div>
+          <div class="act-val" style="font-size:.9rem;">{{ cur_xp }} XP</div>
+        </div>
+
+        {% else %}
+        <div class="act-empty">No activity yet — join an event to get started! 🌱</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Pro Tips -->
+    <div class="activity-card">
+      <div class="activity-head">
+        <i class="bi bi-lightbulb-fill" style="color:#f59e0b;font-size:1rem;"></i>
+        <span class="activity-title">Level Up Faster</span>
+      </div>
+      <div class="activity-body">
+        <div class="act-item">
+          <div class="act-dot green"><i class="bi bi-person-check-fill"></i></div>
+          <div>
+            <div class="act-label">Complete Your Profile</div>
+            <div class="act-sub">Earn +20 XP bonus for a complete profile</div>
+          </div>
+          <div class="act-val">+20 XP</div>
+        </div>
+        <div class="act-item">
+          <div class="act-dot amber"><i class="bi bi-fire"></i></div>
+          <div>
+            <div class="act-label">Maintain a Streak</div>
+            <div class="act-sub">Daily check-ins multiply XP by 1.5×</div>
+          </div>
+          <div class="act-val">×1.5</div>
+        </div>
+        <div class="act-item">
+          <div class="act-dot blue"><i class="bi bi-megaphone-fill"></i></div>
+          <div>
+            <div class="act-label">Refer a Friend</div>
+            <div class="act-sub">+50 XP when they complete first event</div>
+          </div>
+          <div class="act-val">+50 XP</div>
+        </div>
+        <div class="act-item">
+          <div class="act-dot green"><i class="bi bi-star-fill"></i></div>
+          <div>
+            <div class="act-label">Join High-Impact Events</div>
+            <div class="act-sub">Featured events give 2× XP</div>
+          </div>
+          <div class="act-val">×2 XP</div>
+        </div>
+        <div class="act-item">
+          <div class="act-dot amber"><i class="bi bi-patch-check-fill"></i></div>
+          <div>
+            <div class="act-label">Unlock All Badges</div>
+            <div class="act-sub">{{ badge_count }}/{{ badge_count + 5 }} badges collected</div>
+          </div>
+          <div class="act-val">{{ badge_count }} / {{ badge_count + 5 }}</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /bottom-row -->
+
+  {% endblock %}
+
+
+  {% block extra_js %}
+  <script>
+    /* ── Badge filter pills ── */
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const f = this.dataset.filter;
+        document.querySelectorAll('.badge-tile').forEach(tile => {
+          const s = tile.dataset.status;
+          tile.style.display = (f === 'all' || f === s) ? '' : 'none';
+        });
+      });
+    });
+
+    /* ── Real-time XP update via Socket.IO ── */
+    if (typeof socket !== 'undefined') {
+      const userId = "{{ current_user.id if current_user.is_authenticated else '' }}";
+      if (userId) {
+        socket.emit('join', { room: 'user_' + userId });
+      }
+
+      socket.on('user_full_update', function (data) {
+        /* Update stat tiles */
+        const tiles = document.querySelectorAll('.tile-val');
+        if (tiles.length >= 5) {
+          tiles[0].textContent = data.xp;           // Total XP
+          tiles[1].textContent = data.level;         // Level
+          tiles[2].textContent = data.events;        // Events
+          tiles[3].textContent = data.hours + 'h';   // Hours
+          tiles[4].textContent = data.tasks;         // Tasks
+        }
+
+        /* Update XP big number */
+        const xpBig = document.querySelector('.xp-big');
+        if (xpBig) xpBig.textContent = data.xp + ' XP';
+
+        /* Update progress bar */
+        const fill = document.querySelector('.xp-fill');
+        if (fill) fill.style.width = data.xp_percent + '%';
+
+        /* Update XP label */
+        const lbl = document.querySelector('.xp-track-labels span:last-child');
+        if (lbl) lbl.textContent = data.xp + ' / ' + data.xp_for_next_level;
+
+        /* Update % pill */
+        const pct = document.querySelector('.xp-pct');
+        if (pct) pct.textContent = data.xp_percent + '%';
+
+        /* Update level ring */
+        const ring = document.querySelector('.lp-ring');
+        if (ring) ring.childNodes[0].textContent = 'Lv' + data.level;
+
+        /* Update next milestone box */
+        const nextBox = document.querySelector('.lp-next-val');
+        if (nextBox) {
+          const xp = data.xp;
+          if (xp < 100) nextBox.textContent = 'Reach 100 XP — ' + (100 - xp) + ' XP away';
+          else if (xp < 250) nextBox.textContent = 'Reach 250 XP — ' + (250 - xp) + ' XP away';
+          else if (xp < 500) nextBox.textContent = 'Reach 500 XP — ' + (500 - xp) + ' XP away';
+          else if (xp < 1000) nextBox.textContent = 'Reach 1000 XP — ' + (1000 - xp) + ' XP away';
+          else nextBox.textContent = 'All milestones reached! 🎉';
+        }
+
+        /* Update milestone dots */
+        const checkpoints = [0, 100, 250, 500, 1000];
+        document.querySelectorAll('.ms-step-dot').forEach((dot, i) => {
+          const cp = checkpoints[i];
+          dot.classList.remove('reached', 'current');
+          if (data.xp >= cp) {
+            dot.classList.add('reached');
+            dot.innerHTML = '<i class="bi bi-check-lg" style="font-size:.6rem;"></i>';
+          } else {
+            dot.textContent = cp;
+          }
+        });
+      });
+    }
+
+    /* ── Apply dynamic styles from data attributes ── */
+    document.querySelectorAll('[data-width]').forEach(el => {
+      el.style.width = el.dataset.width + '%';
+    });
+    document.querySelectorAll('[data-delay]').forEach(el => {
+      el.style.animationDelay = el.dataset.delay + 's';
+    });
+  </script>
+  {% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="app-landing-hero text-center text-white py-5">
+  <div class="container">
+    <h1 class="display-5 fw-bold">EcoNova Mobile App</h1>
+    <p class="lead mb-4">Your sustainable journey starts with a tap 🌱</p>
+    <img src="{{ url_for('static', filename='images/app_qr.png') }}"
+         alt="EcoNova QR Code"
+         class="qr-image mb-4">
+    <p class="fw-semibold text-white">Scan this QR to install or explore features below</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <!-- Store Buttons -->
+  <div class="d-flex justify-content-center gap-3 mb-4 flex-wrap">
+    <a href="#" class="btn btn-dark btn-lg rounded-pill shadow-sm px-4">
+      <i class="bi bi-apple me-2"></i> App Store
+    </a>
+    <a href="#" class="btn btn-success btn-lg rounded-pill shadow-sm px-4">
+      <i class="bi bi-google-play me-2"></i> Play Store
+    </a>
+    <a href="{{ url_for('static', filename='apk/EcoNova.apk') }}"
+       class="btn btn-outline-primary btn-lg rounded-pill shadow-sm px-4">
+      <i class="bi bi-download me-2"></i> Download APK
+    </a>
+  </div>
+
+  <!-- Feature Highlights -->
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card feature-card h-100 border-0 shadow-sm text-center">
+        <div class="card-body">
+          <i class="bi bi-activity text-success display-6 mb-3"></i>
+          <h5 class="fw-bold">Track Your Impact</h5>
+          <p class="text-muted small">Earn XP, badges, and monitor your environmental contributions in real time.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card feature-card h-100 border-0 shadow-sm text-center">
+        <div class="card-body">
+          <i class="bi bi-bell text-warning display-6 mb-3"></i>
+          <h5 class="fw-bold">Instant Notifications</h5>
+          <p class="text-muted small">Stay updated with nearby events and volunteering opportunities.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card feature-card h-100 border-0 shadow-sm text-center">
+        <div class="card-body">
+          <i class="bi bi-shield-check text-info display-6 mb-3"></i>
+          <h5 class="fw-bold">Secure & Verified</h5>
+          <p class="text-muted small">Trusted ecosystem with verified participants and eco-certified actions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Changelog -->
+  <div class="mt-5">
+    <p>
+      <a class="btn btn-outline-secondary rounded-pill" data-bs-toggle="collapse" href="#changelog" role="button" aria-expanded="false" aria-controls="changelog">
+        <i class="bi bi-clock-history me-1"></i> View Changelog
+      </a>
+    </p>
+    <div class="collapse" id="changelog">
+      <div class="card card-body shadow-sm">
+        <ul class="mb-0 small">
+          <li><strong>v1.4.0</strong> - Improved event QR scanner & offline mode</li>
+          <li><strong>v1.3.2</strong> - UI polishing and minor bug fixes</li>
+          <li><strong>v1.3.0</strong> - XP dashboard and leaderboard module</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Copy Link -->
+  <div class="text-center mt-4">
+    <button class="btn btn-light border rounded-pill px-4" onclick="copyLink()">
+      <i class="bi bi-link-45deg me-1"></i> Copy App Link
+    </button>
+  </div>
+</div>
+
+<script>
+  function copyLink() {
+    navigator.clipboard.writeText("{{ request.url_root }}download/app")
+      .then(() => alert("✅ App link copied!"));
+  }
+</script>
+
+<style>
+  .app-landing-hero {
+    background: linear-gradient(135deg, #4caf50, #1b5e20);
+    background-size: cover;
+    color: white;
+  }
+
+  .qr-image {
+    max-width: 200px;
+    animation: pulseQR 2s infinite;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(255,255,255,0.3);
+  }
+
+  @keyframes pulseQR {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.85; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .feature-card i {
+    transition: transform 0.3s ease;
+  }
+
+  .feature-card:hover i {
+    transform: scale(1.2);
+  }
+</style>
+{% endblock %}

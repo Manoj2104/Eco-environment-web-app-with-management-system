@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Volunteer Reviews{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-primary"><i class="bi bi-chat-quote-fill"></i> Volunteer Reviews</h3>
+    <div class="d-flex gap-2">
+      <select class="form-select form-select-sm" id="sortOption" style="width: 160px;">
+        <option selected value="recent">Most Recent</option>
+        <option value="rating">Highest Rated</option>
+      </select>
+      <button class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-circle"></i> Add Review</button>
+    </div>
+  </div>
+
+  <div id="review-list"></div>
+</div>
+
+<!-- Lottie + Socket -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+<script>
+const socket = io();
+socket.emit("get_reviews");
+
+socket.on("update_reviews", (reviews) => {
+  const container = document.getElementById("review-list");
+
+  if (!reviews || reviews.length === 0) {
+    container.innerHTML = `
+      <div class="text-center mt-5">
+        <lottie-player src="https://lottie.host/4d407a8d-a38f-4b9e-a7de-104cc7dc7a8d/NaGHYxb1V5.json"
+                       background="transparent" speed="1"
+                       style="width: 300px; height: 300px;" loop autoplay>
+        </lottie-player>
+        <p class="lead text-muted mt-3"><i class="bi bi-emoji-neutral"></i> No reviews available yet.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const sorted = [...reviews];
+  const sortOption = document.getElementById("sortOption").value;
+  if (sortOption === "rating") {
+    sorted.sort((a, b) => b.rating - a.rating);
+  } else {
+    sorted.sort((a, b) => new Date(b.timestamp_raw) - new Date(a.timestamp_raw));
+  }
+
+  container.innerHTML = `
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      ${sorted.map(review => `
+        <div class="col">
+          <div class="card shadow-sm border-0 rounded-4 h-100 review-card">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-3">
+                <div class="avatar bg-light text-primary fw-bold rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                  ${review.name.charAt(0)}
+                </div>
+                <div>
+                  <h6 class="mb-0">${review.name}</h6>
+                  <small class="text-muted">${review.timestamp}</small>
+                </div>
+              </div>
+
+              <p class="mb-2 text-muted">“${review.text}”</p>
+
+              <div>
+                <span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i> ${review.rating}/5</span>
+                ${review.tags?.map(tag => `
+                  <span class="badge bg-light text-muted border ms-1">#${tag.trim()}</span>
+                `).join("")}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+});
+
+document.getElementById("sortOption").addEventListener("change", () => {
+  socket.emit("get_reviews"); // Re-fetch and re-render
+});
+</script>
+
+<style>
+.review-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.review-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

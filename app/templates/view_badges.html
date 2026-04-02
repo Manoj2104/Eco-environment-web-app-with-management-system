@@ -1,0 +1,764 @@
+{% extends 'base.html' %}
+{% block title %}Badge Collection{% endblock %}
+
+{% block content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;800&display=swap');
+
+  :root {
+    --bg-primary:     #f0f7f2;
+    --bg-secondary:   #ffffff;
+    --bg-card:        #ffffff;
+    --bg-glass:       rgba(255,255,255,0.85);
+    --border-light:   rgba(34,139,68,0.12);
+    --border-card:    rgba(34,139,68,0.18);
+
+    --green-dark:     #1a6b3a;
+    --green-main:     #228b44;
+    --green-mid:      #2ecc71;
+    --green-light:    #a8edbc;
+    --green-soft:     #e8f7ed;
+    --green-glow:     rgba(46,204,113,0.25);
+
+    --accent-gold:    #e6a817;
+    --accent-teal:    #0891b2;
+    --accent-purple:  #7c3aed;
+    --accent-orange:  #ea580c;
+    --accent-red:     #dc2626;
+
+    --text-primary:   #1a2e1e;
+    --text-secondary: #3a5c42;
+    --text-muted:     #7aab88;
+    --shadow-card:    0 4px 24px rgba(34,139,68,0.09), 0 1px 4px rgba(0,0,0,0.05);
+    --shadow-hover:   0 12px 40px rgba(34,139,68,0.18), 0 2px 8px rgba(0,0,0,0.08);
+
+    /* Rarity */
+    --common:    #64748b;
+    --rare:      #0891b2;
+    --epic:      #7c3aed;
+    --legendary: #e6a817;
+    --mythic:    #dc2626;
+  }
+
+  body { background: var(--bg-primary); font-family: 'Exo 2', sans-serif; color: var(--text-primary); }
+  .main-content, .container, .badge-wrapper { position: relative; z-index: 1; }
+  #sidebar { position: fixed; z-index: 9999; }
+  .overlay, .glass-effect, .bg-animation { pointer-events: none !important; }
+
+  /* ── PAGE ── */
+  .bc-page { min-height: 100vh; padding: 1.75rem 1.75rem 4rem; position: relative; }
+
+  /* Subtle mesh bg */
+  .bc-mesh {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 55% 45% at 5% 15%,  rgba(46,204,113,.08) 0%, transparent 65%),
+      radial-gradient(ellipse 45% 35% at 95% 85%, rgba(26,107,58,.07) 0%, transparent 65%),
+      radial-gradient(ellipse 35% 25% at 50% 50%, rgba(168,237,188,.12) 0%, transparent 65%),
+      #f0f7f2;
+  }
+
+  /* ── HEADER ── */
+  .bc-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; position: relative; z-index: 2;
+  }
+  .bc-title-group { display: flex; align-items: center; gap: .85rem; }
+  .bc-title-icon {
+    width: 52px; height: 52px; border-radius: 16px;
+    background: linear-gradient(135deg, var(--green-main) 0%, var(--green-mid) 100%);
+    display: grid; place-items: center; font-size: 1.5rem;
+    box-shadow: 0 6px 20px rgba(34,139,68,.35);
+  }
+  .bc-title {
+    font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 2rem; letter-spacing: .05em;
+    background: linear-gradient(90deg, var(--green-dark) 0%, var(--green-main) 60%, var(--green-mid) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .bc-subtitle { font-size: .72rem; color: var(--text-muted); letter-spacing: .14em; text-transform: uppercase; }
+
+  /* Controls */
+  .bc-controls { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+  .bc-search-wrap { position: relative; }
+  .bc-search-wrap i { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+  .bc-search {
+    background: var(--bg-secondary); border: 1.5px solid var(--border-card);
+    color: var(--text-primary); border-radius: 12px;
+    padding: .55rem 1rem .55rem 2.2rem; width: 220px;
+    font-family: 'Exo 2', sans-serif; font-size: .875rem;
+    box-shadow: 0 2px 8px rgba(34,139,68,.07);
+    transition: border .22s, box-shadow .22s;
+  }
+  .bc-search:focus { outline: none; border-color: var(--green-main); box-shadow: 0 0 0 3px rgba(46,204,113,.18); }
+  .bc-search::placeholder { color: var(--text-muted); }
+  .bc-select {
+    background: var(--bg-secondary); border: 1.5px solid var(--border-card);
+    color: var(--text-primary); border-radius: 12px;
+    padding: .55rem 1.1rem; font-family: 'Exo 2', sans-serif; font-size: .875rem;
+    box-shadow: 0 2px 8px rgba(34,139,68,.07); cursor: pointer; transition: border .22s;
+  }
+  .bc-select:focus { outline: none; border-color: var(--green-main); }
+
+  /* ── STATS ── */
+  .bc-stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+    gap: 1rem; margin-bottom: 2rem; position: relative; z-index: 2;
+  }
+  .stat-card {
+    background: var(--bg-card); border: 1.5px solid var(--border-card);
+    border-radius: 18px; padding: 1.1rem 1.25rem;
+    box-shadow: var(--shadow-card); display: flex; align-items: center; gap: .9rem;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+  .stat-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: grid; place-items: center; font-size: 1.4rem; flex-shrink: 0;
+  }
+  .stat-icon.s-gold   { background: linear-gradient(135deg,#fef9c3,#fde68a); box-shadow: 0 4px 14px rgba(230,168,23,.25); }
+  .stat-icon.s-green  { background: linear-gradient(135deg,#dcfce7,#bbf7d0); box-shadow: 0 4px 14px rgba(46,204,113,.22); }
+  .stat-icon.s-purple { background: linear-gradient(135deg,#ede9fe,#ddd6fe); box-shadow: 0 4px 14px rgba(124,58,237,.18); }
+  .stat-icon.s-teal   { background: linear-gradient(135deg,#cffafe,#a5f3fc); box-shadow: 0 4px 14px rgba(8,145,178,.18); }
+  .stat-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); margin-bottom: .15rem; }
+  .stat-value { font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; font-weight: 700; line-height: 1; }
+
+  /* ── PROGRESS ── */
+  .bc-progress-wrap { margin-bottom: 2rem; position: relative; z-index: 2; }
+  .bc-progress-info { display: flex; justify-content: space-between; margin-bottom: .45rem; }
+  .bc-progress-label { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); }
+  .bc-progress-pct { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: .9rem; color: var(--green-main); }
+  .bc-progress-track {
+    height: 11px; border-radius: 99px;
+    background: rgba(34,139,68,.1); overflow: visible; position: relative;
+  }
+  .bc-progress-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--green-dark), var(--green-mid));
+    transition: width 1.3s cubic-bezier(.22,1,.36,1); position: relative;
+    box-shadow: 0 0 10px rgba(46,204,113,.45);
+  }
+  .bc-progress-fill::after {
+    content: ''; position: absolute; right: -7px; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px; border-radius: 50%;
+    background: var(--green-main);
+    box-shadow: 0 0 0 3px #fff, 0 0 12px rgba(46,204,113,.6);
+  }
+
+  /* ── TABS ── */
+  .bc-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 2rem; position: relative; z-index: 2; }
+  .bc-tab {
+    display: flex; align-items: center; gap: .4rem;
+    padding: .48rem 1.1rem; border-radius: 11px;
+    border: 1.5px solid var(--border-card);
+    background: var(--bg-card); color: var(--text-muted);
+    font-family: 'Exo 2', sans-serif; font-size: .8rem; font-weight: 600;
+    letter-spacing: .05em; cursor: pointer; transition: all .22s; text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(34,139,68,.06);
+  }
+  .bc-tab:hover { border-color: var(--green-mid); color: var(--green-main); background: var(--green-soft); }
+  .bc-tab.active {
+    background: linear-gradient(135deg, var(--green-main), var(--green-mid));
+    border-color: var(--green-main); color: #fff;
+    box-shadow: 0 4px 16px rgba(34,139,68,.3);
+  }
+  .tab-count {
+    background: rgba(255,255,255,.25); border-radius: 6px;
+    padding: .05rem .35rem; font-size: .7rem;
+  }
+  .bc-tab:not(.active) .tab-count { background: rgba(34,139,68,.1); color: var(--green-main); }
+
+  /* ── GRID ── */
+  .bc-grid {
+    display: grid; gap: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+    position: relative; z-index: 2;
+  }
+
+  /* ── BADGE CARD ── */
+  .badge-card { perspective: 900px; cursor: pointer; }
+  .badge-card-inner {
+    background: var(--bg-card); border-radius: 22px; overflow: hidden;
+    border: 1.5px solid var(--border-card);
+    box-shadow: var(--shadow-card);
+    transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s;
+  }
+  .badge-card:hover .badge-card-inner {
+    transform: rotateY(5deg) rotateX(-3deg) scale(1.03);
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* Rarity left accent strip */
+  .badge-card[data-rarity="Common"]    .badge-card-inner { border-left: 3px solid var(--common); }
+  .badge-card[data-rarity="Rare"]      .badge-card-inner { border-left: 3px solid var(--rare); box-shadow: var(--shadow-card), -3px 0 16px rgba(8,145,178,.12); }
+  .badge-card[data-rarity="Epic"]      .badge-card-inner { border-left: 3px solid var(--epic); box-shadow: var(--shadow-card), -3px 0 16px rgba(124,58,237,.12); }
+  .badge-card[data-rarity="Legendary"] .badge-card-inner { border-left: 3px solid var(--legendary); box-shadow: var(--shadow-card), -3px 0 20px rgba(230,168,23,.18); }
+  .badge-card[data-rarity="Mythic"]    .badge-card-inner { border-left: 3px solid var(--mythic); box-shadow: var(--shadow-card), -3px 0 20px rgba(220,38,38,.15); }
+
+  /* Legendary shimmer */
+  .badge-card[data-rarity="Legendary"] .badge-card-inner::before,
+  .badge-card[data-rarity="Mythic"]    .badge-card-inner::before {
+    content: ''; position: absolute; inset: 0; z-index: 10; pointer-events: none; border-radius: 22px;
+    background: linear-gradient(115deg, transparent 25%, rgba(255,220,100,.08) 45%, rgba(255,255,255,.1) 55%, transparent 75%);
+    background-size: 200% 200%; animation: holo-shift 3.5s ease infinite;
+  }
+  @keyframes holo-shift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+  /* Card top */
+  .badge-card-top {
+    padding: 1.5rem 1rem 1rem;
+    background: linear-gradient(180deg, var(--green-soft) 0%, #fff 100%);
+    display: flex; flex-direction: column; align-items: center; gap: .65rem; position: relative;
+  }
+
+  /* Rarity pill */
+  .rarity-pill {
+    position: absolute; top: .75rem; left: .75rem;
+    font-size: .6rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    padding: .2rem .55rem; border-radius: 6px;
+  }
+  .rarity-pill.Common    { background: rgba(100,116,139,.1); color: var(--common); border: 1px solid rgba(100,116,139,.3); }
+  .rarity-pill.Rare      { background: rgba(8,145,178,.1);  color: var(--rare);   border: 1px solid rgba(8,145,178,.3); }
+  .rarity-pill.Epic      { background: rgba(124,58,237,.1); color: var(--epic);   border: 1px solid rgba(124,58,237,.3); }
+  .rarity-pill.Legendary { background: rgba(230,168,23,.12); color: var(--legendary); border: 1px solid rgba(230,168,23,.4); }
+  .rarity-pill.Mythic    { background: rgba(220,38,38,.1);  color: var(--mythic); border: 1px solid rgba(220,38,38,.35); }
+
+  /* Earned dot */
+  .earned-dot {
+    position: absolute; top: .8rem; right: .8rem;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--green-mid); box-shadow: 0 0 8px rgba(46,204,113,.6);
+    animation: pulse-dot 2s ease infinite;
+  }
+  @keyframes pulse-dot { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: .5; } }
+
+  /* Badge image */
+  .badge-img-wrap {
+    width: 88px; height: 88px; border-radius: 50%;
+    display: grid; place-items: center; position: relative; flex-shrink: 0;
+  }
+  .badge-img-wrap.earned-wrap {
+    background: radial-gradient(circle, rgba(46,204,113,.12) 0%, transparent 70%);
+    animation: badge-float 4s ease-in-out infinite;
+  }
+  .badge-img-wrap.locked-wrap { filter: grayscale(1) opacity(.6); }
+  @keyframes badge-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+  .badge-img-ring {
+    position: absolute; inset: -5px; border-radius: 50%;
+    border: 2px solid var(--green-mid);
+    box-shadow: 0 0 14px rgba(46,204,113,.3);
+    animation: ring-spin 10s linear infinite;
+  }
+  @keyframes ring-spin { to { transform: rotate(360deg); } }
+
+  .badge-img { width: 72px; height: 72px; object-fit: cover; border-radius: 50%; position: relative; z-index: 1; }
+  .badge-img.locked { filter: grayscale(1) brightness(.7); }
+
+  .lock-overlay {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: rgba(255,255,255,.55); display: grid; place-items: center;
+    font-size: 1.25rem; z-index: 2;
+  }
+
+  /* Card body */
+  .badge-card-body { padding: .8rem 1rem 1rem; }
+  .badge-name { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 1.05rem; text-align: center; margin-bottom: .3rem; color: var(--text-primary); }
+  .badge-name.locked { color: var(--text-muted); }
+  .badge-xp { text-align: center; font-size: .8rem; color: var(--accent-gold); font-weight: 700; margin-bottom: .3rem; }
+  .badge-date { text-align: center; font-size: .7rem; color: var(--text-muted); margin-bottom: .75rem; }
+
+  /* Mini progress */
+  .mini-progress-wrap { margin-bottom: .5rem; }
+  .mini-progress-track { height: 5px; border-radius: 99px; background: rgba(34,139,68,.1); overflow: hidden; margin-bottom: .25rem; }
+  .mini-progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--green-main), var(--green-mid)); }
+  .mini-hint { font-size: .65rem; color: var(--text-muted); text-align: center; }
+
+  /* Actions */
+  .badge-actions { display: flex; gap: .5rem; justify-content: center; }
+  .bc-btn {
+    font-family: 'Exo 2', sans-serif; font-size: .72rem; font-weight: 700;
+    letter-spacing: .06em; border-radius: 9px; border: 1.5px solid;
+    padding: .35rem .75rem; cursor: pointer; transition: all .2s; text-transform: uppercase;
+  }
+  .bc-btn-share { border-color: rgba(34,139,68,.3); color: var(--green-main); background: var(--green-soft); }
+  .bc-btn-share:hover { background: rgba(46,204,113,.15); border-color: var(--green-main); box-shadow: 0 4px 12px rgba(34,139,68,.2); }
+  .bc-btn-view { border-color: rgba(230,168,23,.3); color: var(--accent-gold); background: rgba(230,168,23,.07); }
+  .bc-btn-view:hover { background: rgba(230,168,23,.15); border-color: var(--accent-gold); box-shadow: 0 4px 12px rgba(230,168,23,.2); }
+
+  /* ── PAGINATION ── */
+  .bc-pagination { display: flex; justify-content: center; align-items: center; gap: .75rem; margin-top: 2.5rem; position: relative; z-index: 2; }
+  .bc-page-btn {
+    display: flex; align-items: center; gap: .4rem; padding: .55rem 1.4rem;
+    border-radius: 12px; border: 1.5px solid var(--border-card);
+    background: var(--bg-card); color: var(--text-secondary);
+    font-family: 'Exo 2', sans-serif; font-size: .82rem; font-weight: 600;
+    cursor: pointer; transition: all .22s; box-shadow: 0 2px 8px rgba(34,139,68,.07);
+  }
+  .bc-page-btn:hover { border-color: var(--green-main); color: var(--green-main); background: var(--green-soft); box-shadow: 0 4px 14px rgba(34,139,68,.15); }
+  .bc-page-indicator { font-family: 'Rajdhani', sans-serif; font-size: 1rem; color: var(--text-muted); min-width: 90px; text-align: center; }
+
+  /* ── EMPTY ── */
+  .bc-empty { text-align: center; padding: 4rem 2rem; display: none; position: relative; z-index: 2; }
+  .bc-empty-icon { font-size: 3.5rem; margin-bottom: .75rem; opacity: .4; }
+  .bc-empty-text { color: var(--text-muted); font-size: .9rem; }
+
+  /* ── MODAL ── */
+  .bc-modal-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(26,46,30,.45); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .26s;
+  }
+  .bc-modal-overlay.open { opacity: 1; pointer-events: all; }
+  .bc-modal {
+    background: #fff; border: 1.5px solid var(--border-card);
+    border-radius: 24px; padding: 2rem; max-width: 400px; width: 93%;
+    position: relative; box-shadow: 0 24px 60px rgba(34,139,68,.18);
+    transform: scale(.9) translateY(20px); transition: transform .3s cubic-bezier(.22,1,.36,1);
+    overflow: hidden;
+  }
+  .bc-modal-overlay.open .bc-modal { transform: scale(1) translateY(0); }
+  /* green top accent */
+  .bc-modal::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--green-dark), var(--green-mid));
+  }
+  .modal-close {
+    position: absolute; top: 1.1rem; right: 1.1rem;
+    width: 32px; height: 32px; border-radius: 9px;
+    background: var(--green-soft); border: 1.5px solid var(--border-card);
+    color: var(--text-muted); display: grid; place-items: center;
+    cursor: pointer; transition: all .2s; font-size: .9rem;
+  }
+  .modal-close:hover { background: rgba(34,139,68,.15); color: var(--green-main); }
+  .modal-badge-wrap { text-align: center; margin-bottom: 1.25rem; }
+  .modal-img-ring {
+    width: 110px; height: 110px; border-radius: 50%; margin: 0 auto .75rem;
+    display: grid; place-items: center; position: relative;
+  }
+  .modal-img { width: 90px; height: 90px; object-fit: cover; border-radius: 50%; }
+  .modal-badge-name { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.4rem; color: var(--text-primary); margin-bottom: .2rem; }
+  .modal-desc { color: var(--text-muted); font-size: .875rem; line-height: 1.55; }
+  .modal-meta-row {
+    display: flex; gap: .75rem; margin: 1.25rem 0;
+    background: var(--green-soft); border-radius: 14px; padding: .9rem;
+    border: 1px solid var(--border-light);
+  }
+  .modal-meta-item { flex: 1; text-align: center; }
+  .modal-meta-label { font-size: .63rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); margin-bottom: .2rem; }
+  .modal-meta-val { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--text-primary); }
+  .modal-actions { display: flex; gap: .65rem; }
+  .modal-btn {
+    flex: 1; font-family: 'Exo 2', sans-serif; font-size: .8rem; font-weight: 700;
+    letter-spacing: .07em; text-transform: uppercase; padding: .65rem;
+    border-radius: 12px; border: 1.5px solid; cursor: pointer; transition: all .22s;
+  }
+  .modal-btn-copy { border-color: rgba(34,139,68,.3); color: var(--green-main); background: var(--green-soft); }
+  .modal-btn-copy:hover { background: rgba(46,204,113,.2); border-color: var(--green-main); box-shadow: 0 4px 14px rgba(34,139,68,.2); }
+  .modal-btn-dl { border-color: rgba(230,168,23,.35); color: var(--accent-gold); background: rgba(230,168,23,.07); }
+  .modal-btn-dl:hover { background: rgba(230,168,23,.15); border-color: var(--accent-gold); box-shadow: 0 4px 14px rgba(230,168,23,.2); }
+
+  /* ── TOAST ── */
+  .bc-toast {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 99999;
+    background: #fff; border: 1.5px solid var(--border-card);
+    border-radius: 14px; padding: .8rem 1.2rem;
+    font-size: .85rem; color: var(--text-primary);
+    box-shadow: 0 8px 28px rgba(34,139,68,.18);
+    display: flex; align-items: center; gap: .6rem;
+    transform: translateY(80px); opacity: 0; transition: all .3s cubic-bezier(.22,1,.36,1);
+    pointer-events: none;
+  }
+  .bc-toast.show { transform: translateY(0); opacity: 1; }
+  .toast-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg,var(--green-main),var(--green-mid)); border-radius: 99px; animation: toast-bar 2.8s linear forwards; }
+  @keyframes toast-bar { from { width: 100%; } to { width: 0%; } }
+
+  /* ── PARTICLES ── */
+  #bc-particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+  /* ── FADE IN ── */
+  @keyframes fade-slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .badge-card { animation: fade-slide-up .42s ease both; }
+
+  @media (max-width: 640px) {
+    .bc-header { flex-direction: column; align-items: flex-start; }
+    .bc-controls, .bc-search { width: 100%; }
+  }
+</style>
+
+<!-- Particle canvas (light green dots) -->
+<canvas id="bc-particles"></canvas>
+<div class="bc-mesh"></div>
+
+<div class="bc-page">
+
+  <!-- HEADER -->
+  <div class="bc-header">
+    <div class="bc-title-group">
+      <div class="bc-title-icon">🌿</div>
+      <div>
+        <div class="bc-title">Badge Collection</div>
+        <div class="bc-subtitle">Your Achievement Vault</div>
+      </div>
+    </div>
+    <div class="bc-controls">
+      <div class="bc-search-wrap">
+        <i class="bi bi-search"></i>
+        <input type="text" id="searchBadge" class="bc-search" placeholder="Search badges…">
+      </div>
+      <select id="rarityFilter" class="bc-select">
+        <option value="">All Rarities</option>
+        <option value="Common">Common</option>
+        <option value="Rare">Rare</option>
+        <option value="Epic">Epic</option>
+        <option value="Legendary">Legendary</option>
+        <option value="Mythic">Mythic</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="bc-stats">
+    <div class="stat-card">
+      <div class="stat-icon s-gold">🏅</div>
+      <div>
+        <div class="stat-label">Earned</div>
+        <div class="stat-value" style="color:var(--accent-gold)">{{ badges.earned|length }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon s-green">🔒</div>
+      <div>
+        <div class="stat-label">Locked</div>
+        <div class="stat-value" style="color:var(--green-main)">{{ badges.locked|length }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon s-purple">⚡</div>
+      <div>
+        <div class="stat-label">Total XP</div>
+        {% set total_xp = badges.earned | sum(attribute='xp') %}
+        <div class="stat-value" style="color:var(--accent-purple)">{{ total_xp }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon s-teal">📈</div>
+      <div>
+        {% set total = badges.earned|length + badges.locked|length %}
+        {% set pct = ((badges.earned|length / total * 100) if total else 0)|round(1) %}
+        <div class="stat-label">Completion</div>
+        <div class="stat-value" style="color:var(--accent-teal)">{{ pct }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="bc-progress-wrap">
+    <div class="bc-progress-info">
+      <span class="bc-progress-label">Collection Progress</span>
+      <span class="bc-progress-pct">{{ pct }}% Collected</span>
+    </div>
+    <div class="bc-progress-track">
+      <div class="bc-progress-fill" id="mainProgressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="bc-tabs">
+    <button class="bc-tab active" data-filter="">✦ All <span class="tab-count" id="tab-all">0</span></button>
+    <button class="bc-tab" data-filter="XP">⚡ XP <span class="tab-count" id="tab-xp">0</span></button>
+    <button class="bc-tab" data-filter="Event">🎪 Event <span class="tab-count" id="tab-event">0</span></button>
+    <button class="bc-tab" data-filter="Milestone">🏆 Milestone <span class="tab-count" id="tab-milestone">0</span></button>
+    <button class="bc-tab" data-filter="__earned__">✅ Earned <span class="tab-count" id="tab-earned">{{ badges.earned|length }}</span></button>
+    <button class="bc-tab" data-filter="__locked__">🔒 Locked <span class="tab-count" id="tab-locked">{{ badges.locked|length }}</span></button>
+  </div>
+
+  <!-- GRID -->
+  <div class="bc-grid" id="badgeContainer">
+
+    {% for badge in badges.earned %}
+    <div class="badge-card"
+         data-name="{{ badge.name|lower }}"
+         data-category="{{ badge.category }}"
+         data-rarity="{{ badge.rarity or 'Common' }}"
+         data-earned="true"
+         style="animation-delay:{{ loop.index0 * 0.06 }}s"
+         onclick="openModal(this)">
+      <div class="badge-card-inner">
+        <div class="badge-card-top">
+          <span class="rarity-pill {{ badge.rarity or 'Common' }}">{{ badge.rarity or 'Common' }}</span>
+          <span class="earned-dot"></span>
+          <div class="badge-img-wrap earned-wrap">
+            <div class="badge-img-ring"></div>
+            <img src="{{ badge.icon_url }}" class="badge-img" alt="{{ badge.name }}"
+                 data-name="{{ badge.name }}"
+                 data-desc="{{ badge.description }}"
+                 data-xp="{{ badge.xp or 0 }}"
+                 data-rarity="{{ badge.rarity or 'Common' }}"
+                 data-date="{% if badge.earned_date %}{{ badge.earned_date.strftime('%b %d, %Y') }}{% else %}—{% endif %}"
+                 data-id="{{ badge.id }}"
+                 data-src="{{ badge.icon_url }}">
+          </div>
+        </div>
+        <div class="badge-card-body">
+          <div class="badge-name">{{ badge.name }}</div>
+          <div class="badge-xp">⚡ {{ badge.xp or 0 }} XP</div>
+          <div class="badge-date">
+            {% if badge.earned_date %}🗓 {{ badge.earned_date.strftime('%b %d, %Y') }}
+            {% else %}<span style="color:var(--text-muted)">Not earned yet</span>{% endif %}
+          </div>
+          <div class="badge-actions" onclick="event.stopPropagation()">
+            <button class="bc-btn bc-btn-share" data-id="{{ badge.id }}">🔗 Share</button>
+            <button class="bc-btn bc-btn-view">👁 View</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% for badge in badges.locked %}
+    <div class="badge-card"
+         data-name="{{ badge.name|lower }}"
+         data-category="{{ badge.category }}"
+         data-rarity="{{ badge.rarity or 'Common' }}"
+         data-earned="false"
+         style="animation-delay:{{ (badges.earned|length + loop.index0) * 0.06 }}s"
+         onclick="openModal(this)">
+      <div class="badge-card-inner">
+        <div class="badge-card-top">
+          <span class="rarity-pill {{ badge.rarity or 'Common' }}">{{ badge.rarity or 'Common' }}</span>
+          <div class="badge-img-wrap locked-wrap">
+            <img src="{{ badge.icon_url }}" class="badge-img locked" alt="{{ badge.name }}"
+                 data-name="{{ badge.name }}"
+                 data-desc="{{ badge.description }}"
+                 data-xp="{{ badge.xp or 0 }}"
+                 data-rarity="{{ badge.rarity or 'Common' }}"
+                 data-date="Locked"
+                 data-id="{{ badge.id }}"
+                 data-src="{{ badge.icon_url }}">
+            <div class="lock-overlay">🔒</div>
+          </div>
+        </div>
+        <div class="badge-card-body">
+          <div class="badge-name locked">{{ badge.name }}</div>
+          <div class="badge-xp" style="color:var(--text-muted)">⚡ {{ badge.xp or 0 }} XP</div>
+          {% if badge.progress %}
+          <div class="mini-progress-wrap">
+            <div class="mini-progress-track">
+              <div class="mini-progress-fill" style="width:{{ badge.progress }}%"></div>
+            </div>
+            <div class="mini-hint">{{ badge.hint }}</div>
+          </div>
+          {% else %}
+          <div class="badge-date">🔒 Locked</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+
+  <!-- EMPTY -->
+  <div class="bc-empty" id="emptyState">
+    <div class="bc-empty-icon">🔍</div>
+    <div class="bc-empty-text">No badges match your criteria.</div>
+  </div>
+
+  <!-- PAGINATION -->
+  <div class="bc-pagination">
+    <button class="bc-page-btn" id="prevPage">← Prev</button>
+    <div class="bc-page-indicator" id="pageIndicator">Page 1</div>
+    <button class="bc-page-btn" id="nextPage">Next →</button>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="bc-modal-overlay" id="badgeModal">
+  <div class="bc-modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-badge-wrap">
+      <div class="modal-img-ring" id="modalImgRing">
+        <img class="modal-img" id="modalImg" src="" alt="">
+      </div>
+      <div class="modal-badge-name" id="modalName"></div>
+      <div class="modal-desc" id="modalDesc"></div>
+    </div>
+    <div class="modal-meta-row">
+      <div class="modal-meta-item">
+        <div class="modal-meta-label">Rarity</div>
+        <div class="modal-meta-val" id="modalRarity"></div>
+      </div>
+      <div class="modal-meta-item">
+        <div class="modal-meta-label">XP Reward</div>
+        <div class="modal-meta-val" id="modalXP"></div>
+      </div>
+      <div class="modal-meta-item">
+        <div class="modal-meta-label">Earned</div>
+        <div class="modal-meta-val" id="modalDate"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-copy" id="modalCopy">🔗 Copy Link</button>
+      <a class="modal-btn modal-btn-dl" id="modalDl" download target="_blank">⬇️ Download</a>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="bc-toast" id="bcToast">
+  <span id="toastIcon">✅</span>
+  <span id="toastMsg">Done!</span>
+  <div class="toast-bar" id="toastBar"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const BADGES_PER_PAGE = 8;
+let currentPage = 1, activeFilter = '', activeRarity = '', searchKw = '';
+const allCards   = Array.from(document.querySelectorAll('.badge-card'));
+const emptyState = document.getElementById('emptyState');
+const pageInd    = document.getElementById('pageIndicator');
+
+/* Tab counts */
+function updateTabCounts() {
+  const c = { '':0, XP:0, Event:0, Milestone:0 };
+  allCards.forEach(card => { c['']++; if(c[card.dataset.category]!==undefined) c[card.dataset.category]++; });
+  document.getElementById('tab-all').textContent       = c[''];
+  document.getElementById('tab-xp').textContent        = c['XP']||0;
+  document.getElementById('tab-event').textContent     = c['Event']||0;
+  document.getElementById('tab-milestone').textContent = c['Milestone']||0;
+}
+updateTabCounts();
+
+function getVisible() {
+  return allCards.filter(c => {
+    const nameOk   = c.dataset.name.includes(searchKw);
+    const rarityOk = !activeRarity || c.dataset.rarity === activeRarity;
+    let catOk = true;
+    if      (activeFilter === '__earned__') catOk = c.dataset.earned === 'true';
+    else if (activeFilter === '__locked__') catOk = c.dataset.earned === 'false';
+    else if (activeFilter)                 catOk = c.dataset.category === activeFilter;
+    return nameOk && rarityOk && catOk;
+  });
+}
+
+function render() {
+  const vis = getVisible();
+  const total = Math.max(1, Math.ceil(vis.length / BADGES_PER_PAGE));
+  currentPage = Math.min(currentPage, total);
+  allCards.forEach(c => c.style.display = 'none');
+  vis.slice((currentPage-1)*BADGES_PER_PAGE, currentPage*BADGES_PER_PAGE).forEach((c,i) => {
+    c.style.display = '';
+    c.style.animation = 'none'; void c.offsetWidth;
+    c.style.animation = `fade-slide-up .42s ease ${i*.055}s both`;
+  });
+  emptyState.style.display = vis.length ? 'none' : 'block';
+  pageInd.textContent = `Page ${currentPage} / ${total}`;
+}
+
+document.getElementById('searchBadge').addEventListener('input', e => { searchKw = e.target.value.toLowerCase(); currentPage=1; render(); });
+document.getElementById('rarityFilter').addEventListener('change', e => { activeRarity = e.target.value; currentPage=1; render(); });
+document.querySelectorAll('.bc-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.bc-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active'); activeFilter = tab.dataset.filter; currentPage=1; render();
+  });
+});
+document.getElementById('nextPage').onclick = () => { if(currentPage < Math.ceil(getVisible().length/BADGES_PER_PAGE)){ currentPage++; render(); } };
+document.getElementById('prevPage').onclick  = () => { if(currentPage > 1){ currentPage--; render(); } };
+
+/* Progress animate */
+const pct = parseFloat('{{ pct }}') || 0;
+setTimeout(() => { document.getElementById('mainProgressFill').style.width = pct + '%'; }, 500);
+
+/* Share */
+document.querySelectorAll('.bc-btn-share').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(`${location.origin}/badge/${btn.dataset.id}`).then(() => {
+      btn.textContent = '✅ Copied!';
+      showToast('✅', 'Link copied to clipboard!');
+      setTimeout(() => btn.textContent = '🔗 Share', 2000);
+    });
+  });
+});
+
+/* Toast */
+function showToast(icon, msg) {
+  const t = document.getElementById('bcToast');
+  const b = document.getElementById('toastBar');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastMsg').textContent  = msg;
+  b.style.animation = 'none'; void b.offsetWidth; b.style.animation = 'toast-bar 2.8s linear forwards';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* Modal */
+const modalOverlay = document.getElementById('badgeModal');
+function openModal(card) { populateModal(card.querySelector('.badge-img')); }
+function populateModal(img) {
+  document.getElementById('modalImg').src          = img.dataset.src || img.src;
+  document.getElementById('modalName').textContent = img.dataset.name;
+  document.getElementById('modalDesc').textContent = img.dataset.desc || '—';
+  document.getElementById('modalRarity').textContent = img.dataset.rarity;
+  document.getElementById('modalXP').textContent   = img.dataset.xp + ' XP';
+  document.getElementById('modalDate').textContent = img.dataset.date || '—';
+
+  const ring = document.getElementById('modalImgRing');
+  const rarityColors = { Common:'#64748b', Rare:'#0891b2', Epic:'#7c3aed', Legendary:'#e6a817', Mythic:'#dc2626' };
+  const col = rarityColors[img.dataset.rarity] || '#228b44';
+  ring.style.boxShadow = `0 0 28px ${col}44, 0 0 56px ${col}22`;
+  ring.style.border = `2.5px solid ${col}`;
+
+  document.getElementById('modalCopy').onclick = () => {
+    if(img.dataset.id) { navigator.clipboard.writeText(`${location.origin}/badge/${img.dataset.id}`); showToast('✅', 'Badge link copied!'); }
+  };
+  document.getElementById('modalDl').href = img.dataset.src || img.src;
+  modalOverlay.classList.add('open');
+}
+document.getElementById('modalClose').onclick = () => modalOverlay.classList.remove('open');
+modalOverlay.addEventListener('click', e => { if(e.target===modalOverlay) modalOverlay.classList.remove('open'); });
+
+/* Light green particles */
+(function(){
+  const canvas = document.getElementById('bc-particles');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  const pts = Array.from({length:45}, () => ({
+    x: Math.random()*2000, y: Math.random()*1200,
+    vx:(Math.random()-.5)*.2, vy:(Math.random()-.5)*.2,
+    r: Math.random()*1.8+.5, a: Math.random()
+  }));
+  function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p => {
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=W; if(p.x>W)p.x=0; if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(46,180,100,${p.a*0.28})`; ctx.fill();
+    });
+    for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<120){ ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y);
+        ctx.strokeStyle=`rgba(34,139,68,${(1-d/120)*.06})`; ctx.lineWidth=.6; ctx.stroke(); }
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+if(typeof socket !== 'undefined'){
+  socket.on('badge_unlocked', d => { showToast('🎉',`Badge unlocked: ${d.name||''}!`); setTimeout(()=>location.reload(),1800); });
+}
+
+render();
+</script>
+{% endblock %}

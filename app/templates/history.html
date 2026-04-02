@@ -1,0 +1,1813 @@
+{% extends 'base.html' %}
+{% block title %}History — ReEarth{% endblock %}
+{% block page_title %}Event History{% endblock %}
+{% block page_subtitle %}Past & Created Events{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile.t-red::before {
+    background: #ef4444;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .04s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .08s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .12s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .16s;
+  }
+
+  .tile:nth-child(5) {
+    animation-delay: .20s;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .tile.t-red .tile-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── MAIN GRID ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* ── CHART CARD ── */
+  .chart-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .18s ease both;
+  }
+
+  .chart-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .chart-big-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.04em;
+    line-height: 1;
+  }
+
+  .chart-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 99px;
+    margin-top: 8px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .time-tabs {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .time-tab {
+    padding: 6px 13px;
+    border-radius: 7px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .time-tab.active {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .3);
+  }
+
+  .chart-body {
+    position: relative;
+    width: 100%;
+    height: 200px;
+  }
+
+  .chart-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ── BREAKDOWN CARD ── */
+  .breakdown-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .22s ease both;
+  }
+
+  .bc-title {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .bc-title i {
+    color: #16a34a;
+    font-size: .9rem;
+  }
+
+  .doughnut-wrap {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    margin-bottom: 16px;
+  }
+
+  .doughnut-wrap canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .bc-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bc-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .76rem;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .bc-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .bc-legend-val {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: #111827;
+    font-size: .78rem;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    animation: fadeUp .4s .26s ease both;
+  }
+
+  .toolbar-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .toolbar-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .85rem;
+  }
+
+  .toolbar-search input {
+    width: 100%;
+    padding: 8px 14px 8px 34px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    color: #111827;
+    outline: none;
+    background: #f9fafb;
+    transition: all .18s;
+  }
+
+  .toolbar-search input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .toolbar-search input::placeholder {
+    color: #9ca3af;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .fpill {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .fpill:hover:not(.active) {
+    color: #16a34a;
+  }
+
+  .fpill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .sort-select {
+    padding: 7px 32px 7px 12px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    outline: none;
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    appearance: none;
+    transition: all .18s;
+  }
+
+  .sort-select:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .vtbtn {
+    width: 32px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: .85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .vtbtn.active {
+    background: #fff;
+    color: #374151;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+  }
+
+  .export-group {
+    display: flex;
+    gap: 6px;
+  }
+
+  .export-btn {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    font-size: .76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all .18s;
+  }
+
+  .export-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .record-count {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+  }
+
+  /* ── GRID VIEW ── */
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .3s ease both;
+  }
+
+  .hist-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 18px;
+    padding: 20px;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .hist-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0 3px 3px 0;
+  }
+
+  .hist-card.created::before {
+    background: #3b82f6;
+  }
+
+  .hist-card.booked::before {
+    background: #22c55e;
+  }
+
+  .hist-card:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .12);
+    transform: translateY(-2px);
+  }
+
+  .hist-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .hist-type-badge {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .hb-created {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .hb-booked {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .hist-date-box {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .hist-date-day {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1;
+  }
+
+  .hist-date-month {
+    font-size: .68rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .hist-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+
+  .hist-meta-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+
+  .hist-meta {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .75rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .hist-meta i {
+    color: #16a34a;
+    width: 14px;
+    flex-shrink: 0;
+  }
+
+  .hist-log {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: .72rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    border-left: 3px solid #e4ece6;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+
+  .hist-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .hist-btn {
+    flex: 1;
+    height: 32px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all .18s;
+  }
+
+  .hbtn-detail {
+    background: #f0fdf4;
+    color: #16a34a;
+    border-color: #dcfce7;
+  }
+
+  .hbtn-detail:hover {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  /* ── TABLE VIEW ── */
+  .hist-table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    margin-bottom: 20px;
+    animation: fadeUp .4s .3s ease both;
+  }
+
+  .hist-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .hist-table thead th {
+    padding: 11px 20px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .hist-table thead th:hover {
+    color: #16a34a;
+  }
+
+  .hist-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+    cursor: pointer;
+  }
+
+  .hist-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .hist-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .hist-table tbody td {
+    padding: 13px 20px;
+    font-size: .8rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .td-num {
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .76rem;
+    font-weight: 600;
+  }
+
+  .td-event-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .td-event-loc {
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .td-type-pill {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .ttp-created {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .ttp-booked {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .td-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .76rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .td-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+    transition: all .18s;
+  }
+
+  .td-icon-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  /* ── TIMELINE VIEW ── */
+  .timeline-wrap {
+    padding: 8px 0;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .3s ease both;
+  }
+
+  .timeline-year-group {
+    margin-bottom: 32px;
+  }
+
+  .timeline-year-label {
+    font-size: .64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    padding: 0 0 10px 36px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .timeline-year-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #f3f4f6;
+  }
+
+  .timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+    position: relative;
+    padding-left: 36px;
+  }
+
+  .tl-dot-col {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tl-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .6rem;
+    color: #fff;
+    font-weight: 700;
+    z-index: 1;
+  }
+
+  .tl-dot.created {
+    background: #3b82f6;
+  }
+
+  .tl-dot.booked {
+    background: #16a34a;
+  }
+
+  .tl-line {
+    width: 2px;
+    flex: 1;
+    background: #f3f4f6;
+    min-height: 24px;
+    margin-top: 2px;
+  }
+
+  .tl-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 14px;
+    padding: 14px 16px;
+    flex: 1;
+    transition: box-shadow .2s, transform .2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .03);
+    animation: slideIn .35s ease both;
+  }
+
+  .tl-card:hover {
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .1);
+    transform: translateX(4px);
+  }
+
+  .tl-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .tl-card-title {
+    font-size: .84rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .tl-card-date {
+    font-size: .68rem;
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tl-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .72rem;
+    color: #6b7280;
+    flex-wrap: wrap;
+  }
+
+  .tl-card-meta i {
+    color: #16a34a;
+  }
+
+  /* ── EMPTY STATE ── */
+  .hist-empty {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 60px 24px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .3s ease both;
+  }
+
+  .hist-empty-icon {
+    font-size: 3rem;
+    opacity: .2;
+    margin-bottom: 12px;
+  }
+
+  .hist-empty h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .hist-empty p {
+    font-size: .82rem;
+    color: #9ca3af;
+    margin-bottom: 20px;
+  }
+
+  .hist-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 22px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    text-decoration: none;
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .hist-empty-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .38);
+    color: #fff;
+  }
+
+  /* ── DETAIL MODAL ── */
+  .hist-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .hist-modal-overlay.open {
+    display: flex;
+  }
+
+  .hist-modal {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .18);
+    overflow: hidden;
+    animation: fadeUp .25s cubic-bezier(.34, 1.56, .64, 1) both;
+  }
+
+  .hist-modal-top {
+    padding: 24px 24px 20px;
+    position: relative;
+  }
+
+  .hist-modal-top.created {
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    color: #fff;
+  }
+
+  .hist-modal-top.booked {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+  }
+
+  .hist-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background .18s;
+  }
+
+  .hist-modal-close:hover {
+    background: rgba(255, 255, 255, .35);
+  }
+
+  .hist-modal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, .2);
+    border-radius: 99px;
+    padding: 4px 12px;
+    font-size: .7rem;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 10px;
+  }
+
+  .hist-modal-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 4px;
+  }
+
+  .hist-modal-sub {
+    font-size: .76rem;
+    opacity: .8;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .hist-modal-body {
+    padding: 20px 24px;
+  }
+
+  .hist-modal-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: .82rem;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .hist-modal-row i {
+    width: 20px;
+    color: #16a34a;
+    font-size: .9rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .hist-modal-divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 16px 0;
+  }
+
+  .hist-modal-log {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: .78rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    border-left: 3px solid #e4ece6;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .hist-modal-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .hist-modal-btn {
+    flex: 1;
+    height: 40px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all .2s;
+  }
+
+  .hmb-primary {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+  }
+
+  .hmb-primary:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .hmb-outline {
+    background: #fff;
+    border: 1.5px solid #e4ece6 !important;
+    color: #374151;
+  }
+
+  .hmb-outline:hover {
+    border-color: #9ca3af !important;
+  }
+
+  @media (max-width: 1200px) {
+    .stat-tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .main-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .page-content {
+      padding: 16px;
+    }
+
+    .history-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Compute stats from Jinja -->
+{% set total = history_records | length %}
+{% set created_ct = history_records | selectattr('type', 'equalto', 'created') | list | length %}
+{% set booked_ct = history_records | selectattr('type', 'equalto', 'booked') | list | length %}
+{% set past_ct = history_records | selectattr('status','equalto', 'past') | list | length %}
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="tile-val">{{ total }}</div>
+    <div class="tile-lbl">Total Events</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-plus-circle-fill"></i></div>
+    <div class="tile-val">{{ created_ct }}</div>
+    <div class="tile-lbl">Created</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-calendar-check-fill"></i></div>
+    <div class="tile-val">{{ booked_ct }}</div>
+    <div class="tile-lbl">Booked</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-archive-fill"></i></div>
+    <div class="tile-val">{{ past_ct }}</div>
+    <div class="tile-lbl">Past</div>
+  </div>
+  <div class="tile t-red">
+    <div class="tile-icon"><i class="bi bi-bar-chart-fill"></i></div>
+    <div class="tile-val" id="tileActive">—</div>
+    <div class="tile-lbl">This Month</div>
+  </div>
+</div>
+
+{% if history_records %}
+
+<!-- MAIN GRID: Chart + Breakdown -->
+<div class="main-grid">
+  <!-- Activity chart -->
+  <div class="chart-card">
+    <div class="chart-head">
+      <div>
+        <div class="chart-big-val">{{ total }} Events</div>
+        <div class="chart-pill">
+          <i class="bi bi-arrow-up-short"></i>
+          {{ created_ct }} Created · {{ booked_ct }} Booked
+        </div>
+      </div>
+      <div class="time-tabs">
+        <button class="time-tab" data-range="3">3M</button>
+        <button class="time-tab active" data-range="6">6M</button>
+        <button class="time-tab" data-range="12">1Y</button>
+        <button class="time-tab" data-range="0">All</button>
+      </div>
+    </div>
+    <div class="chart-body">
+      <canvas id="activityChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Breakdown doughnut -->
+  <div class="breakdown-card">
+    <div class="bc-title"><i class="bi bi-pie-chart-fill"></i> Type Breakdown</div>
+    <div class="doughnut-wrap">
+      <canvas id="breakdownChart"></canvas>
+    </div>
+    <div class="bc-legend">
+      <div class="bc-legend-item">
+        <div class="bc-dot" style="background:#3b82f6;"></div>
+        <span>Created Events</span>
+        <span class="bc-legend-val">{{ created_ct }}</span>
+      </div>
+      <div class="bc-legend-item">
+        <div class="bc-dot" style="background:#16a34a;"></div>
+        <span>Booked Events</span>
+        <span class="bc-legend-val">{{ booked_ct }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar-card">
+  <div class="toolbar-search">
+    <i class="bi bi-search"></i>
+    <input type="text" id="histSearch" placeholder="Search events, locations...">
+  </div>
+  <div class="filter-group">
+    <button class="fpill active" data-filter="all">All</button>
+    <button class="fpill" data-filter="created">Created</button>
+    <button class="fpill" data-filter="booked">Booked</button>
+  </div>
+  <select class="sort-select" id="histSort">
+    <option value="newest">Newest First</option>
+    <option value="oldest">Oldest First</option>
+    <option value="title">Event Name A–Z</option>
+    <option value="location">By Location</option>
+  </select>
+  <div class="view-toggle">
+    <button class="vtbtn active" id="gridViewBtn" title="Grid"><i class="bi bi-grid-fill"></i></button>
+    <button class="vtbtn" id="tableViewBtn" title="Table"><i class="bi bi-list-ul"></i></button>
+    <button class="vtbtn" id="timelineViewBtn" title="Timeline"><i class="bi bi-layout-text-sidebar"></i></button>
+  </div>
+  <div class="export-group">
+    <button class="export-btn" id="exportCsvBtn"><i class="bi bi-filetype-csv"></i> CSV</button>
+    <button class="export-btn" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+  </div>
+  <div class="record-count"><span id="recordCount">{{ total }}</span> records</div>
+</div>
+
+<!-- Build JS data array from Jinja -->
+<script id="historyDataScript" type="application/json">
+[{% for record in history_records %}
+  {
+    "title":     {{ record.title | tojson }},
+    "type":      {{ record.type  | tojson }},
+    "status":    {{ record.status| tojson }},
+    "location":  {{ record.location | tojson }},
+    "date":      {{ record.date.strftime('%Y-%m-%d') | tojson }},
+    "dateLabel": {{ record.date.strftime('%d %b %Y, %I:%M %p') | tojson }},
+    "day":       {{ record.date.strftime('%d') | tojson }},
+    "month":     {{ record.date.strftime('%b %Y') | tojson }},
+    "timestamp": {{ record.timestamp.strftime('%d %b %Y, %I:%M %p') | tojson }},
+    "action":    {{ record.action | tojson }}
+  }{% if not loop.last %},{% endif %}
+{% endfor %}]
+</script>
+
+<!-- GRID VIEW -->
+<div id="gridView">
+  <div class="history-grid" id="historyGrid">
+    {% for record in history_records %}
+    <div class="hist-card {{ record.type }}" data-type="{{ record.type }}" data-title="{{ record.title | lower }}"
+      data-location="{{ record.location | lower }}" data-date="{{ record.date.strftime('%Y-%m-%d') }}"
+      onclick="openHistModal({{ loop.index0 }})">
+      <div class="hist-card-top">
+        <span class="hist-type-badge {% if record.type == 'created' %}hb-created{% else %}hb-booked{% endif %}">
+          <i
+            class="bi bi-{% if record.type == 'created' %}plus-circle-fill{% else %}calendar-check-fill{% endif %}"></i>
+          {{ record.type | capitalize }}
+        </span>
+        <div class="hist-date-box">
+          <div class="hist-date-day">{{ record.date.strftime('%d') }}</div>
+          <div class="hist-date-month">{{ record.date.strftime('%b %Y') }}</div>
+        </div>
+      </div>
+      <div class="hist-title">{{ record.title }}</div>
+      <div class="hist-meta-list">
+        <div class="hist-meta"><i class="bi bi-geo-alt-fill"></i><span>{{ record.location }}</span></div>
+        <div class="hist-meta"><i class="bi bi-calendar3"></i><span>{{ record.date.strftime('%d %b %Y, %I:%M %p')
+            }}</span></div>
+        <div class="hist-meta"><i class="bi bi-clock-history"></i><span>Logged: {{ record.timestamp.strftime('%d %b %Y')
+            }}</span></div>
+      </div>
+      <div class="hist-log">{{ record.action }}</div>
+      <div class="hist-actions">
+        <button class="hist-btn hbtn-detail" onclick="event.stopPropagation(); openHistModal({{ loop.index0 }})">
+          <i class="bi bi-eye"></i> Details
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="hist-empty" id="gridEmpty" style="display:none;">
+    <div class="hist-empty-icon"><i class="bi bi-calendar-x"></i></div>
+    <h3>No events match your filter</h3>
+    <p>Try adjusting your search or filter criteria.</p>
+  </div>
+</div>
+
+<!-- TABLE VIEW -->
+<div id="tableView" style="display:none;">
+  <div class="hist-table-card">
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Event Title</th>
+          <th>Type</th>
+          <th>Date</th>
+          <th>Location</th>
+          <th>Logged</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="histTableBody">
+        {% for record in history_records %}
+        <tr data-type="{{ record.type }}" data-title="{{ record.title | lower }}"
+          data-location="{{ record.location | lower }}" data-date="{{ record.date.strftime('%Y-%m-%d') }}"
+          onclick="openHistModal({{ loop.index0 }})">
+          <td class="td-num">{{ '%02d' % loop.index }}</td>
+          <td>
+            <div class="td-event-name">{{ record.title }}</div>
+            <div class="td-event-loc">{{ record.action }}</div>
+          </td>
+          <td>
+            <span class="td-type-pill {% if record.type == 'created' %}ttp-created{% else %}ttp-booked{% endif %}">
+              <i
+                class="bi bi-{% if record.type == 'created' %}plus-circle-fill{% else %}calendar-check-fill{% endif %}"></i>
+              {{ record.type | capitalize }}
+            </span>
+          </td>
+          <td class="td-mono">{{ record.date.strftime('%d %b %Y') }}</td>
+          <td
+            style="font-size:.76rem; color:#6b7280; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            {{ record.location }}</td>
+          <td class="td-mono" style="font-size:.72rem;">{{ record.timestamp.strftime('%d %b %Y') }}</td>
+          <td>
+            <button class="td-icon-btn" onclick="event.stopPropagation(); openHistModal({{ loop.index0 }})"
+              title="View details">
+              <i class="bi bi-eye"></i>
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="hist-empty" id="tableEmpty" style="display:none; border:none; border-radius:0;">
+      <div class="hist-empty-icon"><i class="bi bi-calendar-x"></i></div>
+      <h3>No events match your filter</h3>
+      <p>Try adjusting your search or filter criteria.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TIMELINE VIEW -->
+<div id="timelineView" style="display:none;">
+  <div class="timeline-wrap" id="timelineWrap"></div>
+  <div class="hist-empty" id="timelineEmpty" style="display:none;">
+    <div class="hist-empty-icon"><i class="bi bi-calendar-x"></i></div>
+    <h3>No events match your filter</h3>
+    <p>Try adjusting your search or filter criteria.</p>
+  </div>
+</div>
+
+{% else %}
+<!-- EMPTY STATE -->
+<div class="hist-empty">
+  <div class="hist-empty-icon"><i class="bi bi-clock-history"></i></div>
+  <h3>No Past Events Yet</h3>
+  <p>Your event history will appear here once you join or create events.</p>
+  <a href="{{ url_for('dashboard.home') }}" class="hist-empty-btn">
+    <i class="bi bi-compass"></i> Browse Events
+  </a>
+</div>
+{% endif %}
+
+<!-- DETAIL MODAL -->
+<div class="hist-modal-overlay" id="histModalOverlay">
+  <div class="hist-modal">
+    <div class="hist-modal-top created" id="histModalTop">
+      <button class="hist-modal-close" id="histModalClose"><i class="bi bi-x-lg"></i></button>
+      <div class="hist-modal-badge" id="histModalBadge"><i class="bi bi-circle"></i> Type</div>
+      <div class="hist-modal-title" id="histModalTitle">Event Title</div>
+      <div class="hist-modal-sub" id="histModalSub">Date</div>
+    </div>
+    <div class="hist-modal-body">
+      <div class="hist-modal-row"><i class="bi bi-geo-alt-fill"></i><span id="histModalLoc">—</span></div>
+      <div class="hist-modal-row"><i class="bi bi-calendar3"></i><span id="histModalDate">—</span></div>
+      <div class="hist-modal-row"><i class="bi bi-clock"></i><span id="histModalLogged">—</span></div>
+      <div class="hist-modal-divider"></div>
+      <div class="hist-modal-log" id="histModalLog">—</div>
+      <div class="hist-modal-actions">
+        <button class="hist-modal-btn hmb-outline" id="histModalCloseBtn"><i class="bi bi-x"></i> Close</button>
+        <button class="hist-modal-btn hmb-primary" onclick="window.location.href='{{ url_for('dashboard.home') }}'">
+          <i class="bi bi-compass"></i> Browse Events
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    /* ── Parse data from Jinja ─────────────────────────────── */
+    const RAW = JSON.parse(document.getElementById('historyDataScript')?.textContent || '[]');
+
+    /* ── This-month count ─────────────────────────────────── */
+    const now = new Date();
+    const thisMonth = now.toISOString().slice(0, 7);
+    const thisMonthCount = RAW.filter(r => r.date.startsWith(thisMonth)).length;
+    document.getElementById('tileActive').textContent = thisMonthCount;
+
+    /* ── Activity Line Chart ──────────────────────────────── */
+    (function () {
+      const el = document.getElementById('activityChart');
+      if (!el || !RAW.length) return;
+
+      function buildMonthlyData(monthsBack) {
+        const buckets = {};
+        const now = new Date();
+        const cutoff = monthsBack > 0 ? new Date(now.getFullYear(), now.getMonth() - monthsBack + 1, 1) : null;
+        RAW.forEach(r => {
+          const d = new Date(r.date);
+          if (cutoff && d < cutoff) return;
+          const key = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+          buckets[key] = buckets[key] || { created: 0, booked: 0 };
+          buckets[key][r.type]++;
+        });
+        const labels = Object.keys(buckets);
+        const created = labels.map(k => buckets[k].created);
+        const booked = labels.map(k => buckets[k].booked);
+        return { labels, created, booked };
+      }
+
+      let { labels, created, booked } = buildMonthlyData(6);
+      const hasData = labels.length > 0;
+
+      const chartData = {
+        labels: hasData ? labels : ['No data'],
+        datasets: [
+          {
+            label: 'Created',
+            data: hasData ? created : [0],
+            borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.12)',
+            fill: true, tension: 0.4, pointRadius: 4, borderWidth: 2.5,
+            pointHoverRadius: 6, pointBackgroundColor: '#3b82f6'
+          },
+          {
+            label: 'Booked',
+            data: hasData ? booked : [0],
+            borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,.1)',
+            fill: true, tension: 0.4, pointRadius: 4, borderWidth: 2.5,
+            pointHoverRadius: 6, pointBackgroundColor: '#16a34a'
+          }
+        ]
+      };
+
+      const myChart = new Chart(el.getContext('2d'), {
+        type: 'line',
+        data: chartData,
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              display: true, position: 'top',
+              labels: { color: '#374151', font: { family: 'Sora', size: 11 }, boxWidth: 12, padding: 12 }
+            },
+            tooltip: {
+              backgroundColor: '#111827', titleColor: '#9ca3af',
+              bodyColor: '#fff', padding: 10, cornerRadius: 10,
+              titleFont: { family: 'Sora', size: 11 },
+              bodyFont: { family: 'JetBrains Mono', size: 12 }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { family: 'Sora', size: 10 } }, border: { display: false } },
+            y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 10 }, stepSize: 1 }, border: { display: false }, beginAtZero: true }
+          }
+        }
+      });
+
+      /* Time tab switching */
+      document.querySelectorAll('.time-tab').forEach(btn => {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('.time-tab').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          const months = parseInt(this.dataset.range);
+          const d = buildMonthlyData(months);
+          myChart.data.labels = d.labels.length ? d.labels : ['No data'];
+          myChart.data.datasets[0].data = d.labels.length ? d.created : [0];
+          myChart.data.datasets[1].data = d.labels.length ? d.booked : [0];
+          myChart.update();
+        });
+      });
+    })();
+
+    /* ── Breakdown Doughnut ───────────────────────────────── */
+    (function () {
+      const el = document.getElementById('breakdownChart');
+      if (!el) return;
+      const created = RAW.filter(r => r.type === 'created').length;
+      const booked = RAW.filter(r => r.type === 'booked').length;
+      const hasData = created + booked > 0;
+      new Chart(el.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Created', 'Booked'],
+          datasets: [{
+            data: hasData ? [created, booked] : [1, 0],
+            backgroundColor: hasData ? ['#3b82f6', '#16a34a'] : ['rgba(59,130,246,.15)'],
+            borderWidth: 3, borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '70%',
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: hasData }
+          }
+        }
+      });
+    })();
+
+    /* ── Filter + Search + Sort state ────────────────────── */
+    let activeFilter = 'all';
+    let activeSearch = '';
+    let activeSort = 'newest';
+    let activeView = 'grid';
+
+    function applyFilters() {
+      let filtered = RAW.filter(r => {
+        const matchFilter = activeFilter === 'all' || r.type === activeFilter;
+        const matchSearch = !activeSearch ||
+          r.title.toLowerCase().includes(activeSearch) ||
+          r.location.toLowerCase().includes(activeSearch);
+        return matchFilter && matchSearch;
+      });
+
+      filtered.sort((a, b) => {
+        if (activeSort === 'newest') return b.date.localeCompare(a.date);
+        if (activeSort === 'oldest') return a.date.localeCompare(b.date);
+        if (activeSort === 'title') return a.title.localeCompare(b.title);
+        if (activeSort === 'location') return a.location.localeCompare(b.location);
+        return 0;
+      });
+
+      document.getElementById('recordCount').textContent = filtered.length;
+
+      if (activeView === 'grid') renderGrid(filtered);
+      if (activeView === 'table') renderTable(filtered);
+      if (activeView === 'timeline') renderTimeline(filtered);
+    }
+
+    function getIndexInRaw(r) {
+      return RAW.findIndex(x => x.title === r.title && x.date === r.date && x.type === r.type);
+    }
+
+    /* ── RENDER GRID ─────────────────────────────────────── */
+    function renderGrid(data) {
+      const grid = document.getElementById('historyGrid');
+      const emptyEl = document.getElementById('gridEmpty');
+      /* Update visibility of existing cards */
+      const allCards = grid.querySelectorAll('.hist-card');
+      allCards.forEach((card, i) => { card.style.display = 'none'; });
+
+      /* Just show/hide based on filter since cards are Jinja-rendered */
+      let visible = 0;
+      allCards.forEach(card => {
+        const title = card.dataset.title || '';
+        const location = card.dataset.location || '';
+        const type = card.dataset.type || '';
+        const matchF = activeFilter === 'all' || type === activeFilter;
+        const matchS = !activeSearch || title.includes(activeSearch) || location.includes(activeSearch);
+        if (matchF && matchS) { card.style.display = ''; visible++; }
+      });
+
+      /* Sort */
+      const parent = grid;
+      const cards = [...parent.querySelectorAll('.hist-card[style=""]')];
+      if (activeSort === 'newest') cards.sort((a, b) => b.dataset.date.localeCompare(a.dataset.date));
+      if (activeSort === 'oldest') cards.sort((a, b) => a.dataset.date.localeCompare(b.dataset.date));
+      if (activeSort === 'title') cards.sort((a, b) => a.dataset.title.localeCompare(b.dataset.title));
+      if (activeSort === 'location') cards.sort((a, b) => (a.dataset.location || '').localeCompare(b.dataset.location || ''));
+      cards.forEach(c => parent.appendChild(c));
+
+      emptyEl.style.display = visible === 0 ? '' : 'none';
+    }
+
+    /* ── RENDER TABLE ────────────────────────────────────── */
+    function renderTable(data) {
+      const tbody = document.getElementById('histTableBody');
+      const emptyEl = document.getElementById('tableEmpty');
+      const rows = tbody.querySelectorAll('tr');
+      rows.forEach(row => { row.style.display = 'none'; });
+
+      let visible = 0;
+      rows.forEach(row => {
+        const title = row.dataset.title || '';
+        const location = row.dataset.location || '';
+        const type = row.dataset.type || '';
+        const matchF = activeFilter === 'all' || type === activeFilter;
+        const matchS = !activeSearch || title.includes(activeSearch) || location.includes(activeSearch);
+        if (matchF && matchS) { row.style.display = ''; visible++; }
+      });
+
+      /* Sort table rows */
+      const visibleRows = [...tbody.querySelectorAll('tr:not([style*="none"])')];
+      if (activeSort === 'newest') visibleRows.sort((a, b) => b.dataset.date.localeCompare(a.dataset.date));
+      if (activeSort === 'oldest') visibleRows.sort((a, b) => a.dataset.date.localeCompare(b.dataset.date));
+      if (activeSort === 'title') visibleRows.sort((a, b) => a.dataset.title.localeCompare(b.dataset.title));
+      if (activeSort === 'location') visibleRows.sort((a, b) => (a.dataset.location || '').localeCompare(b.dataset.location || ''));
+      visibleRows.forEach(r => tbody.appendChild(r));
+
+      emptyEl.style.display = visible === 0 ? '' : 'none';
+    }
+
+    /* ── RENDER TIMELINE ─────────────────────────────────── */
+    function renderTimeline(data) {
+      const wrap = document.getElementById('timelineWrap');
+      const emptyEl = document.getElementById('timelineEmpty');
+      wrap.innerHTML = '';
+
+      if (data.length === 0) { emptyEl.style.display = ''; return; }
+      emptyEl.style.display = 'none';
+
+      /* Group by year */
+      const byYear = {};
+      data.forEach(r => {
+        const year = r.date.slice(0, 4);
+        if (!byYear[year]) byYear[year] = [];
+        byYear[year].push(r);
+      });
+
+      Object.keys(byYear).sort((a, b) => b - a).forEach(year => {
+        const group = document.createElement('div');
+        group.className = 'timeline-year-group';
+        group.innerHTML = `<div class="timeline-year-label">${year}</div>`;
+        byYear[year].forEach((r, idx) => {
+          const rawIdx = getIndexInRaw(r);
+          const isLast = idx === byYear[year].length - 1;
+          const item = document.createElement('div');
+          item.className = 'timeline-item';
+          item.style.animationDelay = (idx * 0.06) + 's';
+          item.innerHTML = `
+          <div class="tl-dot-col">
+            <div class="tl-dot ${r.type}" title="${r.type}">
+              <i class="bi bi-${r.type === 'created' ? 'plus' : 'check'}"></i>
+            </div>
+            ${!isLast ? '<div class="tl-line"></div>' : ''}
+          </div>
+          <div class="tl-card" onclick="openHistModal(${rawIdx})">
+            <div class="tl-card-head">
+              <div class="tl-card-title">${esc(r.title)}</div>
+              <div class="tl-card-date">${r.dateLabel.split(',')[0]}</div>
+            </div>
+            <div class="tl-card-meta">
+              <span><i class="bi bi-geo-alt"></i> ${esc(r.location)}</span>
+              <span><i class="bi bi-clock"></i> ${r.dateLabel}</span>
+            </div>
+          </div>`;
+          group.appendChild(item);
+        });
+        wrap.appendChild(group);
+      });
+    }
+
+    /* ── Event listeners ─────────────────────────────────── */
+    document.getElementById('histSearch').addEventListener('input', function () {
+      activeSearch = this.value.toLowerCase();
+      applyFilters();
+    });
+
+    document.querySelectorAll('.fpill').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        activeFilter = this.dataset.filter;
+        applyFilters();
+      });
+    });
+
+    document.getElementById('histSort').addEventListener('change', function () {
+      activeSort = this.value;
+      applyFilters();
+    });
+
+    function setView(view) {
+      activeView = view;
+      document.getElementById('gridView').style.display = view === 'grid' ? '' : 'none';
+      document.getElementById('tableView').style.display = view === 'table' ? '' : 'none';
+      document.getElementById('timelineView').style.display = view === 'timeline' ? '' : 'none';
+      document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+      document.getElementById('tableViewBtn').classList.toggle('active', view === 'table');
+      document.getElementById('timelineViewBtn').classList.toggle('active', view === 'timeline');
+      applyFilters();
+    }
+    document.getElementById('gridViewBtn').onclick = () => setView('grid');
+    document.getElementById('tableViewBtn').onclick = () => setView('table');
+    document.getElementById('timelineViewBtn').onclick = () => setView('timeline');
+
+    /* ── CSV Export ──────────────────────────────────────── */
+    document.getElementById('exportCsvBtn').addEventListener('click', function () {
+      const rows = [['Title', 'Type', 'Date', 'Location', 'Status', 'Logged', 'Action']];
+      RAW.forEach(r => rows.push([r.title, r.type, r.dateLabel, r.location, r.status, r.timestamp, r.action]));
+      const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'history_export.csv' });
+      a.click();
+    });
+
+    /* ── PDF Export ──────────────────────────────────────── */
+    document.getElementById('exportPdfBtn').addEventListener('click', function () {
+      const win = window.open('', '', 'width=1100,height=800');
+      let rows = RAW.map(r => `<tr><td>${esc(r.title)}</td><td>${r.type}</td><td>${r.dateLabel}</td><td>${esc(r.location)}</td><td>${r.status}</td><td>${r.action}</td></tr>`).join('');
+      win.document.write(`<html><head><title>History Report</title><style>
+      body{font-family:Arial,sans-serif;padding:20px;}
+      h2{color:#16a34a;} table{width:100%;border-collapse:collapse;}
+      th,td{border:1px solid #e4ece6;padding:8px;font-size:12px;text-align:left;}
+      th{background:#f0fdf4;color:#15803d;font-weight:700;}
+      tr:nth-child(even){background:#f9fafb;}
+    </style></head><body>
+      <h2>Event History Report</h2>
+      <p style="color:#6b7280;font-size:13px;">Generated: ${new Date().toLocaleString()}</p>
+      <table><thead><tr><th>Title</th><th>Type</th><th>Date</th><th>Location</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </body></html>`);
+      win.document.close(); win.print();
+    });
+
+    /* ── Detail Modal ────────────────────────────────────── */
+    window.openHistModal = function (idx) {
+      const r = RAW[idx];
+      if (!r) return;
+      const top = document.getElementById('histModalTop');
+      top.className = `hist-modal-top ${r.type}`;
+      const isBadgeCreated = r.type === 'created';
+      document.getElementById('histModalBadge').innerHTML = `<i class="bi bi-${isBadgeCreated ? 'plus-circle-fill' : 'calendar-check-fill'}"></i> ${r.type.charAt(0).toUpperCase() + r.type.slice(1)}`;
+      document.getElementById('histModalTitle').textContent = r.title;
+      document.getElementById('histModalSub').textContent = r.dateLabel;
+      document.getElementById('histModalLoc').textContent = r.location;
+      document.getElementById('histModalDate').textContent = r.dateLabel;
+      document.getElementById('histModalLogged').textContent = 'Logged: ' + r.timestamp;
+      document.getElementById('histModalLog').textContent = r.action;
+      document.getElementById('histModalOverlay').classList.add('open');
+    };
+
+    function closeModal() { document.getElementById('histModalOverlay').classList.remove('open'); }
+    document.getElementById('histModalClose').onclick = closeModal;
+    document.getElementById('histModalCloseBtn').onclick = closeModal;
+    document.getElementById('histModalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('histModalOverlay')) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    /* ── Helper ──────────────────────────────────────────── */
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Badge Collection{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-4"><i class="bi bi-stars me-2"></i>Your Badge Collection</h3>
+
+  <div class="row" id="badgeContainer">
+    {% for badge in badges %}
+      <div class="col-md-3 mb-3">
+        <div class="card text-center shadow-sm border-0">
+          <div class="card-body">
+            <img src="{{ badge.icon_url }}" alt="{{ badge.name }}" class="img-fluid" style="max-height: 80px;">
+            <h6 class="mt-2">{{ badge.name }}</h6>
+            <small class="text-muted">{{ badge.description }}</small>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <p class="text-muted">No badges earned yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+<script>
+  const socket = io();
+
+  socket.on('connect', () => {
+    console.log('🔗 Connected to Socket for badge updates');
+    socket.emit('join', { room: "user_{{ current_user.id }}" });
+  });
+
+  socket.on('new_badge', data => {
+    data.badges.forEach(badge => {
+      const col = document.createElement('div');
+      col.className = "col-md-3 mb-3";
+      col.innerHTML = `
+        <div class="card text-center shadow-sm border-0 border-success border-2">
+          <div class="card-body">
+            <img src="${badge.icon}" alt="${badge.name}" class="img-fluid" style="max-height: 80px;">
+            <h6 class="mt-2 text-success">${badge.name}</h6>
+            <small class="text-muted">${badge.desc}</small>
+          </div>
+        </div>`;
+      document.getElementById('badgeContainer').prepend(col);
+    });
+
+    const audio = new Audio("{{ url_for('static', filename='sounds/notify.mp3') }}");
+    audio.play();
+    alert("🎉 New badge unlocked!");
+  });
+</script>
+{% endblock %}

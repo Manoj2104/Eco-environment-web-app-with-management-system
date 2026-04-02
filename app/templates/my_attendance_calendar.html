@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+  #attendance-calendar {
+    background: #f8fafc;
+    padding: 3rem 1rem;
+  }
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #dee2e6;
+  }
+  .calendar-cell {
+    background: #fff;
+    min-height: 100px;
+    padding: 0.25rem 0.5rem;
+    position: relative;
+    font-size: 0.85rem;
+    overflow-y: auto;
+  }
+  .calendar-cell .date {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+  }
+  .attendance-badge {
+    display: block;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.15rem;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: default;
+  }
+  .present {
+    background: #198754;
+  }
+  .missed {
+    background: #dc3545;
+  }
+</style>
+
+<section id="attendance-calendar">
+  <div class="container">
+    <div class="calendar-header">
+      <h2 class="h4 mb-0">My Attendance - {{ current_month.strftime('%B %Y') }}</h2>
+      <!-- You can add navigation buttons here -->
+    </div>
+
+    <div class="calendar-grid">
+      {% for day in week_days %}
+        <div class="calendar-cell bg-light text-center fw-bold">{{ day }}</div>
+      {% endfor %}
+
+      {% for cell in calendar_cells %}
+        <div class="calendar-cell">
+          {% if cell.date %}
+            <div class="date">{{ cell.date.day }}</div>
+            {% for record in cell.records %}
+              <span class="attendance-badge {{ 'present' if record.status == 'present' else 'missed' }}"
+                    title="{{ record.event.title }} - {{ record.status | capitalize }}">
+                {{ record.event.title | truncate(15, True, '...') }}
+              </span>
+            {% endfor %}
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

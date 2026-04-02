@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+
+{% block title %}Explore Missions | ReEarth{% endblock %}
+
+{% block page_title %}Mission Directory{% endblock %}
+{% block page_subtitle %}EXPLORE ALL{% endblock %}
+
+{% block content %}
+<style>
+    .missions-hero {
+        background: linear-gradient(135deg, #064e2c 0%, #0c6137 100%);
+        border-radius: 24px;
+        padding: 40px;
+        color: white;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    .missions-hero::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 50%;
+        filter: blur(60px);
+    }
+    .search-group-premium {
+        position: relative;
+        max-width: 600px;
+        margin-top: 25px;
+    }
+    .search-group-premium input {
+        border-radius: 16px;
+        padding: 15px 25px 15px 55px;
+        border: none;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        color: white;
+        width: 100%;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    .search-group-premium input::placeholder {
+        color: rgba(255,255,255,0.6);
+    }
+    .search-group-premium input:focus {
+        background: rgba(255,255,255,1);
+        color: #064e2c;
+        outline: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .search-icon-p {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.2rem;
+        opacity: 0.7;
+    }
+    .mission-count-badge {
+        background: rgba(16, 185, 129, 0.2);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 4px 12px;
+        border-radius: 99px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-bottom: 12px;
+    }
+    .event-card-wrap {
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        background: white;
+    }
+    .event-card-wrap:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        border-color: #10b981;
+    }
+    .zepto-xp-tag {
+        display: inline-flex;
+        align-items: center;
+        background: #f0fdf4;
+        color: #166534;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.65rem;
+        font-weight: 800;
+    }
+    .btn-forest {
+        background: #064e2c;
+        color: white;
+        border: none;
+    }
+    .btn-forest:hover {
+        background: #053e23;
+        color: white;
+    }
+    .event-img-wrap {
+        height: 160px;
+        position: relative;
+    }
+    .event-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .mobile-join-btn-overlay {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        display: none;
+    }
+    @media (max-width: 768px) {
+        .mobile-join-btn-overlay {
+            display: block;
+        }
+        .desktop-action-bar {
+            display: none !important;
+        }
+      /* Zepto-Style Horizontal Scrollers for All Missions */
+        .about-slider-row {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          overflow-x: auto !important;
+          scroll-snap-type: x mandatory !important;
+          gap: 12px !important;
+          padding-left: 15px !important;
+          padding-right: 15px !important;
+          padding-bottom: 20px !important;
+          scrollbar-width: none;
+          margin-left: -15px !important;
+          margin-right: -15px !important;
+        }
+        .about-slider-row::-webkit-scrollbar { display: none; }
+        .about-block-col {
+          flex: 0 0 85% !important; 
+          width: 85% !important;
+          scroll-snap-align: start !important;
+        }
+        .zepto-xp-tag {
+          background: #f0fdf4 !important;
+          color: #166534 !important;
+          padding: 1px 6px !important;
+          border-radius: 4px !important;
+          font-weight: 800 !important;
+          font-size: 0.55rem !important;
+          display: inline-block;
+          margin-bottom: 4px;
+        }
+    }
+</style>
+
+<div class="missions-hero" data-aos="fade-down">
+    <div class="mission-count-badge">Active Missions: {{ events|length }}</div>
+    <h1 class="fw-black mb-2" style="font-size: 2.8rem; letter-spacing: -0.04em;">Full Missions <span style="color: #10b981;">Directory</span></h1>
+    <p class="opacity-75" style="max-width: 600px;">Every eco-mission currently active on the ReEarth platform. Browse, search, and join local heroes across the globe.</p>
+    
+    <div class="search-group-premium">
+        <i class="bi bi-search search-icon-p"></i>
+        <input type="text" id="missionSearchInput" placeholder="Filter by mission name or city..." onkeyup="filterMissions()">
+    </div>
+</div>
+
+<div class="row g-4 about-slider-row" id="missionGrid">
+    {% for e in events %}
+    {% set event = e["event"] %}
+    {% set status = e["status"] %}
+    <div class="col-md-6 col-lg-3 mission-item about-block-col" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 50 }}">
+        <div class="glass-card h-100 overflow-hidden d-flex flex-column event-card-wrap" style="border-radius: 20px;">
+            <div class="event-img-wrap">
+                <img src="{{ url_for('static', filename='uploads/' ~ (event.thumbnail or 'default.jpg')) }}" alt="{{ event.title }}">
+                <div class="position-absolute top-0 start-0 m-2">
+                    <span class="px-2 py-0.5 rounded-pill fw-bold shadow-sm bg-white" style="font-size: 0.55rem; color: #166534; border: 1px solid #bbf7d0;">
+                        ACTIVE MISSION
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-3 d-flex flex-column flex-grow-1">
+                <div class="zepto-xp-tag">⚡ {{ event.xp_reward or 0 }} XP</div>
+                <h6 class="fw-bold mb-1 text-dark text-truncate-2 mt-2" style="font-size: 0.9rem; line-height: 1.4; min-height: 2.8em;">{{ event.title }}</h6>
+                
+                <div class="d-flex flex-column gap-1 mt-1 mb-3">
+                    <div class="small text-muted text-truncate"><i class="bi bi-geo-alt me-1"></i> {{ event.location }}</div>
+                    <div class="fw-bold text-success" style="font-size: 0.7rem;" id="distance-{{ event.id }}">📍 {{ e.distance_str }}</div>
+                </div>
+
+                <div class="mt-auto pt-2 border-top d-flex align-items-center justify-content-between desktop-action-bar">
+                    <span class="small text-muted">{{ event.date.strftime('%d %b %Y') }}</span>
+                    <div id="btn-container-{{ event.id }}">
+                        {% if current_user.role == 'volunteer' %}
+                            {% if status.task_completed %}<span class="text-success small fw-bold">✓ Done</span>
+                            {% elif status.task_started %}<button class="btn btn-success rounded-pill btn-sm fw-bold px-3" onclick="window.location.href='/dashboard'">Task</button>
+                            {% elif status.checked_in %}<span class="text-muted small">Checked In</span>
+                            {% elif status.booked %}<button class="btn btn-warning rounded-pill btn-sm fw-bold px-3">Booked</button>
+                            {% else %}
+                            <button class="btn btn-forest rounded-pill btn-sm fw-bold px-3" 
+                              data-event-id="{{ event.id }}" 
+                              data-event-time="{{ event.date.strftime('%Y-%m-%dT%H:%M') }}"
+                              onclick="showBookingModal(this.dataset.eventId, this.dataset.eventTime)">Join +</button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="noMissionsMsg" class="text-center py-5 d-none">
+    <div class="display-1 mb-3">🔍</div>
+    <h4 class="fw-bold">No Missions Found</h4>
+    <p class="text-muted">Try adjusting your search terms to find active environmental missions.</p>
+</div>
+
+{% include 'partials/modals.html' %}
+
+<script src="{{ url_for('static', filename='js/dashboard_logic.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+      {% if user and user.latitude and user.longitude %}
+      {% for e in events %}
+      calculateDistance('{{ user.latitude }}', '{{ user.longitude }}', '{{ e.event.latitude }}', '{{ e.event.longitude }}', 'distance-{{ e.event.id }}');
+      {% endfor %}
+      {% endif %}
+    });
+
+    function filterMissions() {
+        const input = document.getElementById('missionSearchInput');
+        const filter = input.value.toUpperCase();
+        const grid = document.getElementById('missionGrid');
+        const items = grid.getElementsByClassName('mission-item');
+        let visibleCount = 0;
+
+        for (let i = 0; i < items.length; i++) {
+            const h6 = items[i].getElementsByTagName('h6')[0];
+            const loc = items[i].getElementsByClassName('text-muted')[0];
+            const textValue = (h6.textContent || h6.innerText) + (loc.textContent || loc.innerText);
+            
+            if (textValue.toUpperCase().indexOf(filter) > -1) {
+                items[i].style.display = "";
+                visibleCount++;
+            } else {
+                items[i].style.display = "none";
+            }
+        }
+
+        const noMsg = document.getElementById('noMissionsMsg');
+        if (visibleCount === 0) noMsg.classList.remove('d-none');
+        else noMsg.classList.add('d-none');
+    }
+</script>
+{% endblock %}

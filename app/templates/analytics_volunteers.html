@@ -1,0 +1,1506 @@
+{% extends 'base.html' %}
+{% block title %}Volunteer Analytics — ReEarth{% endblock %}
+{% block page_title %}Volunteer Analytics{% endblock %}
+{% block page_subtitle %}Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(22, 163, 74, .4);
+    }
+
+    70% {
+      box-shadow: 0 0 0 10px rgba(22, 163, 74, 0);
+    }
+
+    100% {
+      box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+    }
+  }
+
+  /* ── KPI TILES ─────────────────────────────────── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .kpi {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 16px 14px 14px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    transition: box-shadow .22s, transform .22s;
+    animation: fadeUp .4s ease both;
+    overflow: hidden;
+  }
+
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .kpi.k0::before {
+    background: #22c55e;
+  }
+
+  .kpi.k1::before {
+    background: #3b82f6;
+  }
+
+  .kpi.k2::before {
+    background: #f59e0b;
+  }
+
+  .kpi.k3::before {
+    background: #10b981;
+  }
+
+  .kpi.k4::before {
+    background: #8b5cf6;
+  }
+
+  .kpi.k5::before {
+    background: #ef4444;
+  }
+
+  .kpi.k6::before {
+    background: #ec4899;
+  }
+
+  .kpi:nth-child(1) {
+    animation-delay: .05s;
+  }
+
+  .kpi:nth-child(2) {
+    animation-delay: .09s;
+  }
+
+  .kpi:nth-child(3) {
+    animation-delay: .13s;
+  }
+
+  .kpi:nth-child(4) {
+    animation-delay: .17s;
+  }
+
+  .kpi:nth-child(5) {
+    animation-delay: .21s;
+  }
+
+  .kpi:nth-child(6) {
+    animation-delay: .25s;
+  }
+
+  .kpi:nth-child(7) {
+    animation-delay: .29s;
+  }
+
+  .kpi:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    margin-bottom: 10px;
+  }
+
+  .kpi.k0 .kpi-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .kpi.k1 .kpi-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .kpi.k2 .kpi-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .kpi.k3 .kpi-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .kpi.k4 .kpi-icon {
+    background: #f5f3ff;
+    color: #8b5cf6;
+  }
+
+  .kpi.k5 .kpi-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .kpi.k6 .kpi-icon {
+    background: #fdf2f8;
+    color: #ec4899;
+  }
+
+  .kpi-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .kpi-lbl {
+    font-size: .65rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* live pulse for live volunteers */
+  .kpi-live-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    margin-right: 4px;
+    animation: pulse-ring 1.8s infinite;
+  }
+
+  /* ── CHART CARD ─────────────────────────────────── */
+  .ch-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+  }
+
+  .ch-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .ch-title {
+    font-size: .84rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .ch-title i {
+    color: #16a34a;
+  }
+
+  .ch-subtitle {
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-top: 2px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .ch-body {
+    position: relative;
+    width: 100%;
+  }
+
+  .ch-body.h180 {
+    height: 180px;
+  }
+
+  .ch-body.h220 {
+    height: 220px;
+  }
+
+  .ch-body.h260 {
+    height: 260px;
+  }
+
+  .ch-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* time tabs */
+  .time-tabs {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .time-tab {
+    padding: 5px 11px;
+    border-radius: 7px;
+    font-size: .72rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .time-tab.active {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .3);
+  }
+
+  /* ── GRID LAYOUTS ───────────────────────────────── */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .grid-2-1 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .grid-1-2 {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* ── XP PROGRESS CARD ───────────────────────────── */
+  .xp-hero {
+    background: linear-gradient(135deg, #16a34a 0%, #10b981 100%);
+    border-radius: 16px;
+    padding: 20px 22px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .xp-hero::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .08);
+  }
+
+  .xp-hero-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    line-height: 1;
+  }
+
+  .xp-hero-lbl {
+    font-size: .72rem;
+    opacity: .8;
+    margin-bottom: 14px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .xp-bar-track {
+    height: 8px;
+    background: rgba(255, 255, 255, .25);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #fff 0%, rgba(255, 255, 255, .7) 100%);
+    transition: width 1.2s cubic-bezier(.4, 0, .2, 1);
+    position: relative;
+  }
+
+  .xp-bar-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .45) 50%, transparent 100%);
+    animation: shimmer 2.2s infinite;
+    background-size: 200% 100%;
+  }
+
+  .xp-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: .68rem;
+    opacity: .75;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── TOP VOLUNTEERS TABLE ───────────────────────── */
+  .vol-table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    margin-bottom: 16px;
+  }
+
+  .vol-table-head {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #f3f4f6;
+    flex-wrap: wrap;
+  }
+
+  .vol-table-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .vth-spacer {
+    flex: 1;
+  }
+
+  .vol-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .vol-search i {
+    position: absolute;
+    left: 11px;
+    color: #9ca3af;
+    font-size: .82rem;
+  }
+
+  .vol-search input {
+    padding: 7px 12px 7px 32px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    background: #f9fafb;
+    outline: none;
+    width: 200px;
+    transition: all .2s;
+  }
+
+  .vol-search input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .vol-export-btn {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    font-size: .76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all .2s;
+  }
+
+  .vol-export-btn:hover {
+    border-color: #4ade80;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .vol-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .vol-table thead th {
+    padding: 10px 18px;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    white-space: nowrap;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .vol-table thead th:hover {
+    color: #16a34a;
+  }
+
+  .vol-table thead th.sorted {
+    color: #16a34a;
+  }
+
+  .vol-table thead th .sort-icon {
+    margin-left: 3px;
+    opacity: .45;
+    font-size: .65rem;
+  }
+
+  .vol-table thead th.sorted .sort-icon {
+    opacity: 1;
+  }
+
+  .vol-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+  }
+
+  .vol-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .vol-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .vol-table tbody td {
+    padding: 12px 18px;
+    font-size: .8rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .vol-rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    font-weight: 600;
+    color: #9ca3af;
+  }
+
+  .vol-rank.g1 {
+    color: #f59e0b;
+    font-size: .9rem;
+  }
+
+  .vol-rank.g2 {
+    color: #9ca3af;
+    font-size: .85rem;
+  }
+
+  .vol-rank.g3 {
+    color: #d97706;
+    font-size: .8rem;
+  }
+
+  .vol-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .vol-ava {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .vol-name {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .vol-email {
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .vol-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  .vol-xp-bar {
+    height: 5px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+    width: 80px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+
+  .vol-xp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #10b981);
+    border-radius: 99px;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+
+  .status-dot.active {
+    background: #22c55e;
+  }
+
+  .status-dot.inactive {
+    background: #d1d5db;
+  }
+
+  /* ── GENDER + HEATMAP CARDS ─────────────────────── */
+  .gender-bar {
+    margin-bottom: 10px;
+  }
+
+  .gender-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .gender-bar-label {
+    font-size: .72rem;
+    font-weight: 600;
+    color: #374151;
+    width: 50px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .gender-bar-track {
+    flex: 1;
+    height: 8px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .gender-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .gender-bar-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #374151;
+    width: 30px;
+    text-align: right;
+  }
+
+  /* ── HEATMAP ─────────────────────────────────────── */
+  #heatmapEl {
+    height: 240px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* ── REWARDS GRID ───────────────────────────────── */
+  .rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+
+  .reward-tile {
+    background: #f9fafb;
+    border: 1px solid #e4ece6;
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+    transition: transform .2s, box-shadow .2s;
+  }
+
+  .reward-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(22, 163, 74, .12);
+  }
+
+  .reward-tile-icon {
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+  }
+
+  .reward-tile-name {
+    font-size: .76rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .reward-tile-xp {
+    display: inline-block;
+    font-size: .66rem;
+    font-weight: 700;
+    background: #dcfce7;
+    color: #15803d;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── ACTIVITY FEED (bottom) ─────────────────────── */
+  .activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f9fafb;
+  }
+
+  .activity-item:last-child {
+    border-bottom: none;
+  }
+
+  .activity-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+  }
+
+  .activity-dot.green {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .activity-dot.blue {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .activity-dot.amber {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .activity-dot.red {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .activity-text {
+    flex: 1;
+  }
+
+  .activity-title {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .activity-sub {
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .activity-time {
+    font-size: .66rem;
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+
+  /* ── EMPTY STATES ───────────────────────────────── */
+  .empty-state {
+    padding: 36px 24px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: .84rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .empty-state i {
+    display: block;
+    font-size: 2.2rem;
+    opacity: .3;
+    margin-bottom: 10px;
+  }
+
+  /* ── FILTER BAR ─────────────────────────────────── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 14px;
+    padding: 12px 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+  }
+
+  .filter-label {
+    font-size: .74rem;
+    font-weight: 600;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    margin-right: 4px;
+  }
+
+  .filter-pill {
+    padding: 5px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .filter-pill:hover {
+    color: #16a34a;
+    border-color: #4ade80;
+  }
+
+  .filter-pill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .filter-spacer {
+    flex: 1;
+  }
+
+  .refresh-btn {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    font-size: .76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all .2s;
+  }
+
+  .refresh-btn:hover {
+    border-color: #4ade80;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .refresh-btn.spinning i {
+    animation: spin .6s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width:1400px) {
+    .kpi-row {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @media (max-width:1100px) {
+
+    .grid-3,
+    .grid-2,
+    .grid-2-1,
+    .grid-1-2 {
+      grid-template-columns: 1fr;
+    }
+
+    .kpi-row {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width:700px) {
+    .kpi-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <span class="filter-label">Period:</span>
+  <button class="filter-pill active" data-period="all">All Time</button>
+  <button class="filter-pill" data-period="month">This Month</button>
+  <button class="filter-pill" data-period="week">This Week</button>
+  <button class="filter-pill" data-period="today">Today</button>
+  <div class="filter-spacer"></div>
+  <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
+    <i class="bi bi-arrow-clockwise" id="refreshIcon"></i> Refresh
+  </button>
+</div>
+
+<!-- KPI TILES -->
+<div class="kpi-row">
+  <div class="kpi k0">
+    <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
+    <div class="kpi-val" id="kpi-total">{{ total_volunteers or 0 }}</div>
+    <div class="kpi-lbl">Total Volunteers</div>
+  </div>
+  <div class="kpi k1">
+    <div class="kpi-icon"><i class="bi bi-broadcast-pin"></i></div>
+    <div class="kpi-val" id="kpi-live">
+      <span class="kpi-live-dot"></span>{{ live_volunteer_count or 0 }}
+    </div>
+    <div class="kpi-lbl">Live Now</div>
+  </div>
+  <div class="kpi k2">
+    <div class="kpi-icon"><i class="bi bi-calendar-event-fill"></i></div>
+    <div class="kpi-val" id="kpi-events">{{ total_events or 0 }}</div>
+    <div class="kpi-lbl">Total Events</div>
+  </div>
+  <div class="kpi k3">
+    <div class="kpi-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="kpi-val" id="kpi-hours">{{ avg_hours or 0 }}h</div>
+    <div class="kpi-lbl">Avg Hours</div>
+  </div>
+  <div class="kpi k4">
+    <div class="kpi-icon"><i class="bi bi-stars"></i></div>
+    <div class="kpi-val" id="kpi-xp">{{ total_xp or 0 }}</div>
+    <div class="kpi-lbl">Total XP</div>
+  </div>
+  <div class="kpi k5">
+    <div class="kpi-icon"><i class="bi bi-journal-check"></i></div>
+    <div class="kpi-val" id="kpi-bookings">{{ total_bookings or 0 }}</div>
+    <div class="kpi-lbl">Total Bookings</div>
+  </div>
+  <div class="kpi k6">
+    <div class="kpi-icon"><i class="bi bi-calendar-check-fill"></i></div>
+    <div class="kpi-val" id="kpi-ongoing">{{ ongoing_events_count or 0 }}</div>
+    <div class="kpi-lbl">Ongoing Events</div>
+  </div>
+</div>
+
+<!-- ROW 1: XP Progress + Participation trend + Gender -->
+<div class="grid-3" style="animation:fadeUp .4s .18s ease both;">
+
+  <!-- XP Progress hero -->
+  <div class="ch-card" style="display:flex;flex-direction:column;gap:14px;">
+    <div class="xp-hero">
+      <div class="xp-hero-lbl">MY XP PROGRESS</div>
+      <div class="xp-hero-val">{{ xp or 0 }} <span style="font-size:1rem;font-weight:500;opacity:.7">/ {{ next_level
+          }}</span></div>
+      <div style="margin-top:12px;">
+        <div class="xp-bar-track">
+          <div class="xp-bar-fill" style="width:{{ percent_to_next | default(0) }}%;"></div>
+        </div>
+        <div class="xp-meta">
+          <span>Level {{ (xp or 0) // 100 + 1 }}</span>
+          <span>{{ percent_to_next | round(1) | default(0) }}% to next level</span>
+        </div>
+      </div>
+    </div>
+    <!-- mini XP breakdown -->
+    <div>
+      <div
+        style="font-size:.72rem;font-weight:700;color:#374151;font-family:'Sora',sans-serif;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+        <i class="bi bi-bar-chart" style="color:#16a34a;"></i>XP Distribution</div>
+      <div class="ch-body h180">
+        <canvas id="xpDistChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Participation trend -->
+  <div class="ch-card">
+    <div class="ch-head">
+      <div>
+        <div class="ch-title"><i class="bi bi-graph-up-arrow"></i>Participation Trend</div>
+        <div class="ch-subtitle">Monthly volunteer activity</div>
+      </div>
+      <div class="time-tabs">
+        <button class="time-tab">3M</button>
+        <button class="time-tab active">6M</button>
+        <button class="time-tab">1Y</button>
+      </div>
+    </div>
+    <div class="ch-body h260">
+      <canvas id="participationChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Gender + completion -->
+  <div class="ch-card">
+    <div class="ch-head">
+      <div>
+        <div class="ch-title"><i class="bi bi-gender-ambiguous"></i>Demographics</div>
+        <div class="ch-subtitle">Volunteer breakdown</div>
+      </div>
+    </div>
+    <!-- Gender bars -->
+    <div class="gender-bar">
+      {% set male = gender_ratio.male if gender_ratio else 0 %}
+      {% set female = gender_ratio.female if gender_ratio else 0 %}
+      {% set other = gender_ratio.other if gender_ratio else 0 %}
+      {% set g_total = [male + female + other, 1] | max %}
+      <div class="gender-bar-row">
+        <div class="gender-bar-label" style="color:#3b82f6;"><i class="bi bi-gender-male me-1"></i>Male</div>
+        <div class="gender-bar-track">
+          <div class="gender-bar-fill" style="width:{{ ((male / g_total) * 100) | round }}%;background:#3b82f6;"></div>
+        </div>
+        <div class="gender-bar-count" style="color:#3b82f6;">{{ male }}</div>
+      </div>
+      <div class="gender-bar-row">
+        <div class="gender-bar-label" style="color:#ec4899;"><i class="bi bi-gender-female me-1"></i>Female</div>
+        <div class="gender-bar-track">
+          <div class="gender-bar-fill" style="width:{{ ((female / g_total) * 100) | round }}%;background:#ec4899;">
+          </div>
+        </div>
+        <div class="gender-bar-count" style="color:#ec4899;">{{ female }}</div>
+      </div>
+      <div class="gender-bar-row">
+        <div class="gender-bar-label" style="color:#8b5cf6;"><i class="bi bi-gender-ambiguous me-1"></i>Other</div>
+        <div class="gender-bar-track">
+          <div class="gender-bar-fill" style="width:{{ ((other / g_total) * 100) | round }}%;background:#8b5cf6;"></div>
+        </div>
+        <div class="gender-bar-count" style="color:#8b5cf6;">{{ other }}</div>
+      </div>
+    </div>
+    <div style="height:1px;background:#f3f4f6;margin:14px 0;"></div>
+    <!-- Gender doughnut -->
+    <div class="ch-body h160" style="height:160px;">
+      <canvas id="genderChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 2: Top Volunteers table -->
+<div class="vol-table-card" style="animation:fadeUp .4s .26s ease both;">
+  <div class="vol-table-head">
+    <span class="vol-table-title">🏆 Top Volunteers</span>
+    <div class="vth-spacer"></div>
+    <div class="vol-search">
+      <i class="bi bi-search"></i>
+      <input type="text" id="volSearch" placeholder="Search volunteer...">
+    </div>
+    <button class="vol-export-btn" onclick="exportCSV()">
+      <i class="bi bi-download"></i> Export CSV
+    </button>
+  </div>
+  <table class="vol-table" id="volTable">
+    <thead>
+      <tr>
+        <th class="sorted" onclick="sortTable(0)"># <i class="bi bi-arrow-down-short sort-icon"></i></th>
+        <th>Volunteer</th>
+        <th onclick="sortTable(2)">Total Hours <i class="bi bi-arrow-down-short sort-icon"></i></th>
+        <th onclick="sortTable(3)">XP <i class="bi bi-arrow-down-short sort-icon"></i></th>
+        <th>Status</th>
+        <th>XP Bar</th>
+      </tr>
+    </thead>
+    <tbody id="volTbody">
+      {% set COLORS = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#10b981','#8b5cf6','#ec4899','#14b8a6'] %}
+      {% set max_xp = (top_volunteers | map(attribute='xp') | list | max) if top_volunteers else 1 %}
+      {% for v in top_volunteers %}
+      {% set i = loop.index %}
+      {% set color = COLORS[(i-1) % COLORS|length] %}
+      {% set initials = (v.name[0] + (v.name.split(' ')[1][0] if v.name.split(' ')|length > 1 else '')) | upper %}
+      <tr>
+        <td>
+          {% if i == 1 %}<span class="vol-rank g1">🥇</span>
+          {% elif i == 2 %}<span class="vol-rank g2">🥈</span>
+          {% elif i == 3 %}<span class="vol-rank g3">🥉</span>
+          {% else %}<span class="vol-rank">{{ '%02d' % i }}</span>{% endif %}
+        </td>
+        <td>
+          <div class="vol-user">
+            <div class="vol-ava" style="background:{{ color }};">{{ initials }}</div>
+            <div>
+              <div class="vol-name">{{ v.name }}</div>
+              <div class="vol-email">{{ v.email }}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="vol-mono">{{ v.total_hours | round(1) if v.total_hours else 0 }}h</span></td>
+        <td><span class="vol-mono" style="color:#16a34a;">{{ v.xp or 0 }}</span></td>
+        <td>
+          <span class="status-dot {{ 'active' if v.is_volunteer_active else 'inactive' }}"></span>
+          <span style="font-size:.72rem;color:#374151;font-family:'Sora',sans-serif;">
+            {{ 'Active' if v.is_volunteer_active else 'Inactive' }}
+          </span>
+        </td>
+        <td>
+          <div class="vol-xp-bar">
+            <div class="vol-xp-bar-fill" style="width:{{ (((v.xp or 0) / max_xp) * 100) | round }}%;"></div>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" class="empty-state"><i class="bi bi-people"></i>No volunteer data yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- ROW 3: Category breakdown + Heatmap + Completion rate -->
+<div class="grid-2-1" style="animation:fadeUp .4s .34s ease both;">
+
+  <!-- Category breakdown + heatmap -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="ch-card">
+      <div class="ch-head">
+        <div>
+          <div class="ch-title"><i class="bi bi-tags-fill"></i>Event Categories</div>
+          <div class="ch-subtitle">Participation by type</div>
+        </div>
+      </div>
+      <div class="ch-body h180">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+    <div class="ch-card">
+      <div class="ch-head">
+        <div>
+          <div class="ch-title"><i class="bi bi-geo-alt-fill"></i>Volunteer Heatmap</div>
+          <div class="ch-subtitle">Geographic activity</div>
+        </div>
+      </div>
+      <div id="heatmapEl"></div>
+    </div>
+  </div>
+
+  <!-- Right: Completion ring + Rewards -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Completion rate ring -->
+    <div class="ch-card" style="text-align:center;">
+      <div class="ch-title" style="justify-content:center;margin-bottom:14px;">
+        <i class="bi bi-check-circle-fill"></i>Task Completion
+      </div>
+      <div class="ch-body" style="height:160px;">
+        <canvas id="completionChart"></canvas>
+      </div>
+      {% set comp_rate = ((total_bookings or 1) and (ongoing_events_count or 0) / (total_bookings or 1) * 100) |
+      round(1) %}
+      <div style="margin-top:8px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:800;color:#16a34a;">
+          {{ xp_values[0] if xp_values else 0 }}<span style="font-size:.9rem;color:#9ca3af;">/{{ total_volunteers or 0
+            }}</span>
+        </div>
+        <div style="font-size:.72rem;color:#9ca3af;font-family:'Sora',sans-serif;">volunteers completed tasks</div>
+      </div>
+    </div>
+
+    <!-- Rewards -->
+    <div class="ch-card">
+      <div class="ch-head">
+        <div class="ch-title"><i class="bi bi-gift-fill"></i>Available Rewards</div>
+      </div>
+      <div class="rewards-grid">
+        {% for reward in rewards %}
+        <div class="reward-tile">
+          <div class="reward-tile-icon">🎁</div>
+          <div class="reward-tile-name">{{ reward.title or reward.name }}</div>
+          <span class="reward-tile-xp">{{ reward.xp_required }} XP</span>
+        </div>
+        {% else %}
+        <div style="grid-column:1/-1;" class="empty-state"><i class="bi bi-gift"></i>No rewards yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 4: Live activity feed -->
+<div class="ch-card" style="animation:fadeUp .4s .42s ease both;">
+  <div class="ch-head">
+    <div>
+      <div class="ch-title"><i class="bi bi-activity"></i>Live Activity Feed</div>
+      <div class="ch-subtitle">Real-time volunteer actions</div>
+    </div>
+    <div style="font-size:.72rem;color:#9ca3af;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:5px;">
+      <span class="kpi-live-dot"></span> Live
+    </div>
+  </div>
+  <div class="activity-list" id="activityFeed">
+    <!-- Populated by Socket.IO or initial data -->
+    {% for v in top_volunteers[:5] %}
+    <div class="activity-item">
+      <div class="activity-dot {{ loop.cycle('green','blue','amber','red','green') }}">
+        <i class="bi {{ loop.cycle('bi-check2-circle','bi-lightning-charge','bi-geo-alt','bi-award','bi-clock') }}"></i>
+      </div>
+      <div class="activity-text">
+        <div class="activity-title">{{ v.name }} completed a task</div>
+        <div class="activity-sub">Earned +{{ v.xp or 0 }} XP • Level {{ (v.xp or 0) // 100 + 1 }}</div>
+      </div>
+      <div class="activity-time">just now</div>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-activity"></i>No recent activity.</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+{# Inject ALL Jinja variables into a single JS object using a JSON data island to avoid IDE formatting corruption #}
+<script type="application/json" id="vaData">
+{
+  "xpLabels": {{ xp_labels | default([]) | tojson }},
+  "xpValues": {{ xp_values | default([]) | tojson }},
+  "months": {{ months | default([]) | tojson }},
+  "counts": {{ counts | default([]) | tojson }},
+  "categories": {{ categories | default([]) | tojson }},
+  "categoryCounts": {{ category_counts | default([]) | tojson }},
+  "heatmapData": {{ heatmap_data | default([]) | tojson }},
+  "genderMale": {{ (gender_ratio.male if gender_ratio else 0) | int }},
+  "genderFemale": {{ (gender_ratio.female if gender_ratio else 0) | int }},
+  "genderOther": {{ (gender_ratio.other if gender_ratio else 0) | int }},
+  "totalVolunteers": {{ (total_volunteers or 1) | int }},
+  "xpValue0": {{ (xp_values[0] if xp_values else 0) | int }},
+  "currentUserId": {{ current_user.id | int }},
+  "isAuthenticated": {{ 'true' if current_user.is_authenticated else 'false' }}
+}
+</script>
+
+<script>
+  var VA = {};
+  var dataIsland = document.getElementById('vaData');
+  if (dataIsland) {
+    try {
+      VA = JSON.parse(dataIsland.textContent);
+    } catch (e) {
+      console.error("Failed to parse analytics JSON", e);
+    }
+  }
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var SORA = { family: 'Sora', size: 10 };
+    var MONO = { family: 'JetBrains Mono', size: 10 };
+    var SCALES = {
+      x: { grid: { display: false }, ticks: { color: '#9ca3af', font: SORA, maxTicksLimit: 8 }, border: { display: false } },
+      y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { color: '#9ca3af', font: MONO }, border: { display: false }, beginAtZero: true }
+    };
+    var BASE = {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: SCALES
+    };
+    var GREEN_PALETTE = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0'];
+    var MULTI_PALETTE = ['#16a34a', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+
+    function fallback(arr, fb) { return (arr && arr.length > 0) ? arr : fb; }
+    function extend(target, source) {
+      var out = {};
+      for (var k in target) out[k] = target[k];
+      for (var k in source) out[k] = source[k];
+      return out;
+    }
+
+    /* 1. XP Distribution */
+    (function () {
+      var el = document.getElementById('xpDistChart');
+      if (!el) return;
+      var labels = fallback(VA.xpLabels, ['0-100 XP', '101-250 XP', '251-500 XP', '501+ XP']);
+      var data = fallback(VA.xpValues, [0, 0, 0, 0]);
+      new Chart(el.getContext('2d'), {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ data: data, backgroundColor: GREEN_PALETTE, borderRadius: 6, borderSkipped: false }] },
+        options: extend(BASE, { indexAxis: 'y' })
+      });
+    })();
+
+    /* 2. Participation trend */
+    (function () {
+      var el = document.getElementById('participationChart');
+      if (!el) return;
+      var labels = fallback(VA.months, ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']);
+      var data = fallback(VA.counts, [0, 0, 0, 0, 0, 0]);
+      var ctx = el.getContext('2d');
+      var g = ctx.createLinearGradient(0, 0, 0, 260);
+      g.addColorStop(0, 'rgba(34,197,94,.22)');
+      g.addColorStop(1, 'rgba(34,197,94,0)');
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ data: data, borderColor: '#16a34a', borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: '#16a34a', fill: true, backgroundColor: g, tension: 0.4 }] },
+        options: extend(BASE, { plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111827', titleColor: '#9ca3af', bodyColor: '#fff', padding: 10, cornerRadius: 10, titleFont: { family: 'Sora', size: 11 }, bodyFont: { family: 'JetBrains Mono', size: 13 } } } })
+      });
+    })();
+
+    /* 3. Gender doughnut */
+    (function () {
+      var el = document.getElementById('genderChart');
+      if (!el) return;
+      var male = VA.genderMale;
+      var female = VA.genderFemale;
+      var other = VA.genderOther;
+      var total = (male + female + other) || 1;
+      new Chart(el.getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: ['Male', 'Female', 'Other'], datasets: [{ data: [male, female, other], backgroundColor: ['#3b82f6', '#ec4899', '#8b5cf6'], borderWidth: 2, borderColor: '#fff' }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '65%',
+          plugins: {
+            legend: { display: true, position: 'bottom', labels: { color: '#374151', font: { family: 'Sora', size: 10 }, boxWidth: 10, padding: 8 } },
+            tooltip: { callbacks: { label: function (c) { return ' ' + c.label + ': ' + c.raw + ' (' + ((c.raw / total) * 100).toFixed(1) + '%)'; } } }
+          }
+        }
+      });
+    })();
+
+    /* 4. Category breakdown */
+    (function () {
+      var el = document.getElementById('categoryChart');
+      if (!el) return;
+      var labels = fallback(VA.categories, ['No data']);
+      var data = fallback(VA.categoryCounts, [0]);
+      new Chart(el.getContext('2d'), {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ data: data, backgroundColor: labels.map(function (_, i) { return MULTI_PALETTE[i % MULTI_PALETTE.length]; }), borderRadius: 6, borderSkipped: false }] },
+        options: extend(BASE, { indexAxis: 'y' })
+      });
+    })();
+
+    /* 5. Completion doughnut */
+    (function () {
+      var el = document.getElementById('completionChart');
+      if (!el) return;
+      var completed = VA.xpValue0;
+      var total = VA.totalVolunteers;
+      var remaining = Math.max(0, total - completed);
+      new Chart(el.getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: ['Completed', 'Remaining'], datasets: [{ data: [completed, remaining], backgroundColor: ['#16a34a', '#f3f4f6'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return ' ' + c.label + ': ' + c.raw; } } } } }
+      });
+    })();
+
+    /* 6. Leaflet map */
+    (function () {
+      var mapEl = document.getElementById('heatmapEl');
+      if (!mapEl) return;
+      var map = L.map('heatmapEl').setView([20.5937, 78.9629], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+      var hd = VA.heatmapData;
+      if (hd && hd.length > 0) {
+        hd.forEach(function (loc) {
+          if (loc.lat && loc.lng) {
+            L.circleMarker([loc.lat, loc.lng], { radius: Math.min(8 + (loc.count || 1) * 2, 20), fillColor: '#16a34a', color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.75 }).bindTooltip('Attendance: ' + (loc.count || 1)).addTo(map);
+          }
+        });
+      } else {
+        [[12.97, 80.22], [13.08, 80.27], [12.92, 80.15]].forEach(function (c) { L.circleMarker(c, { radius: 10, fillColor: 'rgba(22,163,74,.3)', color: '#16a34a', weight: 1.5, fillOpacity: 0.4 }).addTo(map); });
+      }
+    })();
+
+    /* Tab interactions */
+    document.querySelectorAll('.time-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        this.closest('.time-tabs').querySelectorAll('.time-tab').forEach(function (b) { b.classList.remove('active'); });
+        this.classList.add('active');
+      });
+    });
+    document.querySelectorAll('[data-period]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('[data-period]').forEach(function (b) { b.classList.remove('active'); });
+        this.classList.add('active');
+      });
+    });
+
+    /* Search */
+    var vs = document.getElementById('volSearch');
+    if (vs) vs.addEventListener('keyup', function () {
+      var q = this.value.toLowerCase();
+      document.querySelectorAll('#volTbody tr').forEach(function (row) { row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+    });
+
+    /* Sort */
+    window.sortTable = function (col) {
+      var tbody = document.getElementById('volTbody');
+      if (!tbody) return;
+      var rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort(function (a, b) {
+        var at = a.cells[col] ? a.cells[col].textContent.trim() : '';
+        var bt = b.cells[col] ? b.cells[col].textContent.trim() : '';
+        var an = parseFloat(at.replace(/[^\d.]/g, '')), bn = parseFloat(bt.replace(/[^\d.]/g, ''));
+        return (!isNaN(an) && !isNaN(bn)) ? bn - an : bt.localeCompare(at);
+      });
+      rows.forEach(function (r) { tbody.appendChild(r); });
+    };
+
+    /* Export CSV */
+    window.exportCSV = function () {
+      var rows = Array.from(document.querySelectorAll('#volTbody tr'));
+      var csv = 'Rank,Name,Email,Hours,XP,Status\n';
+      rows.forEach(function (row, i) {
+        var cells = row.querySelectorAll('td');
+        if (cells.length < 5) return;
+        var name = (cells[1].querySelector('.vol-name') || {}).textContent || '';
+        var email = (cells[1].querySelector('.vol-email') || {}).textContent || '';
+        csv += (i + 1) + ',"' + name.trim() + '","' + email.trim() + '","' + cells[2].textContent.trim() + '","' + cells[3].textContent.trim() + '","' + cells[4].textContent.trim() + '"\n';
+      });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = 'volunteers_export.csv';
+      a.click();
+    };
+
+    /* Refresh */
+    window.refreshData = function () {
+      var btn = document.getElementById('refreshBtn');
+      btn.classList.add('spinning');
+      setTimeout(function () { btn.classList.remove('spinning'); }, 1200);
+    };
+
+    /* Socket.IO */
+    try {
+      var socket = io();
+      socket.on('connect', function () {
+        if (VA.isAuthenticated) socket.emit('join', { room: 'user_' + VA.currentUserId });
+      });
+      socket.on('update_stats', function (data) {
+        if (data.volunteers !== undefined) document.getElementById('kpi-total').textContent = data.volunteers;
+        if (data.events !== undefined) document.getElementById('kpi-events').textContent = data.events;
+      });
+      function prependFeed(dotClass, icon, title, sub, time) {
+        var feed = document.getElementById('activityFeed');
+        if (!feed) return;
+        var item = document.createElement('div');
+        item.className = 'activity-item';
+        item.innerHTML = '<div class="activity-dot ' + dotClass + '"><i class="bi ' + icon + '"></i></div><div class="activity-text"><div class="activity-title">' + title + '</div><div class="activity-sub">' + sub + '</div></div><div class="activity-time">' + time + '</div>';
+        feed.prepend(item);
+        while (feed.children.length > 10) feed.removeChild(feed.lastChild);
+      }
+      socket.on('new_checkin', function (data) {
+        prependFeed('green', 'bi-check2-circle', (data.name || 'Volunteer') + ' just checked in', 'Event check-in confirmed', data.time || 'just now');
+      });
+      socket.on('new_notification', function (data) {
+        prependFeed('blue', 'bi-bell', data.title || 'Notification', data.message || '', data.timestamp || 'just now');
+      });
+      setInterval(function () {
+        fetch('/api/leaderboard').then(function (r) { return r.json(); }).then(function (data) {
+          if (Array.isArray(data)) { var el = document.getElementById('kpi-live'); if (el) el.innerHTML = '<span class="kpi-live-dot"></span>' + data.length; }
+        }).catch(function () { });
+      }, 30000);
+    } catch (e) { }
+
+  });
+</script>
+{% endblock %}

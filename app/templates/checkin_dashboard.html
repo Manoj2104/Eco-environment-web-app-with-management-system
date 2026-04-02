@@ -1,0 +1,1846 @@
+{% extends 'base.html' %}
+{% block title %}Check-In Panel — ReEarth{% endblock %}
+{% block page_title %}Check-In Panel{% endblock %}
+{% block page_subtitle %}Live Attendance{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-green {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .4);
+    }
+
+    50% {
+      box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes checkPop {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+
+    70% {
+      transform: scale(1.2);
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile.t-red::before {
+    background: #ef4444;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .04s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .08s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .12s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .16s;
+  }
+
+  .tile:nth-child(5) {
+    animation-delay: .20s;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .tile.t-red .tile-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  .tile-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .62rem;
+    font-weight: 700;
+    color: #16a34a;
+    background: #dcfce7;
+    padding: 2px 8px;
+    border-radius: 99px;
+    margin-top: 4px;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: pulse-green 1.4s infinite;
+    flex-shrink: 0;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    animation: fadeUp .4s .22s ease both;
+  }
+
+  .toolbar-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .toolbar-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .85rem;
+    pointer-events: none;
+  }
+
+  .toolbar-search input {
+    width: 100%;
+    padding: 8px 14px 8px 34px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    color: #111827;
+    outline: none;
+    background: #f9fafb;
+    transition: all .18s;
+  }
+
+  .toolbar-search input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .toolbar-search input::placeholder {
+    color: #9ca3af;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .fpill {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .fpill:hover:not(.active) {
+    color: #16a34a;
+  }
+
+  .fpill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .sort-select {
+    padding: 7px 32px 7px 12px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    outline: none;
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    appearance: none;
+    transition: all .18s;
+  }
+
+  .sort-select:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .vtbtn {
+    width: 32px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: .85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .vtbtn.active {
+    background: #fff;
+    color: #374151;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+  }
+
+  .export-btn {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .18s;
+  }
+
+  .export-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .record-count {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+  }
+
+  /* ── MAIN CONTENT AREA ── */
+  .content-area {
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  /* ── GRID VIEW ── */
+  .attendee-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .attendee-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 18px;
+    padding: 20px;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .attendee-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0 3px 3px 0;
+  }
+
+  .attendee-card.checked-in::before {
+    background: #22c55e;
+  }
+
+  .attendee-card.pending::before {
+    background: #f59e0b;
+  }
+
+  .attendee-card.missed::before {
+    background: #ef4444;
+  }
+
+  .attendee-card:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .12);
+    transform: translateY(-2px);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .attendee-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .attendee-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-name {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-email {
+    font-size: .72rem;
+    color: #9ca3af;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-status-pill {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+
+  .csp-checked {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .csp-pending {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .csp-missed {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+
+  .card-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .74rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .card-meta-row i {
+    color: #16a34a;
+    width: 14px;
+    flex-shrink: 0;
+    font-size: .82rem;
+  }
+
+  .card-xp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f0fdf4;
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+  }
+
+  .card-xp-lbl {
+    font-size: .7rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .card-xp-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .84rem;
+    font-weight: 800;
+    color: #16a34a;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .card-btn {
+    flex: 1;
+    height: 34px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .74rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all .18s;
+  }
+
+  .card-btn-checkin {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .card-btn-checkin:hover {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .card-btn-done {
+    background: #f0fdf4;
+    color: #16a34a;
+    border-color: #bbf7d0;
+    cursor: default;
+  }
+
+  .card-btn-info {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+  }
+
+  .card-btn-info:hover {
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .check-anim {
+    animation: checkPop .35s cubic-bezier(.34, 1.56, .64, 1) both;
+  }
+
+  /* ── TABLE VIEW ── */
+  .checkin-table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    margin-bottom: 20px;
+  }
+
+  .checkin-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .checkin-table thead th {
+    padding: 11px 18px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+  }
+
+  .checkin-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+  }
+
+  .checkin-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .checkin-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .checkin-table tbody td {
+    padding: 12px 18px;
+    font-size: .8rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .td-num {
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .76rem;
+  }
+
+  .td-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .td-ava {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  .td-ava img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .td-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .td-email {
+    font-size: .7rem;
+    color: #9ca3af;
+  }
+
+  .td-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  .td-green {
+    color: #16a34a;
+  }
+
+  .td-status-pill {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .tsp-checked {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .tsp-pending {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .tsp-missed {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .td-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+    transition: all .18s;
+  }
+
+  .td-icon-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .td-icon-btn.checkin-trigger:hover {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+  }
+
+  /* ── PROGRESS BAR ROW ── */
+  .progress-row-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .16s ease both;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .prc-label {
+    font-size: .8rem;
+    font-weight: 700;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    flex-shrink: 0;
+  }
+
+  .prc-bar-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+
+  .prc-track {
+    height: 10px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .prc-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #16a34a, #4ade80, #10b981);
+    box-shadow: 0 2px 8px rgba(34, 197, 94, .3);
+    transition: width 1s cubic-bezier(.4, 0, .2, 1);
+    position: relative;
+  }
+
+  .prc-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .45) 50%, transparent 100%);
+    background-size: 200% 100%;
+    border-radius: 99px;
+    animation: shimmer 2.2s infinite;
+  }
+
+  .prc-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .82rem;
+    font-weight: 800;
+    color: #16a34a;
+    flex-shrink: 0;
+  }
+
+  .prc-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .prc-chip {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .chip-green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .chip-amber {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .chip-red {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 60px 24px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    opacity: .2;
+    margin-bottom: 12px;
+  }
+
+  .empty-state h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .empty-state p {
+    font-size: .82rem;
+    color: #9ca3af;
+  }
+
+  /* ── DETAIL MODAL ── */
+  .ci-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .ci-modal-overlay.open {
+    display: flex;
+  }
+
+  .ci-modal {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .18);
+    overflow: hidden;
+    animation: fadeUp .25s cubic-bezier(.34, 1.56, .64, 1) both;
+  }
+
+  .ci-modal-top {
+    padding: 24px 24px 20px;
+    position: relative;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+  }
+
+  .ci-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background .18s;
+  }
+
+  .ci-modal-close:hover {
+    background: rgba(255, 255, 255, .35);
+  }
+
+  .ci-modal-ava {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, .4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .ci-modal-ava img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ci-modal-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 2px;
+  }
+
+  .ci-modal-sub {
+    font-size: .76rem;
+    opacity: .8;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .ci-modal-body {
+    padding: 20px 24px;
+  }
+
+  .ci-modal-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: .82rem;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .ci-modal-row i {
+    width: 20px;
+    color: #16a34a;
+    font-size: .9rem;
+    flex-shrink: 0;
+  }
+
+  .ci-modal-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .ci-modal-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: .72rem;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .cmc-green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .cmc-blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .cmc-amber {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .ci-modal-divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 16px 0;
+  }
+
+  .ci-modal-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .ci-modal-btn {
+    flex: 1;
+    height: 40px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all .2s;
+  }
+
+  .cmb-primary {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+  }
+
+  .cmb-primary:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .cmb-outline {
+    background: #fff;
+    border: 1.5px solid #e4ece6 !important;
+    color: #374151;
+  }
+
+  .cmb-outline:hover {
+    border-color: #9ca3af !important;
+  }
+
+  /* ── LIVE FEED TOAST ── */
+  .live-feed {
+    position: fixed;
+    bottom: 80px;
+    right: 24px;
+    z-index: 8000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .feed-item {
+    background: #111827;
+    color: #fff;
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+    animation: slideIn .3s ease both;
+    pointer-events: auto;
+  }
+
+  .feed-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    flex-shrink: 0;
+  }
+
+  .feed-name {
+    font-weight: 700;
+    color: #4ade80;
+  }
+
+  .feed-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-left: auto;
+  }
+
+  /* ── FEEDBACK ALERT ── */
+  .checkin-alert {
+    position: fixed;
+    top: 88px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #16a34a;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .86rem;
+    font-weight: 700;
+    box-shadow: 0 8px 32px rgba(22, 163, 74, .35);
+    z-index: 9500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+    white-space: nowrap;
+  }
+
+  .checkin-alert.show {
+    opacity: 1;
+  }
+
+  /* ── SOCKET STATUS ── */
+  .socket-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .72rem;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+    padding: 4px 10px;
+    border-radius: 99px;
+  }
+
+  .ss-online {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .ss-offline {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .ss-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .ss-online .ss-dot {
+    background: #22c55e;
+    animation: pulse-green 1.4s infinite;
+  }
+
+  .ss-offline .ss-dot {
+    background: #ef4444;
+  }
+
+  @media (max-width: 1100px) {
+    .stat-tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .page-content {
+      padding: 16px;
+    }
+
+    .attendee-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- LIVE ALERT -->
+<div class="checkin-alert" id="checkinAlert">
+  <i class="bi bi-check-circle-fill"></i>
+  <span id="alertMsg">Attendee checked in!</span>
+</div>
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-people-fill"></i></div>
+    <div class="tile-val" id="tileTotal">—</div>
+    <div class="tile-lbl">Total Attendees</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-check-circle-fill"></i></div>
+    <div class="tile-val" id="tileCheckedIn">—</div>
+    <div class="tile-lbl">Checked-In</div>
+    <div class="tile-live"><span class="live-dot"></span> Live</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-hourglass-split"></i></div>
+    <div class="tile-val" id="tilePending">—</div>
+    <div class="tile-lbl">Pending</div>
+  </div>
+  <div class="tile t-red">
+    <div class="tile-icon"><i class="bi bi-x-circle-fill"></i></div>
+    <div class="tile-val" id="tileMissed">—</div>
+    <div class="tile-lbl">Missed</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-val" id="tileRate">—</div>
+    <div class="tile-lbl">Check-In Rate</div>
+  </div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-row-card">
+  <div class="prc-label">Attendance Progress</div>
+  <div class="prc-bar-wrap">
+    <div class="prc-track">
+      <div class="prc-fill" id="progressFill" style="width:0%;"></div>
+    </div>
+  </div>
+  <div class="prc-pct" id="progressPct">0%</div>
+  <div class="prc-meta">
+    <span class="prc-chip chip-green" id="chipChecked">0 Checked</span>
+    <span class="prc-chip chip-amber" id="chipPending">0 Pending</span>
+    <span class="prc-chip chip-red" id="chipMissed">0 Missed</span>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar-card">
+  <div class="toolbar-search">
+    <i class="bi bi-search"></i>
+    <input type="text" id="searchInput" placeholder="Search by name or email...">
+  </div>
+  <div class="filter-group">
+    <button class="fpill active" data-filter="all">All</button>
+    <button class="fpill" data-filter="checked_in">Checked-In</button>
+    <button class="fpill" data-filter="pending">Pending</button>
+    <button class="fpill" data-filter="missed">Missed</button>
+  </div>
+  <select class="sort-select" id="sortSelect">
+    <option value="name">Name A–Z</option>
+    <option value="status">By Status</option>
+    <option value="xp">By XP</option>
+    <option value="time">By Time</option>
+  </select>
+  <div class="view-toggle">
+    <button class="vtbtn active" id="gridViewBtn" title="Grid"><i class="bi bi-grid-fill"></i></button>
+    <button class="vtbtn" id="tableViewBtn" title="Table"><i class="bi bi-list-ul"></i></button>
+  </div>
+  <button class="export-btn" id="exportBtn">
+    <i class="bi bi-download"></i> Export
+  </button>
+  <div id="socketStatusWrap">
+    <span class="socket-status ss-online" id="socketStatus">
+      <span class="ss-dot"></span> Connected
+    </span>
+  </div>
+  <div class="record-count"><span id="recordCount">0</span> records</div>
+</div>
+
+<!-- CONTENT AREA -->
+<div class="content-area">
+
+  <!-- GRID VIEW -->
+  <div id="gridView">
+    <div class="attendee-grid" id="attendeeGrid"></div>
+    <div class="empty-state" id="gridEmpty" style="display:none;">
+      <div class="empty-icon"><i class="bi bi-people"></i></div>
+      <h3>No attendees found</h3>
+      <p>Try adjusting your search or filter.</p>
+    </div>
+  </div>
+
+  <!-- TABLE VIEW (hidden) -->
+  <div id="tableView" style="display:none;">
+    <div class="checkin-table-card">
+      <table class="checkin-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Attendee</th>
+            <th>Event</th>
+            <th>Status</th>
+            <th>Checked-In At</th>
+            <th>XP</th>
+            <th>Level</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="attendeeTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="tableEmpty" style="display:none; border:none; border-radius:0;">
+        <div class="empty-icon"><i class="bi bi-people"></i></div>
+        <h3>No attendees found</h3>
+        <p>Try adjusting your search or filter.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="ci-modal-overlay" id="detailOverlay">
+  <div class="ci-modal">
+    <div class="ci-modal-top">
+      <button class="ci-modal-close" id="modalClose"><i class="bi bi-x-lg"></i></button>
+      <div class="ci-modal-ava" id="modalAva">?</div>
+      <div class="ci-modal-name" id="modalName">—</div>
+      <div class="ci-modal-sub" id="modalSub">—</div>
+    </div>
+    <div class="ci-modal-body">
+      <div class="ci-modal-chips" id="modalChips"></div>
+      <div class="ci-modal-row"><i class="bi bi-envelope-fill"></i><span id="modalEmail">—</span></div>
+      <div class="ci-modal-row"><i class="bi bi-calendar-event-fill"></i><span id="modalEvent">—</span></div>
+      <div class="ci-modal-row"><i class="bi bi-clock-fill"></i><span id="modalTime">—</span></div>
+      <div class="ci-modal-divider"></div>
+      <div class="ci-modal-actions">
+        <button class="ci-modal-btn cmb-outline" id="modalCloseBtn"><i class="bi bi-x"></i> Close</button>
+        <button class="ci-modal-btn cmb-primary" id="modalCheckinBtn">
+          <i class="bi bi-check-circle-fill"></i> Mark Check-In
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE FEED -->
+<div class="live-feed" id="liveFeed"></div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    /* ── State ─────────────────────────────────────────────────── */
+    let ALL_DATA = [];
+    let activeFilter = 'all';
+    let activeSearch = '';
+    let activeSort = 'name';
+    let isGridView = true;
+    let currentModal = null;
+
+    const COLORS = ['#22c55e', '#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#a855f7', '#f43f5e', '#0ea5e9'];
+
+    /* ── Socket.IO ─────────────────────────────────────────────── */
+    const socket = io();
+
+    socket.on('connect', () => {
+      setSocketStatus(true);
+      socket.emit('join', { room: 'checkin_panel' });
+    });
+    socket.on('disconnect', () => setSocketStatus(false));
+
+    socket.on('new_checkin', data => {
+      /* Update matching entry in ALL_DATA */
+      const idx = ALL_DATA.findIndex(u => u.name === data.name || u.id === data.id);
+      if (idx !== -1) {
+        ALL_DATA[idx].checked_in = true;
+        ALL_DATA[idx].checkin_time = data.time;
+        ALL_DATA[idx].status = 'checked_in';
+      }
+      updateStats();
+      renderContent();
+      showLiveFeedItem(data.name, data.time);
+      showAlert(`${data.name} checked in at ${data.time}`);
+    });
+
+    function setSocketStatus(online) {
+      const el = document.getElementById('socketStatus');
+      el.className = `socket-status ${online ? 'ss-online' : 'ss-offline'}`;
+      el.innerHTML = `<span class="ss-dot"></span> ${online ? 'Connected' : 'Offline'}`;
+    }
+
+    /* ── Load data ─────────────────────────────────────────────── */
+    function loadData() {
+      fetch('/realtime-attendance')
+        .then(r => r.json())
+        .then(data => {
+          ALL_DATA = data;
+          updateStats();
+          renderContent();
+        })
+        .catch(() => {
+          /* If fetch fails, show empty state gracefully */
+          updateStats();
+          renderContent();
+        });
+    }
+
+    loadData();
+
+    /* Auto-refresh every 30 seconds */
+    setInterval(loadData, 30000);
+
+    /* ── Stats ─────────────────────────────────────────────────── */
+    function updateStats() {
+      const total = ALL_DATA.length;
+      const checkedIn = ALL_DATA.filter(u => u.checked_in || u.status === 'checked_in').length;
+      const missed = ALL_DATA.filter(u => u.missed || u.status === 'missed').length;
+      const pending = total - checkedIn - missed;
+      const rate = total > 0 ? Math.round((checkedIn / total) * 100) : 0;
+
+      document.getElementById('tileTotal').textContent = total;
+      document.getElementById('tileCheckedIn').textContent = checkedIn;
+      document.getElementById('tilePending').textContent = pending;
+      document.getElementById('tileMissed').textContent = missed;
+      document.getElementById('tileRate').textContent = rate + '%';
+
+      document.getElementById('progressFill').style.width = rate + '%';
+      document.getElementById('progressPct').textContent = rate + '%';
+      document.getElementById('chipChecked').textContent = checkedIn + ' Checked';
+      document.getElementById('chipPending').textContent = pending + ' Pending';
+      document.getElementById('chipMissed').textContent = missed + ' Missed';
+    }
+
+    /* ── Filter + Search + Sort ────────────────────────────────── */
+    function getFiltered() {
+      let data = [...ALL_DATA];
+
+      /* Search */
+      if (activeSearch) {
+        const q = activeSearch.toLowerCase();
+        data = data.filter(u =>
+          (u.name || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q)
+        );
+      }
+
+      /* Filter */
+      if (activeFilter !== 'all') {
+        data = data.filter(u => {
+          const st = resolveStatus(u);
+          return st === activeFilter;
+        });
+      }
+
+      /* Sort */
+      data.sort((a, b) => {
+        if (activeSort === 'name') return (a.name || '').localeCompare(b.name || '');
+        if (activeSort === 'status') return statusOrder(a) - statusOrder(b);
+        if (activeSort === 'xp') return (b.xp || 0) - (a.xp || 0);
+        if (activeSort === 'time') {
+          if (a.checkin_time && b.checkin_time) return b.checkin_time.localeCompare(a.checkin_time);
+          if (a.checkin_time) return -1;
+          if (b.checkin_time) return 1;
+          return 0;
+        }
+        return 0;
+      });
+
+      return data;
+    }
+
+    function resolveStatus(u) {
+      if (u.status) return u.status;
+      if (u.checked_in) return 'checked_in';
+      if (u.missed) return 'missed';
+      return 'pending';
+    }
+
+    function statusOrder(u) {
+      const m = { checked_in: 0, pending: 1, missed: 2 };
+      return m[resolveStatus(u)] ?? 3;
+    }
+
+    /* ── Render ────────────────────────────────────────────────── */
+    function renderContent() {
+      const filtered = getFiltered();
+      document.getElementById('recordCount').textContent = filtered.length;
+
+      if (isGridView) {
+        renderGrid(filtered);
+      } else {
+        renderTable(filtered);
+      }
+    }
+
+    function avatarInitials(name) {
+      return (name || '??').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+
+    function colorForId(id) {
+      return COLORS[(id || 0) % COLORS.length];
+    }
+
+    function statusInfo(u) {
+      const st = resolveStatus(u);
+      if (st === 'checked_in') return { cls: 'checked-in', pillCls: 'csp-checked', tPillCls: 'tsp-checked', label: 'Checked-In', icon: 'check-circle-fill' };
+      if (st === 'missed') return { cls: 'missed', pillCls: 'csp-missed', tPillCls: 'tsp-missed', label: 'Missed', icon: 'x-circle-fill' };
+      return { cls: 'pending', pillCls: 'csp-pending', tPillCls: 'tsp-pending', label: 'Pending', icon: 'hourglass-split' };
+    }
+
+    /* GRID */
+    function renderGrid(data) {
+      const grid = document.getElementById('attendeeGrid');
+      const emptyEl = document.getElementById('gridEmpty');
+      grid.innerHTML = '';
+
+      if (data.length === 0) {
+        emptyEl.style.display = '';
+        return;
+      }
+      emptyEl.style.display = 'none';
+
+      data.forEach(u => {
+        const si = statusInfo(u);
+        const color = colorForId(u.id);
+        const ini = avatarInitials(u.name);
+        const isChecked = resolveStatus(u) === 'checked_in';
+
+        const card = document.createElement('div');
+        card.className = `attendee-card ${si.cls}`;
+        card.dataset.id = u.id;
+
+        const avatarHTML = u.avatar
+          ? `<img src="/static/uploads/${u.avatar}" alt="${u.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+           <span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${ini}</span>`
+          : ini;
+
+        card.innerHTML = `
+        <div class="card-top">
+          <div class="attendee-avatar" style="background:${color};">${avatarHTML}</div>
+          <div class="card-info">
+            <div class="card-name">${escHtml(u.name || '—')}</div>
+            <div class="card-email">${escHtml(u.email || '—')}</div>
+            <span class="card-status-pill ${si.pillCls}">
+              <i class="bi bi-${si.icon}"></i> ${si.label}
+            </span>
+          </div>
+        </div>
+        <div class="card-meta">
+          ${u.event_title ? `<div class="card-meta-row"><i class="bi bi-calendar-event-fill"></i><span>${escHtml(u.event_title)}</span></div>` : ''}
+          ${u.event_date ? `<div class="card-meta-row"><i class="bi bi-calendar3"></i><span>${escHtml(u.event_date)}</span></div>` : ''}
+          ${u.checkin_time ? `<div class="card-meta-row"><i class="bi bi-clock-fill"></i><span>In at ${escHtml(u.checkin_time)}</span></div>` : ''}
+        </div>
+        <div class="card-xp-row">
+          <span class="card-xp-lbl">XP · Level ${u.level || 1}</span>
+          <span class="card-xp-val">${u.xp || 0} XP</span>
+        </div>
+        <div class="card-actions">
+          ${isChecked
+            ? `<button class="card-btn card-btn-done" disabled><i class="bi bi-check2-circle check-anim"></i> Done</button>`
+            : `<button class="card-btn card-btn-checkin checkin-trigger" data-id="${u.id}" data-name="${escHtml(u.name)}">
+                 <i class="bi bi-check-circle"></i> Check-In
+               </button>`
+          }
+          <button class="card-btn card-btn-info open-detail" data-id="${u.id}">
+            <i class="bi bi-info-circle"></i>
+          </button>
+        </div>`;
+        grid.appendChild(card);
+      });
+    }
+
+    /* TABLE */
+    function renderTable(data) {
+      const tbody = document.getElementById('attendeeTableBody');
+      const emptyEl = document.getElementById('tableEmpty');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        emptyEl.style.display = '';
+        return;
+      }
+      emptyEl.style.display = 'none';
+
+      data.forEach((u, i) => {
+        const si = statusInfo(u);
+        const color = colorForId(u.id);
+        const ini = avatarInitials(u.name);
+        const isChecked = resolveStatus(u) === 'checked_in';
+
+        const avatarHTML = u.avatar
+          ? `<img src="/static/uploads/${u.avatar}" alt="${u.name}" onerror="this.style.display='none'"><span style="display:none">${ini}</span>`
+          : ini;
+
+        const tr = document.createElement('tr');
+        tr.dataset.id = u.id;
+        tr.innerHTML = `
+        <td class="td-num">${String(i + 1).padStart(2, '0')}</td>
+        <td>
+          <div class="td-user">
+            <div class="td-ava" style="background:${color};">${avatarHTML}</div>
+            <div>
+              <div class="td-name">${escHtml(u.name || '—')}</div>
+              <div class="td-email">${escHtml(u.email || '—')}</div>
+            </div>
+          </div>
+        </td>
+        <td style="font-size:.78rem;color:#6b7280;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(u.event_title || '—')}</td>
+        <td>
+          <span class="td-status-pill ${si.tPillCls}">
+            <i class="bi bi-${si.icon}"></i> ${si.label}
+          </span>
+        </td>
+        <td class="td-mono" style="font-size:.74rem;">${u.checkin_time ? escHtml(u.checkin_time) : '—'}</td>
+        <td class="td-mono td-green">${u.xp || 0}</td>
+        <td class="td-mono" style="color:#374151;">${u.level || 1}</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            ${isChecked
+            ? `<span title="Already checked in" style="font-size:.82rem;color:#16a34a;"><i class="bi bi-check-circle-fill"></i></span>`
+            : `<button class="td-icon-btn checkin-trigger" data-id="${u.id}" data-name="${escHtml(u.name)}" title="Check-In"><i class="bi bi-check-circle"></i></button>`
+          }
+            <button class="td-icon-btn open-detail" data-id="${u.id}" title="Details"><i class="bi bi-eye"></i></button>
+          </div>
+        </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* ── Event delegation for check-in + detail buttons ───────── */
+    document.addEventListener('click', function (e) {
+      const ci = e.target.closest('.checkin-trigger');
+      if (ci) { doCheckin(parseInt(ci.dataset.id), ci.dataset.name); return; }
+
+      const od = e.target.closest('.open-detail');
+      if (od) { openModal(parseInt(od.dataset.id)); return; }
+    });
+
+    /* ── Check-in action ───────────────────────────────────────── */
+    function doCheckin(userId, name) {
+      fetch(`/checkin/${userId}`, { method: 'POST', headers: { 'X-CSRFToken': getCsrf() } })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            const idx = ALL_DATA.findIndex(u => u.id === userId);
+            if (idx !== -1) {
+              ALL_DATA[idx].checked_in = true;
+              ALL_DATA[idx].checkin_time = data.checkin_time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+              ALL_DATA[idx].status = 'checked_in';
+            }
+            updateStats();
+            renderContent();
+            showAlert(`${name} checked in successfully ✓`);
+            showLiveFeedItem(name, ALL_DATA.find(u => u.id === userId)?.checkin_time || 'just now');
+            socket.emit('checkin', { id: userId, name, time: ALL_DATA.find(u => u.id === userId)?.checkin_time });
+          } else {
+            showAlert(data.message || 'Check-in failed', true);
+          }
+        })
+        .catch(() => showAlert('Network error — please try again', true));
+    }
+
+    /* ── Detail modal ───────────────────────────────────────────── */
+    function openModal(userId) {
+      const u = ALL_DATA.find(x => x.id === userId);
+      if (!u) return;
+      currentModal = u;
+
+      const si = statusInfo(u);
+      const ini = avatarInitials(u.name);
+
+      const avaEl = document.getElementById('modalAva');
+      if (u.avatar) {
+        avaEl.innerHTML = `<img src="/static/uploads/${u.avatar}" alt="${u.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${ini}'">`;
+      } else {
+        avaEl.textContent = ini;
+      }
+
+      document.getElementById('modalName').textContent = u.name || '—';
+      document.getElementById('modalSub').textContent = `${si.label} · Level ${u.level || 1}`;
+      document.getElementById('modalEmail').textContent = u.email || '—';
+      document.getElementById('modalEvent').textContent = u.event_title ? `${u.event_title}${u.event_date ? ' · ' + u.event_date : ''}` : '—';
+      document.getElementById('modalTime').textContent = u.checkin_time ? `Checked in at ${u.checkin_time}` : 'Not checked in yet';
+
+      document.getElementById('modalChips').innerHTML = `
+      <span class="ci-modal-chip cmc-blue"><i class="bi bi-lightning-charge-fill"></i> ${u.xp || 0} XP</span>
+      <span class="ci-modal-chip cmc-amber"><i class="bi bi-bar-chart-fill"></i> Level ${u.level || 1}</span>
+      <span class="ci-modal-chip ${u.checked_in ? 'cmc-green' : 'cmc-amber'}">
+        <i class="bi bi-${si.icon}"></i> ${si.label}
+      </span>`;
+
+      const checkinBtn = document.getElementById('modalCheckinBtn');
+      if (resolveStatus(u) === 'checked_in') {
+        checkinBtn.disabled = true;
+        checkinBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Already Checked-In';
+        checkinBtn.style.opacity = '.6';
+      } else {
+        checkinBtn.disabled = false;
+        checkinBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Mark Check-In';
+        checkinBtn.style.opacity = '1';
+      }
+
+      document.getElementById('detailOverlay').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('detailOverlay').classList.remove('open');
+      currentModal = null;
+    }
+
+    document.getElementById('modalClose').onclick = closeModal;
+    document.getElementById('modalCloseBtn').onclick = closeModal;
+    document.getElementById('detailOverlay').addEventListener('click', e => { if (e.target === document.getElementById('detailOverlay')) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    document.getElementById('modalCheckinBtn').addEventListener('click', function () {
+      if (!currentModal || resolveStatus(currentModal) === 'checked_in') return;
+      doCheckin(currentModal.id, currentModal.name);
+      closeModal();
+    });
+
+    /* ── Toolbar listeners ──────────────────────────────────────── */
+    document.getElementById('searchInput').addEventListener('input', function () {
+      activeSearch = this.value;
+      renderContent();
+    });
+
+    document.querySelectorAll('.fpill').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        activeFilter = this.dataset.filter;
+        renderContent();
+      });
+    });
+
+    document.getElementById('sortSelect').addEventListener('change', function () {
+      activeSort = this.value;
+      renderContent();
+    });
+
+    document.getElementById('gridViewBtn').addEventListener('click', function () {
+      isGridView = true;
+      this.classList.add('active');
+      document.getElementById('tableViewBtn').classList.remove('active');
+      document.getElementById('gridView').style.display = '';
+      document.getElementById('tableView').style.display = 'none';
+    });
+    document.getElementById('tableViewBtn').addEventListener('click', function () {
+      isGridView = false;
+      this.classList.add('active');
+      document.getElementById('gridViewBtn').classList.remove('active');
+      document.getElementById('gridView').style.display = 'none';
+      document.getElementById('tableView').style.display = '';
+      renderContent();
+    });
+
+    /* ── Export CSV ─────────────────────────────────────────────── */
+    document.getElementById('exportBtn').addEventListener('click', function () {
+      if (ALL_DATA.length === 0) return;
+      const rows = [['Name', 'Email', 'Status', 'Event', 'Checked-In At', 'XP', 'Level']];
+      getFiltered().forEach(u => {
+        rows.push([
+          u.name || '', u.email || '',
+          resolveStatus(u), u.event_title || '',
+          u.checkin_time || '', u.xp || 0, u.level || 1
+        ]);
+      });
+      const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `checkin_export_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+    });
+
+    /* ── Live feed toast ────────────────────────────────────────── */
+    function showLiveFeedItem(name, time) {
+      const feed = document.getElementById('liveFeed');
+      const item = document.createElement('div');
+      item.className = 'feed-item';
+      item.innerHTML = `<span class="feed-dot"></span><span><span class="feed-name">${escHtml(name)}</span> checked in</span><span class="feed-time">${escHtml(time || 'just now')}</span>`;
+      feed.appendChild(item);
+      setTimeout(() => {
+        item.style.transition = 'opacity .4s';
+        item.style.opacity = '0';
+        setTimeout(() => item.remove(), 400);
+      }, 4000);
+    }
+
+    /* ── Alert banner ───────────────────────────────────────────── */
+    let alertTimer;
+    function showAlert(msg, isError = false) {
+      const el = document.getElementById('checkinAlert');
+      document.getElementById('alertMsg').textContent = msg;
+      el.style.background = isError ? '#ef4444' : '#16a34a';
+      el.classList.add('show');
+      clearTimeout(alertTimer);
+      alertTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    /* ── Helpers ────────────────────────────────────────────────── */
+    function escHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function getCsrf() {
+      const m = document.cookie.match(/csrf_token=([^;]+)/);
+      return m ? m[1] : '';
+    }
+
+  });
+</script>
+{% endblock %}

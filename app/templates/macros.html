@@ -1,0 +1,3 @@
+{% macro timedelta(minutes=0, hours=0) %}
+  {{ namespace(val=loop.caller.current_time + (hours * 3600 + minutes * 60) | int) }}
+{% endmacro %}

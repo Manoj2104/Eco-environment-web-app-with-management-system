@@ -1,0 +1,1532 @@
+{% extends 'base.html' %}
+{% block title %}My Attendance — ReEarth{% endblock %}
+{% block page_title %}My Attendance{% endblock %}
+{% block page_subtitle %}Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile.t-red::before {
+    background: #ef4444;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .04s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .08s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .12s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .16s;
+  }
+
+  .tile:nth-child(5) {
+    animation-delay: .20s;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .tile.t-red .tile-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    animation: fadeUp .4s .2s ease both;
+  }
+
+  .toolbar-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .toolbar-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .85rem;
+  }
+
+  .toolbar-search input {
+    width: 100%;
+    padding: 8px 14px 8px 34px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    color: #111827;
+    outline: none;
+    transition: all .18s;
+    background: #f9fafb;
+  }
+
+  .toolbar-search input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .toolbar-search input::placeholder {
+    color: #9ca3af;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .fpill {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .fpill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .fpill:hover:not(.active) {
+    color: #16a34a;
+  }
+
+  .sort-select {
+    padding: 7px 32px 7px 12px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    outline: none;
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    appearance: none;
+    transition: all .18s;
+  }
+
+  .sort-select:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  /* ── GRID / TABLE TOGGLE ── */
+  .view-toggle {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .vtbtn {
+    width: 32px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: .85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .vtbtn.active {
+    background: #fff;
+    color: #374151;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+  }
+
+  /* ── ATTENDANCE GRID (card view) ── */
+  .att-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .26s ease both;
+  }
+
+  .att-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 18px;
+    padding: 20px;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .att-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0 3px 3px 0;
+  }
+
+  .att-card.present::before {
+    background: #22c55e;
+  }
+
+  .att-card.absent::before {
+    background: #ef4444;
+  }
+
+  .att-card.pending::before {
+    background: #f59e0b;
+  }
+
+  .att-card:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .12);
+    transform: translateY(-2px);
+  }
+
+  .att-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .att-event-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  .present .att-event-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .absent .att-event-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .pending .att-event-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .att-status-pill {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+  }
+
+  .asp-present {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .asp-absent {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .asp-pending {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .att-event-name {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+
+  .att-meta-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+
+  .att-meta {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .75rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .att-meta i {
+    color: #16a34a;
+    width: 14px;
+    flex-shrink: 0;
+  }
+
+  .att-tags {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .att-tag {
+    font-size: .62rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #dcfce7;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .att-xp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f0fdf4;
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+  }
+
+  .att-xp-label {
+    font-size: .7rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .att-xp-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .84rem;
+    font-weight: 800;
+    color: #16a34a;
+  }
+
+  /* Progress bar for hours */
+  .att-hours-bar {
+    margin-bottom: 14px;
+  }
+
+  .att-hours-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .att-hours-lbl {
+    font-size: .68rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .att-hours-val {
+    font-size: .68rem;
+    font-weight: 700;
+    color: #374151;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .att-bar-track {
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .att-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+    border-radius: 99px;
+    transition: width 1s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .att-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .att-btn {
+    flex: 1;
+    height: 34px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .74rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all .18s;
+  }
+
+  .att-btn-view {
+    background: #f0fdf4;
+    color: #16a34a;
+    border-color: #dcfce7;
+  }
+
+  .att-btn-view:hover {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .att-btn-map {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+  }
+
+  .att-btn-map:hover {
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .att-btn-cert {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+  }
+
+  .att-btn-cert:hover {
+    background: #f59e0b;
+    color: #fff;
+  }
+
+  /* ── TABLE VIEW ── */
+  .att-table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    margin-bottom: 20px;
+    animation: fadeUp .4s .26s ease both;
+  }
+
+  .att-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .att-table thead th {
+    padding: 11px 18px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .att-table thead th:hover {
+    color: #16a34a;
+  }
+
+  .att-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+  }
+
+  .att-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .att-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .att-table tbody td {
+    padding: 13px 18px;
+    font-size: .8rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .td-name {
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .td-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  .td-green {
+    color: #16a34a;
+  }
+
+  .td-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+    transition: all .18s;
+  }
+
+  .td-icon-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  /* ── EMPTY STATE ── */
+  .att-empty {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 60px 24px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .26s ease both;
+  }
+
+  .att-empty-icon {
+    font-size: 3rem;
+    opacity: .2;
+    margin-bottom: 12px;
+  }
+
+  .att-empty h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .att-empty p {
+    font-size: .82rem;
+    color: #9ca3af;
+    margin-bottom: 20px;
+  }
+
+  .att-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 22px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    text-decoration: none;
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .att-empty-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .38);
+    color: #fff;
+  }
+
+  /* ── DETAIL MODAL ── */
+  .att-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .att-modal-overlay.open {
+    display: flex;
+  }
+
+  .att-modal {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .18);
+    overflow: hidden;
+    animation: modalPop .25s cubic-bezier(.34, 1.56, .64, 1) both;
+  }
+
+  @keyframes modalPop {
+    from {
+      opacity: 0;
+      transform: scale(.92) translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .att-modal-top {
+    padding: 24px 24px 20px;
+    position: relative;
+  }
+
+  .att-modal-top.present {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+  }
+
+  .att-modal-top.absent {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    color: #fff;
+  }
+
+  .att-modal-top.pending {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    color: #fff;
+  }
+
+  .att-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background .18s;
+  }
+
+  .att-modal-close:hover {
+    background: rgba(255, 255, 255, .35);
+  }
+
+  .att-modal-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .att-modal-sub {
+    font-size: .76rem;
+    opacity: .85;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .att-modal-body {
+    padding: 20px 24px;
+  }
+
+  .att-modal-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: .82rem;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .att-modal-row i {
+    width: 20px;
+    color: #16a34a;
+    font-size: .9rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .att-modal-divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 16px 0;
+  }
+
+  .att-modal-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .att-modal-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: .72rem;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .amc-green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .amc-blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .amc-amber {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .amc-purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+
+  .att-modal-map {
+    height: 200px;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    background: #f3f4f6;
+  }
+
+  .att-modal-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .att-modal-btn {
+    flex: 1;
+    height: 40px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all .2s;
+  }
+
+  .amb-primary {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+  }
+
+  .amb-primary:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .amb-outline {
+    background: #fff;
+    border: 1.5px solid #e4ece6 !important;
+    color: #374151;
+  }
+
+  .amb-outline:hover {
+    border-color: #9ca3af !important;
+  }
+
+  /* ── CHART CARD ── */
+  .chart-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .32s ease both;
+  }
+
+  .mini-chart-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+  }
+
+  .mini-chart-title {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #9ca3af;
+    margin-bottom: 14px;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mini-chart-title i {
+    color: #16a34a;
+    font-size: .85rem;
+  }
+
+  .mini-chart-body {
+    position: relative;
+    width: 100%;
+    height: 130px;
+  }
+
+  .mini-chart-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  @media (max-width:1100px) {
+    .stat-tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width:900px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chart-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width:640px) {
+    .page-content {
+      padding: 16px;
+    }
+
+    .att-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set total = records | length %}
+{% set present_ct = records | selectattr('status','equalto','present') | list | length %}
+{% set absent_ct = records | selectattr('status','equalto','absent') | list | length %}
+{% set total_hrs = records | sum(attribute='calculated_hours') %}
+{% set task_ct = records | selectattr('task_completed','equalto',True) | list | length %}
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-calendar2-check-fill"></i></div>
+    <div class="tile-val">{{ total }}</div>
+    <div class="tile-lbl">Total Records</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-check-circle-fill"></i></div>
+    <div class="tile-val">{{ present_ct }}</div>
+    <div class="tile-lbl">Present</div>
+  </div>
+  <div class="tile t-red">
+    <div class="tile-icon"><i class="bi bi-x-circle-fill"></i></div>
+    <div class="tile-val">{{ absent_ct }}</div>
+    <div class="tile-lbl">Absent</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="tile-val">{{ "%.1f"|format(total_hrs) }}h</div>
+    <div class="tile-lbl">Total Hours</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-patch-check-fill"></i></div>
+    <div class="tile-val">{{ task_ct }}</div>
+    <div class="tile-lbl">Tasks Done</div>
+  </div>
+</div>
+
+{% if records %}
+
+<!-- MINI CHARTS -->
+<div class="chart-row">
+  <div class="mini-chart-card">
+    <div class="mini-chart-title"><i class="bi bi-bar-chart-fill"></i> Attendance Rate</div>
+    <div class="mini-chart-body"><canvas id="attRateChart"></canvas></div>
+  </div>
+  <div class="mini-chart-card">
+    <div class="mini-chart-title"><i class="bi bi-graph-up-arrow"></i> Monthly Activity</div>
+    <div class="mini-chart-body"><canvas id="monthlyChart"></canvas></div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar-card">
+  <div class="toolbar-search">
+    <i class="bi bi-search"></i>
+    <input type="text" id="attSearch" placeholder="Search events...">
+  </div>
+  <div class="filter-group">
+    <button class="fpill active" data-filter="all">All</button>
+    <button class="fpill" data-filter="present">Present</button>
+    <button class="fpill" data-filter="absent">Absent</button>
+    <button class="fpill" data-filter="completed">Task Done</button>
+  </div>
+  <select class="sort-select" id="attSort">
+    <option value="newest">Newest First</option>
+    <option value="oldest">Oldest First</option>
+    <option value="name">Event Name</option>
+    <option value="hours">Most Hours</option>
+  </select>
+  <div class="view-toggle">
+    <button class="vtbtn active" id="gridViewBtn" title="Grid view"><i class="bi bi-grid-fill"></i></button>
+    <button class="vtbtn" id="tableViewBtn" title="Table view"><i class="bi bi-list-ul"></i></button>
+  </div>
+  <div style="font-size:.72rem;color:#9ca3af;font-family:'Sora',sans-serif;white-space:nowrap;">
+    <span id="recordCount">{{ total }}</span> records
+  </div>
+</div>
+
+<!-- GRID VIEW -->
+<div class="att-grid" id="attGrid">
+  {% for record in records %}
+  {% set status = record.status | lower %}
+  {% set hrs = record.calculated_hours or 0 %}
+  {% set max_hrs = 8 %}
+  {% set pct = [(hrs / max_hrs * 100)|int, 100]|min %}
+  <div class="att-card {{ status }}" data-status="{{ status }}"
+    data-completed="{{ 'true' if record.task_completed else 'false' }}" data-name="{{ record.event.title | lower }}"
+    data-date="{{ record.timestamp.strftime('%Y-%m-%d') }}" data-hours="{{ hrs }}">
+
+    <div class="att-card-top">
+      <div class="att-event-icon">
+        <i class="bi bi-{% if status == 'present' %}calendar-check-fill{% else %}calendar-x-fill{% endif %}"></i>
+      </div>
+      <span class="att-status-pill asp-{{ status }}">
+        <i class="bi bi-{% if status == 'present' %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
+        {{ status | capitalize }}
+      </span>
+    </div>
+
+    <div class="att-event-name">{{ record.event.title }}</div>
+
+    <div class="att-meta-list">
+      <div class="att-meta">
+        <i class="bi bi-calendar3"></i>
+        <span>{{ record.event.date.strftime('%d %b %Y, %I:%M %p') }}</span>
+      </div>
+      <div class="att-meta">
+        <i class="bi bi-geo-alt-fill"></i>
+        <span>{{ record.event.location }}</span>
+      </div>
+      <div class="att-meta">
+        <i class="bi bi-clock"></i>
+        <span>Marked: {{ record.timestamp.strftime('%d %b %Y, %I:%M %p') }}</span>
+      </div>
+      {% if record.event.category %}
+      <div class="att-meta">
+        <i class="bi bi-tag-fill"></i>
+        <span>{{ record.event.category }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if record.task_completed %}
+    <div class="att-tags">
+      <span class="att-tag">✓ Task Done</span>
+      {% if record.event.xp_score %}
+      <span class="att-tag">+{{ record.event.xp_score }} XP</span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if hrs > 0 %}
+    <div class="att-hours-bar">
+      <div class="att-hours-label">
+        <span class="att-hours-lbl">Hours Logged</span>
+        <span class="att-hours-val">{{ "%.1f"|format(hrs) }}h</span>
+      </div>
+      <div class="att-bar-track">
+        <div class="att-bar-fill" style="width:{{ pct }}%;"></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="att-actions">
+      <button class="att-btn att-btn-view open-detail-modal" data-id="{{ record.id }}"
+        data-name="{{ record.event.title }}" data-status="{{ status }}"
+        data-date="{{ record.event.date.strftime('%d %B %Y, %I:%M %p') }}" data-location="{{ record.event.location }}"
+        data-marked="{{ record.timestamp.strftime('%d %B %Y, %I:%M %p') }}" data-hours="{{ hrs }}"
+        data-xp="{{ record.event.xp_score or 0 }}" data-task="{{ 'Yes' if record.task_completed else 'No' }}"
+        data-desc="{{ record.event.description[:120] if record.event.description else '' }}"
+        data-lat="{{ record.event.latitude or '' }}" data-lng="{{ record.event.longitude or '' }}"
+        data-category="{{ record.event.category or 'General' }}">
+        <i class="bi bi-eye"></i> Details
+      </button>
+      {% if record.event.latitude and record.event.longitude %}
+      <button class="att-btn att-btn-map open-map-btn" data-lat="{{ record.event.latitude }}"
+        data-lng="{{ record.event.longitude }}" data-name="{{ record.event.title }}">
+        <i class="bi bi-map"></i> Map
+      </button>
+      {% endif %}
+      {% if record.task_completed %}
+      <button class="att-btn att-btn-cert" onclick="window.location.href='{{ url_for('dashboard.certificates') }}'">
+        <i class="bi bi-award"></i>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- TABLE VIEW (hidden by default) -->
+<div class="att-table-card" id="attTableView" style="display:none;">
+  <table class="att-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Event</th>
+        <th>Date</th>
+        <th>Location</th>
+        <th>Status</th>
+        <th>Hours</th>
+        <th>Task</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="attTableBody">
+      {% for record in records %}
+      {% set status = record.status | lower %}
+      {% set hrs = record.calculated_hours or 0 %}
+      <tr data-status="{{ status }}" data-completed="{{ 'true' if record.task_completed else 'false' }}"
+        data-name="{{ record.event.title | lower }}" data-date="{{ record.timestamp.strftime('%Y-%m-%d') }}"
+        data-hours="{{ hrs }}">
+        <td class="td-mono" style="color:#9ca3af;">{{ "%02d"|format(loop.index) }}</td>
+        <td>
+          <div class="td-name">{{ record.event.title }}</div>
+          <div style="font-size:.7rem;color:#9ca3af;">{{ record.event.category or 'General' }}</div>
+        </td>
+        <td class="td-mono" style="font-size:.74rem;">{{ record.event.date.strftime('%d %b %Y') }}</td>
+        <td
+          style="font-size:.76rem;color:#6b7280;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          {{ record.event.location }}</td>
+        <td>
+          <span class="att-status-pill asp-{{ status }}">
+            <i class="bi bi-{% if status == 'present' %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
+            {{ status | capitalize }}
+          </span>
+        </td>
+        <td class="td-mono td-green">{{ "%.1f"|format(hrs) }}h</td>
+        <td>
+          {% if record.task_completed %}
+          <span style="color:#16a34a;font-size:.82rem;"><i class="bi bi-check-circle-fill"></i></span>
+          {% else %}
+          <span style="color:#d1d5db;font-size:.82rem;"><i class="bi bi-circle"></i></span>
+          {% endif %}
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="td-icon-btn open-detail-modal" data-id="{{ record.id }}" data-name="{{ record.event.title }}"
+              data-status="{{ status }}" data-date="{{ record.event.date.strftime('%d %B %Y, %I:%M %p') }}"
+              data-location="{{ record.event.location }}"
+              data-marked="{{ record.timestamp.strftime('%d %B %Y, %I:%M %p') }}" data-hours="{{ hrs }}"
+              data-xp="{{ record.event.xp_score or 0 }}" data-task="{{ 'Yes' if record.task_completed else 'No' }}"
+              data-desc="{{ record.event.description[:120] if record.event.description else '' }}"
+              data-lat="{{ record.event.latitude or '' }}" data-lng="{{ record.event.longitude or '' }}"
+              data-category="{{ record.event.category or 'General' }}" title="View details">
+              <i class="bi bi-eye"></i>
+            </button>
+            {% if record.event.latitude and record.event.longitude %}
+            <button class="td-icon-btn open-map-btn" data-lat="{{ record.event.latitude }}"
+              data-lng="{{ record.event.longitude }}" data-name="{{ record.event.title }}" title="View on map">
+              <i class="bi bi-map"></i>
+            </button>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+<!-- EMPTY STATE -->
+<div class="att-empty">
+  <div class="att-empty-icon"><i class="bi bi-calendar-x"></i></div>
+  <h3>No Attendance Records Yet</h3>
+  <p>Join and attend events to build your attendance history.</p>
+  <a href="{{ url_for('dashboard.home') }}" class="att-empty-btn">
+    <i class="bi bi-compass"></i> Browse Events
+  </a>
+</div>
+{% endif %}
+
+<!-- DETAIL MODAL -->
+<div class="att-modal-overlay" id="detailModalOverlay">
+  <div class="att-modal" id="detailModal">
+    <div class="att-modal-top present" id="modalTop">
+      <button class="att-modal-close" id="detailClose"><i class="bi bi-x-lg"></i></button>
+      <div class="att-modal-title" id="modalTitle">Event Name</div>
+      <div class="att-modal-sub" id="modalSub">Status · Category</div>
+    </div>
+    <div class="att-modal-body">
+      <div class="att-modal-chips" id="modalChips"></div>
+      <div class="att-modal-row"><i class="bi bi-calendar3"></i><span id="modalDate">—</span></div>
+      <div class="att-modal-row"><i class="bi bi-geo-alt-fill"></i><span id="modalLocation">—</span></div>
+      <div class="att-modal-row"><i class="bi bi-clock"></i><span id="modalMarked">—</span></div>
+      <div class="att-modal-row" id="modalDescRow" style="display:none;"><i class="bi bi-card-text"></i><span
+          id="modalDesc">—</span></div>
+      <div class="att-modal-divider"></div>
+      <div id="modalMapWrap" style="display:none;">
+        <div class="att-modal-map" id="modalMap"></div>
+      </div>
+      <div class="att-modal-actions">
+        <button class="att-modal-btn amb-outline" id="detailCloseBtn"><i class="bi bi-x"></i> Close</button>
+        <button class="att-modal-btn amb-primary" id="modalCertBtn" style="display:none;"
+          onclick="window.location.href='{{ url_for('dashboard.certificates') }}'">
+          <i class="bi bi-award"></i> Certificate
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script type="application/json" id="attData">
+{
+  "total": {{ total | default(0) | tojson }},
+  "present": {{ present_ct | default(0) | tojson }},
+  "absent": {{ absent_ct | default(0) | tojson }},
+  "months": [
+    {% for record in records | sort(attribute='timestamp') %}
+      "{{ record.timestamp.strftime('%b %Y') }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+
+<script>
+(function () {
+  const dataIsland = document.getElementById('attData');
+  if (!dataIsland) return;
+  const D = JSON.parse(dataIsland.textContent);
+
+  const TOTAL = D.total;
+  const PRESENT = D.present;
+  const ABSENT = D.absent;
+
+  /* Count months properly */
+  const rawCounts = {};
+  D.months.forEach(mo => {
+    rawCounts[mo] = (rawCounts[mo] || 0) + 1;
+  });
+  const monthlyKeys = Object.keys(rawCounts);
+  const monthlyVals = Object.values(rawCounts);
+
+  /* ─── DOUGHNUT: Attendance Rate ─────────────────── */
+  const rateEl = document.getElementById('attRateChart');
+  if (rateEl) {
+    const hasData = TOTAL > 0;
+    new Chart(rateEl.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Present', 'Absent'],
+        datasets: [{
+          data: hasData ? [PRESENT, ABSENT] : [1, 0],
+          backgroundColor: hasData ? ['#16a34a', '#ef4444'] : ['rgba(22,163,74,.15)', 'rgba(239,68,68,.08)'],
+          borderWidth: 3, 
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true, 
+        maintainAspectRatio: false, 
+        cutout: '72%',
+        plugins: {
+          legend: { 
+            display: true, 
+            position: 'bottom', 
+            labels: { color: '#374151', font: { family: 'Sora', size: 10 }, boxWidth: 10, padding: 8 } 
+          },
+          tooltip: { enabled: hasData }
+        }
+      }
+    });
+  }
+
+  /* ─── BAR: Monthly Activity ──────────────────────── */
+  const monthEl = document.getElementById('monthlyChart');
+  if (monthEl) {
+    const hasData = monthlyKeys.length > 0;
+    new Chart(monthEl.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: hasData ? monthlyKeys : ['No data'],
+        datasets: [{
+          data: hasData ? monthlyVals : [0],
+          backgroundColor: '#16a34a', 
+          borderRadius: 6, 
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { 
+          legend: { display: false }, 
+          tooltip: { enabled: hasData } 
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { family: 'Sora', size: 9 } }, border: { display: false } },
+          y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 9 }, stepSize: 1 }, border: { display: false }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  /* ─── FILTER + SEARCH + SORT ─────────────────────── */
+  let activeFilter = 'all';
+  let activeSort = 'newest';
+  let activeSearch = '';
+  let isGridView = true;
+
+  function applyFilters() {
+    const cards = document.querySelectorAll('#attGrid .att-card');
+    const rows = document.querySelectorAll('#attTableBody tr');
+    let visible = 0;
+
+    function matches(el) {
+      const st = el.dataset.status || '';
+      const done = el.dataset.completed === 'true';
+      const name = el.dataset.name || '';
+      if (activeFilter === 'present' && st !== 'present') return false;
+      if (activeFilter === 'absent' && st !== 'absent') return false;
+      if (activeFilter === 'completed' && !done) return false;
+      if (activeSearch && !name.includes(activeSearch.toLowerCase())) return false;
+      return true;
+    }
+
+    cards.forEach(c => { const show = matches(c); c.style.display = show ? '' : 'none'; if (show) visible++; });
+    rows.forEach(r => { r.style.display = matches(r) ? '' : 'none'; });
+    document.getElementById('recordCount').textContent = visible;
+  }
+
+  /* Filter pills */
+  document.querySelectorAll('.fpill').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      activeFilter = this.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  /* Search */
+  document.getElementById('attSearch').addEventListener('input', function () {
+    activeSearch = this.value;
+    applyFilters();
+  });
+
+  /* Sort */
+  document.getElementById('attSort').addEventListener('change', function () {
+    activeSort = this.value;
+    const grid = document.getElementById('attGrid');
+    const cards = [...grid.querySelectorAll('.att-card')];
+    cards.sort((a, b) => {
+      if (activeSort === 'newest') return b.dataset.date.localeCompare(a.dataset.date);
+      if (activeSort === 'oldest') return a.dataset.date.localeCompare(b.dataset.date);
+      if (activeSort === 'name') return a.dataset.name.localeCompare(b.dataset.name);
+      if (activeSort === 'hours') return parseFloat(b.dataset.hours) - parseFloat(a.dataset.hours);
+    });
+    cards.forEach(c => grid.appendChild(c));
+  });
+
+  /* View toggle */
+  document.getElementById('gridViewBtn').addEventListener('click', function () {
+    isGridView = true;
+    this.classList.add('active');
+    document.getElementById('tableViewBtn').classList.remove('active');
+    document.getElementById('attGrid').style.display = '';
+    document.getElementById('attTableView').style.display = 'none';
+  });
+  document.getElementById('tableViewBtn').addEventListener('click', function () {
+    isGridView = false;
+    this.classList.add('active');
+    document.getElementById('gridViewBtn').classList.remove('active');
+    document.getElementById('attGrid').style.display = 'none';
+    document.getElementById('attTableView').style.display = '';
+  });
+
+  /* ─── DETAIL MODAL ───────────────────────────────── */
+  let leafletMap = null;
+
+  function openDetailModal(btn) {
+    const d = btn.dataset;
+    const status = d.status || 'present';
+
+    /* top banner color */
+    const top = document.getElementById('modalTop');
+    top.className = 'att-modal-top ' + status;
+
+    document.getElementById('modalTitle').textContent = d.name;
+    document.getElementById('modalSub').textContent = status.charAt(0).toUpperCase() + status.slice(1) + ' · ' + d.category;
+    document.getElementById('modalDate').textContent = d.date;
+    document.getElementById('modalLocation').textContent = d.location;
+    document.getElementById('modalMarked').textContent = d.marked;
+
+    const descRow = document.getElementById('modalDescRow');
+    if (d.desc) {
+      descRow.style.display = '';
+      document.getElementById('modalDesc').textContent = d.desc;
+    } else {
+      descRow.style.display = 'none';
+    }
+
+    /* chips */
+    const chips = document.getElementById('modalChips');
+    chips.innerHTML = `
+      <span class="att-modal-chip amc-${status === 'present' ? 'green' : 'blue'}"><i class="bi bi-clock-history"></i> ${d.hours}h logged</span>
+      <span class="att-modal-chip amc-amber"><i class="bi bi-lightning-charge-fill"></i> +${d.xp} XP</span>
+      <span class="att-modal-chip amc-purple"><i class="bi bi-patch-check"></i> Task: ${d.task}</span>
+    `;
+
+    /* cert button */
+    document.getElementById('modalCertBtn').style.display = d.task === 'Yes' ? '' : 'none';
+
+    /* map */
+    const mapWrap = document.getElementById('modalMapWrap');
+    if (d.lat && d.lng) {
+      mapWrap.style.display = '';
+      setTimeout(() => {
+        if (leafletMap) { leafletMap.remove(); leafletMap = null; }
+        leafletMap = L.map('modalMap').setView([parseFloat(d.lat), parseFloat(d.lng)], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19, attribution: '© OpenStreetMap'
+        }).addTo(leafletMap);
+        L.marker([parseFloat(d.lat), parseFloat(d.lng)])
+          .addTo(leafletMap)
+          .bindPopup(d.name)
+          .openPopup();
+        leafletMap.invalidateSize();
+      }, 80);
+    } else {
+      mapWrap.style.display = 'none';
+    }
+
+    document.getElementById('detailModalOverlay').classList.add('open');
+  }
+
+  function closeDetailModal() {
+    document.getElementById('detailModalOverlay').classList.remove('open');
+  }
+
+  document.getElementById('detailClose').onclick = closeDetailModal;
+  document.getElementById('detailCloseBtn').onclick = closeDetailModal;
+  document.getElementById('detailModalOverlay').addEventListener('click', function (e) {
+    if (e.target === this) closeDetailModal();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetailModal(); });
+
+  /* Attach to all detail buttons */
+  document.querySelectorAll('.open-detail-modal').forEach(btn => {
+    btn.addEventListener('click', function () { openDetailModal(this); });
+  });
+
+  /* Quick map buttons (from table) */
+  document.querySelectorAll('.open-map-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const fakeBtn = {
+        dataset: {
+          name: this.dataset.name, status: 'present', category: '',
+          date: '', location: '', marked: '', hours: '0', xp: '0', task: 'No', desc: '',
+          lat: this.dataset.lat, lng: this.dataset.lng
+        }
+      };
+      openDetailModal(fakeBtn);
+    });
+  });
+
+})();
+</script>
+{% endblock %}

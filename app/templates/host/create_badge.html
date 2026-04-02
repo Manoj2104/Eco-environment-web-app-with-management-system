@@ -1,0 +1,2055 @@
+{% extends 'base.html' %}
+{% block title %}Create Badge — EcoNova{% endblock %}
+
+{% block extra_css %}
+<link
+  href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Satoshi:wght@400;500;600;700&display=swap"
+  rel="stylesheet">
+<style>
+  :root {
+    --sage: #2d6a4f;
+    --sage-mid: #40916c;
+    --sage-lt: #74c69d;
+    --sage-pale: #d8f3dc;
+    --sage-mist: #f0faf4;
+    --ink: #0d1b14;
+    --ink-mid: #2a3d32;
+    --muted: #7a9080;
+    --line: #d4e8dc;
+    --card-bg: #ffffff;
+    --page-bg: #f4f9f6;
+    --amber: #e9a825;
+    --red: #e25c5c;
+    --blue: #3d7fbd;
+    --mono: 'DM Mono', monospace;
+    --display: 'Clash Display', sans-serif;
+    --body: 'Satoshi', sans-serif;
+    --radius: 18px;
+    --shadow: 0 2px 16px rgba(45, 106, 79, .08), 0 1px 3px rgba(0, 0, 0, .04);
+    --shadow-lg: 0 8px 40px rgba(45, 106, 79, .13), 0 2px 8px rgba(0, 0, 0, .06);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: var(--body);
+    background: var(--page-bg);
+    color: var(--ink);
+  }
+
+  /* ── PAGE LAYOUT ── */
+  .cb-page {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 0;
+    min-height: 100vh;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 28px 28px 40px;
+    gap: 24px;
+  }
+
+  /* ── PAGE HEADER ── */
+  .cb-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    animation: fadeUp .45s ease both;
+  }
+
+  .cb-header-left h1 {
+    font-family: var(--display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -.03em;
+    line-height: 1.1;
+  }
+
+  .cb-header-left p {
+    font-size: .85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .cb-header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .hdr-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    padding: 8px 18px;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--ink-mid);
+    font-family: var(--display);
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .hdr-pill:hover {
+    border-color: var(--sage-lt);
+    color: var(--sage);
+    background: var(--sage-mist);
+  }
+
+  .hdr-pill.primary {
+    background: var(--sage);
+    color: #fff;
+    border-color: var(--sage);
+  }
+
+  .hdr-pill.primary:hover {
+    background: var(--sage-mid);
+  }
+
+  /* ── LEFT COLUMN: Form ── */
+  .cb-form-col {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    animation: fadeUp .45s .08s ease both;
+  }
+
+  /* ── CARD BASE ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow);
+  }
+
+  .card-title {
+    font-family: var(--display);
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--sage-mist);
+  }
+
+  .card-title i {
+    color: var(--sage-mid);
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .form-row {
+    display: grid;
+    gap: 14px;
+  }
+
+  .form-row.cols-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .form-row.cols-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted);
+    font-family: var(--display);
+  }
+
+  .input,
+  .select,
+  .textarea {
+    font-family: var(--body);
+    font-size: .88rem;
+    color: var(--ink);
+    background: var(--sage-mist);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    width: 100%;
+  }
+
+  .input:focus,
+  .select:focus,
+  .textarea:focus {
+    border-color: var(--sage-mid);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(64, 145, 108, .12);
+  }
+
+  .textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.5;
+  }
+
+  .select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a9080' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+
+  /* ── IMAGE UPLOAD ZONE ── */
+  .img-zone {
+    border: 2px dashed var(--line);
+    border-radius: 14px;
+    padding: 20px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+    overflow: hidden;
+    background: var(--sage-mist);
+  }
+
+  .img-zone:hover {
+    border-color: var(--sage-lt);
+    background: #ecf7f0;
+  }
+
+  .img-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  .img-zone-icon {
+    font-size: 1.8rem;
+    color: var(--sage-lt);
+    margin-bottom: 6px;
+  }
+
+  .img-zone-text {
+    font-size: .78rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .img-zone-sub {
+    font-size: .7rem;
+    color: var(--sage-lt);
+    margin-top: 3px;
+  }
+
+  #imgPreviewThumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--sage-lt);
+    display: none;
+    margin: 0 auto 8px;
+  }
+
+  /* ── TAG INPUT ── */
+  .tag-input-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    background: var(--sage-mist);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 10px;
+    cursor: text;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    min-height: 46px;
+  }
+
+  .tag-input-wrap:focus-within {
+    border-color: var(--sage-mid);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(64, 145, 108, .12);
+  }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--sage-pale);
+    color: var(--sage);
+    font-size: .74rem;
+    font-weight: 700;
+    padding: 3px 10px 3px 8px;
+    border-radius: 99px;
+    font-family: var(--display);
+  }
+
+  .tag-chip button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--sage-mid);
+    font-size: .8rem;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .tag-chip button:hover {
+    color: var(--red);
+  }
+
+  #tagInput {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--body);
+    font-size: .84rem;
+    color: var(--ink);
+    min-width: 80px;
+    flex: 1;
+  }
+
+  /* ── CONDITION BUILDER ── */
+  .condition-select-wrap {
+    position: relative;
+  }
+
+  .condition-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+
+  .condition-val-hint {
+    font-size: .72rem;
+    color: var(--sage-mid);
+    margin-top: 5px;
+    font-style: italic;
+  }
+
+  /* ── XP SLIDER ── */
+  .xp-slider-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .xp-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #xpSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 6px;
+    border-radius: 99px;
+    background: var(--line);
+    outline: none;
+    cursor: pointer;
+    transition: background .2s;
+  }
+
+  #xpSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--sage);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(45, 106, 79, .3);
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+  }
+
+  #xpSlider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 14px rgba(45, 106, 79, .4);
+  }
+
+  .xp-display {
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--sage);
+    min-width: 52px;
+    text-align: right;
+  }
+
+  /* ── SUBMIT BUTTON ── */
+  .submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 15px 24px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, var(--sage) 0%, var(--sage-mid) 100%);
+    color: #fff;
+    font-family: var(--display);
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: -.01em;
+    box-shadow: 0 4px 18px rgba(45, 106, 79, .3);
+    transition: transform .18s, box-shadow .18s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .18), transparent);
+    transform: translateX(-100%);
+    transition: transform .5s;
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(45, 106, 79, .4);
+  }
+
+  .submit-btn:hover::before {
+    transform: translateX(100%);
+  }
+
+  .submit-btn:active {
+    transform: translateY(0);
+  }
+
+  /* ── RIGHT COLUMN ── */
+  .cb-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeUp .45s .16s ease both;
+  }
+
+  /* ── LIVE PREVIEW CARD ── */
+  .preview-card {
+    background: linear-gradient(135deg, #0d2b1e 0%, #1a3d2b 50%, #0d2b1e 100%);
+    border: 1px solid rgba(116, 198, 157, .15);
+    border-radius: 20px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    min-height: 200px;
+  }
+
+  .preview-card::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(116, 198, 157, .12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .preview-card::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: -20px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(45, 106, 79, .18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .preview-label {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: rgba(116, 198, 157, .7);
+    margin-bottom: 16px;
+    font-family: var(--display);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .preview-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(116, 198, 157, .18);
+  }
+
+  .preview-badge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .preview-img-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    padding: 4px;
+    flex-shrink: 0;
+    position: relative;
+    transition: all .4s ease;
+  }
+
+  .preview-img-ring::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    padding: 3px;
+    background: conic-gradient(from 0deg, #74c69d, #2d6a4f, #74c69d);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: spinRing 6s linear infinite;
+  }
+
+  @keyframes spinRing {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .preview-img-ring.lvl-intermediate::before {
+    background: conic-gradient(from 0deg, var(--amber), #c77a0c, var(--amber));
+  }
+
+  .preview-img-ring.lvl-pro::before {
+    background: conic-gradient(from 0deg, #c0392b, #8e0808, #c0392b);
+  }
+
+  .preview-img-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, .1);
+  }
+
+  .preview-img-inner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: none;
+  }
+
+  .preview-info {}
+
+  #prevName {
+    font-family: var(--display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    transition: opacity .3s;
+  }
+
+  .preview-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .prev-level-chip {
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-family: var(--display);
+    background: rgba(116, 198, 157, .15);
+    color: var(--sage-lt);
+    border: 1px solid rgba(116, 198, 157, .2);
+    transition: all .3s;
+  }
+
+  .prev-xp-chip {
+    font-family: var(--mono);
+    font-size: .75rem;
+    color: var(--amber);
+    background: rgba(233, 168, 37, .1);
+    border: 1px solid rgba(233, 168, 37, .2);
+    padding: 3px 10px;
+    border-radius: 99px;
+    transition: all .3s;
+  }
+
+  .prev-condition {
+    font-size: .75rem;
+    color: rgba(255, 255, 255, .45);
+    font-style: italic;
+  }
+
+  /* ── STATS STRIP ── */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(116, 198, 157, .12);
+  }
+
+  .stat-mini {
+    text-align: center;
+  }
+
+  .stat-mini-val {
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--sage-lt);
+    display: block;
+  }
+
+  .stat-mini-lbl {
+    font-size: .64rem;
+    color: rgba(255, 255, 255, .35);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-top: 2px;
+    font-family: var(--display);
+  }
+
+  /* ── RIGHT BOTTOM: Activity + Search ── */
+  .right-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  /* ── SEARCH BOX ── */
+  .search-box-wrap {
+    position: relative;
+    margin-bottom: 14px;
+  }
+
+  .search-box {
+    width: 100%;
+    padding: 11px 16px 11px 40px;
+    border-radius: 12px;
+    border: 1.5px solid var(--line);
+    background: var(--sage-mist);
+    font-family: var(--body);
+    font-size: .85rem;
+    color: var(--ink);
+    outline: none;
+    transition: all .2s;
+  }
+
+  .search-box:focus {
+    border-color: var(--sage-mid);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(64, 145, 108, .1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: .88rem;
+    pointer-events: none;
+  }
+
+  /* ── BADGE LIST ── */
+  .badge-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .badge-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .badge-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .badge-list::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 99px;
+  }
+
+  .badge-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--sage-mist);
+    transition: all .18s;
+    cursor: pointer;
+    animation: fadeIn .3s ease both;
+  }
+
+  .badge-row:hover {
+    border-color: var(--sage-lt);
+    background: #ecf7f0;
+    transform: translateX(2px);
+  }
+
+  .badge-row-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--sage-pale);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid var(--sage-pale);
+  }
+
+  .badge-row-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .badge-row-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .badge-row-name {
+    font-size: .84rem;
+    font-weight: 700;
+    color: var(--ink);
+    font-family: var(--display);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .badge-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+  }
+
+  .lvl-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .lvl-dot.beginner {
+    background: var(--sage);
+  }
+
+  .lvl-dot.intermediate {
+    background: var(--amber);
+  }
+
+  .lvl-dot.pro {
+    background: var(--red);
+  }
+
+  .badge-row-xp {
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--sage-mid);
+  }
+
+  .badge-row-action {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-xs {
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--card-bg);
+    font-size: .7rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--display);
+    color: var(--muted);
+    transition: all .15s;
+  }
+
+  .btn-xs:hover {
+    border-color: var(--sage-lt);
+    color: var(--sage);
+    background: var(--sage-pale);
+  }
+
+  .btn-xs.danger:hover {
+    border-color: #f5a5a5;
+    color: var(--red);
+    background: #fef2f2;
+  }
+
+  /* ── CSV SECTION ── */
+  .csv-card {
+    border: 2px dashed var(--line);
+    background: var(--sage-mist);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+  }
+
+  .csv-card:hover {
+    border-color: var(--sage-lt);
+    background: #ecf7f0;
+  }
+
+  .csv-card input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .csv-icon {
+    font-size: 2rem;
+    color: var(--sage-lt);
+    margin-bottom: 8px;
+  }
+
+  .csv-title {
+    font-family: var(--display);
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--ink-mid);
+  }
+
+  .csv-sub {
+    font-size: .72rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── ACTIVITY CHART ── */
+  .activity-chart-wrap {
+    position: relative;
+    height: 90px;
+    margin-top: 6px;
+  }
+
+  /* ── XP HISTORY CHART ── */
+  .xp-history-wrap {
+    position: relative;
+    height: 120px;
+    margin-top: 4px;
+  }
+
+  /* ── NOTIFICATIONS / TOAST ── */
+  .toast-stack {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .toast {
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: .82rem;
+    font-family: var(--body);
+    font-weight: 500;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .18);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: all;
+    animation: toastIn .3s ease;
+    min-width: 220px;
+  }
+
+  .toast.success {
+    background: var(--sage);
+  }
+
+  .toast.error {
+    background: var(--red);
+  }
+
+  .toast.info {
+    background: var(--blue);
+  }
+
+  @keyframes toastIn {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* ── EMPTY STATES ── */
+  .empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--muted);
+  }
+
+  .empty-state i {
+    font-size: 2rem;
+    opacity: .3;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .empty-state p {
+    font-size: .82rem;
+  }
+
+  /* ── BADGES GRID (host's created badges) ── */
+  .badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .badge-card {
+    background: var(--sage-mist);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+    transition: all .2s;
+    cursor: default;
+    position: relative;
+  }
+
+  .badge-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px);
+    border-color: var(--sage-lt);
+  }
+
+  .badge-card-img {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 8px;
+    display: block;
+    border: 2px solid var(--sage-pale);
+  }
+
+  .badge-card-name {
+    font-family: var(--display);
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .badge-card-meta {
+    font-size: .68rem;
+    color: var(--muted);
+  }
+
+  .badge-card-del {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: .8rem;
+    color: var(--muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .15s, color .15s;
+  }
+
+  .badge-card:hover .badge-card-del {
+    opacity: 1;
+  }
+
+  .badge-card-del:hover {
+    color: var(--red);
+  }
+
+  /* ── LIVE DOT ── */
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, .2);
+    animation: pulse 2s infinite;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, .2);
+    }
+
+    50% {
+      box-shadow: 0 0 0 6px rgba(34, 197, 94, .08);
+    }
+  }
+
+  /* ── SKELETON LOADER ── */
+  .skeleton {
+    background: linear-gradient(90deg, var(--line) 0%, #e8f5ee 50%, var(--line) 100%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.5s infinite;
+    border-radius: 8px;
+  }
+
+  @keyframes skeletonShimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* ── HORIZONTAL STATS ── */
+  .hstats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .hstat {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp .4s ease both;
+  }
+
+  .hstat::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .hstat.s-green::before {
+    background: var(--sage);
+  }
+
+  .hstat.s-amber::before {
+    background: var(--amber);
+  }
+
+  .hstat.s-blue::before {
+    background: var(--blue);
+  }
+
+  .hstat.s-red::before {
+    background: var(--red);
+  }
+
+  .hstat-val {
+    font-family: var(--mono);
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -.03em;
+  }
+
+  .hstat-lbl {
+    font-size: .7rem;
+    color: var(--muted);
+    margin-top: 3px;
+    font-weight: 500;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1200px) {
+    .cb-page {
+      grid-template-columns: 1fr;
+    }
+
+    .right-bottom {
+      grid-template-columns: 1fr;
+    }
+
+    .hstats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .cb-page {
+      padding: 16px;
+    }
+
+    .form-row.cols-2,
+    .form-row.cols-3 {
+      grid-template-columns: 1fr;
+    }
+
+    .hstats {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .stats-strip {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cb-page">
+
+  <!-- ══ HEADER ══ -->
+  <div class="cb-header">
+    <div class="cb-header-left">
+      <h1>Badge Studio</h1>
+      <p>Design and publish achievement badges for your volunteers</p>
+    </div>
+    <div class="cb-header-actions">
+      <button class="hdr-pill" onclick="document.getElementById('csvSection').scrollIntoView({behavior:'smooth'})">
+        <i class="bi bi-upload"></i> Bulk CSV
+      </button>
+      <button class="hdr-pill"
+        onclick="document.getElementById('badgeListSection').scrollIntoView({behavior:'smooth'})">
+        <i class="bi bi-collection"></i> My Badges
+        <span id="badgeCountChip"
+          style="font-family:var(--mono);font-size:.72rem;background:var(--sage-pale);color:var(--sage);padding:1px 8px;border-radius:99px;">{{
+          badges|length }}</span>
+      </button>
+      <div class="hdr-pill" style="pointer-events:none;gap:7px;">
+        <span class="live-dot"></span> Live Preview
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LEFT: FORM ══ -->
+  <div class="cb-form-col">
+
+    <!-- Stat strip -->
+    <div class="hstats">
+      <div class="hstat s-green" style="animation-delay:.05s">
+        <div class="hstat-val" id="statTotal">{{ badges|length }}</div>
+        <div class="hstat-lbl">Total Badges</div>
+      </div>
+      <div class="hstat s-amber" style="animation-delay:.1s">
+        <div class="hstat-val" id="statXP">—</div>
+        <div class="hstat-lbl">Avg XP Reward</div>
+      </div>
+      <div class="hstat s-blue" style="animation-delay:.15s">
+        <div class="hstat-val" id="statPro">{{ badges|selectattr("level","equalto","pro")|list|length }}</div>
+        <div class="hstat-lbl">Pro Badges</div>
+      </div>
+      <div class="hstat s-red" style="animation-delay:.2s">
+        <div class="hstat-val" id="statUsers">—</div>
+        <div class="hstat-lbl">Earned (all)</div>
+      </div>
+    </div>
+
+    <!-- ── FORM CARD ── -->
+    <div class="card">
+      <div class="card-title"><i class="bi bi-award-fill"></i> Badge Details</div>
+      <form method="POST" enctype="multipart/form-data" action="{{ url_for('dashboard.create_badge') }}" id="badgeForm">
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="condition_type" id="conditionTypeHidden">
+        <input type="hidden" name="tags_raw" id="tagsRawInput">
+
+        <!-- Row 1: Name + Level -->
+        <div class="form-row cols-2" style="margin-bottom:14px;">
+          <div class="field">
+            <label>Badge Name</label>
+            <input class="input" name="name" id="badgeName" placeholder="e.g. Eco Warrior" required
+              oninput="syncPreview()">
+          </div>
+          <div class="field">
+            <label>Level</label>
+            <select class="select" name="level" id="badgeLevel" onchange="syncPreview()">
+              <option value="beginner">🌱 Beginner</option>
+              <option value="intermediate">⚡ Intermediate</option>
+              <option value="pro">🔥 Pro</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="field" style="margin-bottom:14px;">
+          <label>Description</label>
+          <textarea class="textarea" name="description" id="badgeDesc"
+            placeholder="Describe what makes this badge special…" rows="3" oninput="syncPreview()"></textarea>
+        </div>
+
+        <!-- Image upload + URL -->
+        <div class="form-row cols-2" style="margin-bottom:14px;">
+          <div class="field">
+            <label>Upload Image</label>
+            <div class="img-zone" id="imgZone">
+              <input type="file" name="image_file" accept="image/*" onchange="handleImgFile(this)">
+              <img id="imgPreviewThumb" src="" alt="">
+              <div class="img-zone-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+              <div class="img-zone-text">Drop or click to upload</div>
+              <div class="img-zone-sub">PNG, JPG, SVG, WEBP</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Or Image URL</label>
+            <input class="input" type="url" id="imageUrlInput" placeholder="https://example.com/badge.png"
+              oninput="handleImgUrl(this)">
+            <div style="margin-top:10px;">
+              <label>Quick Icons</label>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+                {% set emojis = ['🌿','🌊','🔥','⚡','🏅','🌱','🎯','🦋','🌍','💡','🌟','🤝'] %}
+                {% for e in emojis %}
+                <button type="button" class="btn-xs" style="font-size:1rem;padding:6px 8px;"
+                  onclick="setEmojiIcon('{{ e }}')">{{ e }}</button>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="field" style="margin-bottom:14px;">
+          <label>Tags</label>
+          <div class="tag-input-wrap" id="tagWrap" onclick="document.getElementById('tagInput').focus()">
+            <input id="tagInput" placeholder="Type tag + Enter…" onkeydown="handleTagKey(event)">
+          </div>
+          {{ form.tags(id="tagsHiddenField", style="display:none;") }}
+        </div>
+
+        <!-- XP Reward Slider -->
+        <div class="field" style="margin-bottom:14px;">
+          <label>XP Reward</label>
+          <div class="xp-slider-wrap">
+            <div class="xp-slider-row">
+              <input type="range" id="xpSlider" name="xp_reward" min="0" max="1000" step="10" value="100"
+                oninput="syncXP(this.value)">
+              <span class="xp-display" id="xpDisplay">100 XP</span>
+            </div>
+            <div
+              style="display:flex;justify-content:space-between;font-size:.64rem;color:var(--muted);font-family:var(--mono);">
+              <span>0</span><span>250</span><span>500</span><span>750</span><span>1000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Condition Builder -->
+        <div class="card-title" style="margin-top:6px;"><i class="bi bi-gear-fill"></i> Unlock Condition</div>
+        <div class="condition-grid" style="margin-bottom:6px;">
+          <div class="field">
+            <label>Condition Type</label>
+            <select class="select" id="conditionTypeSelect" onchange="syncCondition()">
+              <optgroup label="Event-based">
+                <option value="event_attendance">Attend X Events</option>
+                <option value="event_host">Host X Events</option>
+              </optgroup>
+              <optgroup label="Activity-based">
+                <option value="checkins">Check-in X Times</option>
+                <option value="hours_volunteered">Volunteer X Hours</option>
+                <option value="weekly_goals_met">Meet Weekly Goal X Times</option>
+              </optgroup>
+              <optgroup label="XP / Level">
+                <option value="xp_earned">Earn X XP</option>
+                <option value="level_reached">Reach Level X</option>
+              </optgroup>
+              <optgroup label="Milestones">
+                <option value="badges_collected">Collect X Badges</option>
+                <option value="certificates_earned">Earn X Certificates</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="field">
+            <label>Value</label>
+            <input class="input" type="number" name="condition_value" id="conditionValue" placeholder="e.g. 3" min="1"
+              value="3" oninput="syncPreview()">
+          </div>
+        </div>
+        <div class="condition-val-hint" id="conditionHint">Volunteer must attend 3 events to unlock this badge</div>
+
+        <!-- Submit -->
+        <button type="submit" class="submit-btn" style="margin-top:20px;" id="submitBtn">
+          <i class="bi bi-award-fill"></i>
+          <span id="submitBtnText">Create Badge</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- ── CSV UPLOAD ── -->
+    <div class="card" id="csvSection">
+      <div class="card-title"><i class="bi bi-file-earmark-spreadsheet"></i> Bulk Upload via CSV</div>
+      <form method="POST" action="{{ url_for('dashboard.bulk_badge_upload') }}" enctype="multipart/form-data">
+        <div class="csv-card" id="csvDropZone">
+          <input type="file" name="csv_file" accept=".csv" onchange="csvFileSelected(this)">
+          <div class="csv-icon"><i class="bi bi-table"></i></div>
+          <div class="csv-title" id="csvTitle">Drop CSV or click to browse</div>
+          <div class="csv-sub">Required columns: name, description, level, tags, xp_reward, condition_type,
+            condition_value</div>
+        </div>
+        <div id="csvPreview" style="display:none;margin-top:14px;"></div>
+        <button type="submit" class="submit-btn"
+          style="margin-top:14px;background:linear-gradient(135deg,#3d7fbd,#2563eb);">
+          <i class="bi bi-cloud-arrow-up"></i> Upload Badges from CSV
+        </button>
+      </form>
+    </div>
+
+  </div><!-- /cb-form-col -->
+
+  <!-- ══ RIGHT: Preview + Lists ══ -->
+  <div class="cb-right-col">
+
+    <!-- Live Preview -->
+    <div class="preview-card">
+      <div class="preview-label"><span class="live-dot" style="width:6px;height:6px;"></span> Live Preview</div>
+      <div class="preview-badge-wrap">
+        <div class="preview-img-ring lvl-beginner" id="previewRing">
+          <div class="preview-img-inner" id="previewImgInner">
+            <span id="previewEmoji">🏅</span>
+            <img id="previewImgEl" src="" alt="">
+          </div>
+        </div>
+        <div class="preview-info">
+          <div id="prevName" style="color:#fff;">New Badge</div>
+          <div class="preview-meta-row">
+            <span class="prev-level-chip" id="prevLevelChip">Beginner</span>
+            <span class="prev-xp-chip" id="prevXpChip">⚡ 100 XP</span>
+          </div>
+          <div class="prev-condition" id="prevCondition">Attend 3 events to unlock</div>
+        </div>
+      </div>
+      <div class="stats-strip">
+        <div class="stat-mini">
+          <span class="stat-mini-val" id="prevTotalBadges">{{ badges|length }}</span>
+          <span class="stat-mini-lbl">Total Created</span>
+        </div>
+        <div class="stat-mini">
+          <span class="stat-mini-val" id="prevXpStat">100</span>
+          <span class="stat-mini-lbl">This Badge XP</span>
+        </div>
+        <div class="stat-mini">
+          <span class="stat-mini-val" id="prevLevel">Beginner</span>
+          <span class="stat-mini-lbl">Difficulty</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- XP Distribution Mini Chart -->
+    <div class="card">
+      <div class="card-title"><i class="bi bi-bar-chart-fill"></i> XP Distribution & Badge History
+        <span style="margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:400;" id="chartUpdatedAt"></span>
+      </div>
+      <div class="xp-history-wrap">
+        <canvas id="xpHistoryChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Right bottom grid: badge list + search -->
+    <div class="right-bottom">
+
+      <!-- Badge List (searchable) -->
+      <div class="card" id="badgeListSection">
+        <div class="card-title"><i class="bi bi-collection-fill"></i> Your Badges
+          <span style="margin-left:auto;font-size:.7rem;color:var(--muted);font-weight:400;" id="badgeListCount">{{
+            badges|length }} total</span>
+        </div>
+        <div class="search-box-wrap">
+          <i class="bi bi-search search-icon"></i>
+          <input class="search-box" type="search" id="badgeSearch" placeholder="Search badges by name, level, tag…"
+            oninput="filterBadges()">
+        </div>
+        <div class="badge-list" id="badgeListEl">
+          {% if badges %}
+          {% for badge in badges %}
+          <div class="badge-row" data-name="{{ badge.name|lower }}" data-level="{{ badge.level|lower }}"
+            data-tags="{{ badge.tags|lower if badge.tags else '' }}">
+            <div class="badge-row-img">
+              <img src="{{ badge.image_url }}" alt="{{ badge.name }}"
+                onerror="this.style.display='none';this.parentElement.innerHTML='🏅'">
+            </div>
+            <div class="badge-row-info">
+              <div class="badge-row-name">{{ badge.name }}</div>
+              <div class="badge-row-meta">
+                <span class="lvl-dot {{ badge.level or 'beginner' }}"></span>
+                <span style="font-size:.72rem;color:var(--muted);font-family:var(--display);">{{ badge.level|capitalize
+                  }}</span>
+                <span class="badge-row-xp">⚡ {{ badge.xp_reward or 0 }} XP</span>
+              </div>
+            </div>
+            <div class="badge-row-action">
+              <form method="POST" action="{{ url_for('dashboard.delete_badge', badge_id=badge.id) }}"
+                onsubmit="return confirm('Delete this badge?');" style="margin:0;">
+                {{ form.hidden_tag() }}
+                <button type="submit" class="btn-xs danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="empty-state" id="noBadgesMsg">
+            <i class="bi bi-award"></i>
+            <p>No badges yet — create your first one!</p>
+          </div>
+          {% endif %}
+        </div>
+        <div class="empty-state" id="noSearchResult" style="display:none;">
+          <i class="bi bi-search"></i>
+          <p>No badges match your search</p>
+        </div>
+      </div>
+
+      <!-- Activity + Mini Badge Grid -->
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="card">
+          <div class="card-title"><i class="bi bi-activity"></i> Badge Activity</div>
+          <div class="activity-chart-wrap">
+            <canvas id="activityChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><i class="bi bi-grid-3x3-gap-fill"></i> Visual Gallery
+            <a href="{{ url_for('dashboard.view_badgess') }}"
+              style="margin-left:auto;font-size:.72rem;color:var(--sage);font-weight:600;text-decoration:none;">
+              View All →
+            </a>
+          </div>
+          <div class="badges-grid" id="badgesGallery">
+            {% for badge in badges[:6] %}
+            <div class="badge-card">
+              <button class="badge-card-del" type="button"
+                onclick="confirmDelete('{{ url_for('dashboard.delete_badge', badge_id=badge.id) }}','{{ badge.name }}')">
+                <i class="bi bi-x-lg"></i>
+              </button>
+              <img class="badge-card-img" src="{{ badge.image_url }}" alt="{{ badge.name }}"
+                onerror="this.src='/static/badges/default.png'">
+              <div class="badge-card-name">{{ badge.name }}</div>
+              <div class="badge-card-meta">{{ badge.level|capitalize }} · {{ badge.xp_reward or 0 }} XP</div>
+            </div>
+            {% else %}
+            <div class="empty-state" style="grid-column:1/-1;padding:20px;">
+              <i class="bi bi-images" style="font-size:1.5rem;"></i>
+              <p style="font-size:.76rem;">No badges to display</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right-bottom -->
+  </div><!-- /cb-right-col -->
+
+</div><!-- /cb-page -->
+
+<!-- Toast stack -->
+<div class="toast-stack" id="toastStack"></div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  /* ═══════════════════════════════════════════════════════
+     BADGE STUDIO — Full JS
+  ═══════════════════════════════════════════════════════ */
+
+  // ── Existing badge data from Jinja ──────────────────────
+  const EXISTING_BADGES = [
+    {% for b in badges %}
+  {
+    id: { { b.id } },
+    name: { { b.name | tojson } },
+    level: { { (b.level or 'beginner') | tojson } },
+    xp: { { b.xp_reward or 0 } },
+    tags: { { (b.tags or '') | tojson } },
+    img: { { (b.image_url or '/static/badges/default.png') | tojson } }
+  } {% if not loop.last %}, {% endif %}
+  {% endfor %}
+];
+
+  /* ── State ───────────────────────────────────────────── */
+  let tags = [];
+  let emojiMode = true;
+  let currentEmoji = '🏅';
+  let imgUrl = '';
+
+  // ── Stat cards ───────────────────────────────────────
+  function refreshStats() {
+    const total = EXISTING_BADGES.length;
+    const avgXp = total > 0
+      ? Math.round(EXISTING_BADGES.reduce((s, b) => s + b.xp, 0) / total)
+      : 0;
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statXP').textContent = avgXp;
+    document.getElementById('statPro').textContent = EXISTING_BADGES.filter(b => b.level === 'pro').length;
+    document.getElementById('statUsers').textContent = '–';
+    document.getElementById('prevTotalBadges').textContent = total;
+    document.getElementById('badgeListCount').textContent = total + ' total';
+    document.getElementById('badgeCountChip').textContent = total;
+  }
+
+  refreshStats();
+
+  /* ── Live Preview Sync ───────────────────────────────── */
+  const LEVEL_COLORS = { beginner: '#2d6a4f', intermediate: '#e9a825', pro: '#c0392b' };
+  const LEVEL_LABELS = { beginner: '🌱 Beginner', intermediate: '⚡ Intermediate', pro: '🔥 Pro' };
+  const CONDITION_LABELS = {
+    event_attendance: 'Attend',
+    event_host: 'Host',
+    checkins: 'Check-in',
+    hours_volunteered: 'Volunteer',
+    weekly_goals_met: 'Meet weekly goal',
+    xp_earned: 'Earn',
+    level_reached: 'Reach level',
+    badges_collected: 'Collect',
+    certificates_earned: 'Earn'
+  };
+
+  function syncPreview() {
+    const name = document.getElementById('badgeName').value || 'New Badge';
+    const level = document.getElementById('badgeLevel').value || 'beginner';
+    const xp = document.getElementById('xpSlider').value;
+    const cType = document.getElementById('conditionTypeSelect').value;
+    const cVal = document.getElementById('conditionValue').value || '?';
+
+    // Name
+    document.getElementById('prevName').textContent = name;
+
+    // Level chip
+    const chip = document.getElementById('prevLevelChip');
+    chip.textContent = LEVEL_LABELS[level];
+    chip.style.background = LEVEL_COLORS[level] + '22';
+    chip.style.color = LEVEL_COLORS[level];
+    chip.style.borderColor = LEVEL_COLORS[level] + '44';
+
+    // XP chip
+    document.getElementById('prevXpChip').textContent = `⚡ ${xp} XP`;
+    document.getElementById('prevXpStat').textContent = xp;
+
+    // Ring level
+    const ring = document.getElementById('previewRing');
+    ring.className = 'preview-img-ring lvl-' + level;
+
+    // Condition hint
+    const condHint = CONDITION_LABELS[cType] || cType;
+    const condSuffix = {
+      event_attendance: 'events', event_host: 'events', checkins: 'times',
+      hours_volunteered: 'hours', weekly_goals_met: 'times', xp_earned: 'XP',
+      level_reached: '', badges_collected: 'badges', certificates_earned: 'certificates'
+    }[cType] || '';
+    document.getElementById('prevCondition').textContent = `${condHint} ${cVal} ${condSuffix} to unlock`;
+    document.getElementById('prevLevel').textContent = level.charAt(0).toUpperCase() + level.slice(1);
+
+    // Update hidden condition type
+    document.getElementById('conditionTypeHidden').value = cType;
+  }
+
+  syncPreview();
+
+  /* ── XP Slider ───────────────────────────────────────── */
+  function syncXP(val) {
+    const slider = document.getElementById('xpSlider');
+    const pct = val / 1000 * 100;
+    slider.style.background = `linear-gradient(90deg, var(--sage) 0%, var(--sage) ${pct}%, var(--line) ${pct}%, var(--line) 100%)`;
+    document.getElementById('xpDisplay').textContent = val + ' XP';
+    syncPreview();
+  }
+
+  // Init slider gradient
+  syncXP(100);
+
+  /* ── Condition hint text ─────────────────────────────── */
+  function syncCondition() {
+    const hints = {
+      event_attendance: 'Volunteer must attend {n} events to unlock this badge',
+      event_host: 'User must host {n} events to unlock this badge',
+      checkins: 'User must check-in {n} times across all events',
+      hours_volunteered: 'User must volunteer {n} cumulative hours',
+      weekly_goals_met: 'User must meet their weekly goal {n} times',
+      xp_earned: 'User must earn a total of {n} XP points',
+      level_reached: 'User must reach level {n}',
+      badges_collected: 'User must collect {n} other badges first',
+      certificates_earned: 'User must earn {n} certificates'
+    };
+    const cType = document.getElementById('conditionTypeSelect').value;
+    const cVal = document.getElementById('conditionValue').value || 'X';
+    const hint = (hints[cType] || '').replace('{n}', cVal);
+    document.getElementById('conditionHint').textContent = hint;
+    syncPreview();
+  }
+
+  document.getElementById('conditionValue').addEventListener('input', syncCondition);
+
+  /* ── Image Handling ──────────────────────────────────── */
+  function handleImgFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPreviewImg(url, false);
+    emojiMode = false;
+  }
+
+  function handleImgUrl(input) {
+    const url = input.value.trim();
+    if (url.startsWith('http')) {
+      setPreviewImg(url, false);
+      emojiMode = false;
+    }
+  }
+
+  function setPreviewImg(url, isEmoji) {
+    const inner = document.getElementById('previewImgInner');
+    const imgEl = document.getElementById('previewImgEl');
+    const emojiEl = document.getElementById('previewEmoji');
+    const thumb = document.getElementById('imgPreviewThumb');
+
+    if (isEmoji) {
+      imgEl.style.display = 'none';
+      emojiEl.style.display = 'block';
+      emojiEl.textContent = url;
+      thumb.style.display = 'none';
+      emojiMode = true;
+      currentEmoji = url;
+    } else {
+      imgEl.src = url;
+      imgEl.style.display = 'block';
+      emojiEl.style.display = 'none';
+      thumb.src = url; thumb.style.display = 'block';
+      emojiMode = false;
+      imgUrl = url;
+    }
+  }
+
+  function setEmojiIcon(emoji) {
+    setPreviewImg(emoji, true);
+    document.getElementById('imageUrlInput').value = '';
+    // Clear file input visually
+    document.querySelector('[name="image_file"]').value = '';
+    const thumb = document.getElementById('imgPreviewThumb');
+    thumb.style.display = 'none';
+  }
+
+  /* ── Tag Management ──────────────────────────────────── */
+  function handleTagKey(e) {
+    const input = document.getElementById('tagInput');
+    if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+      e.preventDefault();
+      addTag(input.value.trim().replace(/,/g, ''));
+      input.value = '';
+    } else if (e.key === 'Backspace' && !input.value && tags.length > 0) {
+      removeTag(tags.length - 1);
+    }
+  }
+
+  function addTag(text) {
+    if (!text || tags.includes(text) || tags.length >= 8) return;
+    tags.push(text);
+    renderTags();
+  }
+
+  function removeTag(idx) {
+    tags.splice(idx, 1);
+    renderTags();
+  }
+
+  function renderTags() {
+    const wrap = document.getElementById('tagWrap');
+    // Remove existing chips
+    wrap.querySelectorAll('.tag-chip').forEach(c => c.remove());
+    tags.forEach((tag, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.innerHTML = `${tag}<button type="button" onclick="removeTag(${i})" title="Remove">×</button>`;
+      wrap.insertBefore(chip, document.getElementById('tagInput'));
+    });
+    document.getElementById('tagsHiddenField').value = tags.join(',');
+    document.getElementById('tagsRawInput').value = tags.join(',');
+  }
+
+  /* ── Badge Search Filter ────────────────────────────── */
+  function filterBadges() {
+    const q = document.getElementById('badgeSearch').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.badge-row');
+    let visible = 0;
+    rows.forEach(row => {
+      const name = row.dataset.name || '';
+      const level = row.dataset.level || '';
+      const tgs = row.dataset.tags || '';
+      const match = !q || name.includes(q) || level.includes(q) || tgs.includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    document.getElementById('noSearchResult').style.display = (visible === 0 && q) ? 'block' : 'none';
+    document.getElementById('noBadgesMsg') && (
+      document.getElementById('noBadgesMsg').style.display = (rows.length === 0) ? 'block' : 'none'
+    );
+  }
+
+  /* ── CSV File Selected ───────────────────────────────── */
+  function csvFileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('csvTitle').textContent = `📄 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    document.getElementById('csvDropZone').style.background = '#ecf7f0';
+    document.getElementById('csvDropZone').style.borderColor = 'var(--sage-lt)';
+
+    // Parse CSV preview
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const lines = e.target.result.split('\n').filter(l => l.trim());
+      const preview = document.getElementById('csvPreview');
+      preview.innerHTML = `
+      <div style="font-size:.76rem;font-weight:700;color:var(--muted);margin-bottom:6px;font-family:var(--display);">
+        Preview (${Math.min(3, lines.length - 1)} of ${lines.length - 1} rows)
+      </div>
+      <div style="overflow-x:auto;border:1px solid var(--line);border-radius:10px;">
+        <table style="width:100%;border-collapse:collapse;font-size:.75rem;font-family:var(--mono);">
+          ${lines.slice(0, 4).map((line, i) => {
+        const cells = line.split(',');
+        const tag = i === 0 ? 'th' : 'td';
+        const style = i === 0
+          ? 'background:var(--sage-mist);padding:8px 10px;font-family:var(--display);font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--line);'
+          : 'padding:7px 10px;border-bottom:1px solid var(--sage-mist);color:var(--ink);';
+        return `<tr>${cells.map(c => `<${tag} style="${style}">${c.trim()}</${tag}>`).join('')}</tr>`;
+      }).join('')}
+        </table>
+      </div>
+    `;
+      preview.style.display = 'block';
+    };
+    reader.readAsText(file);
+  }
+
+  /* ── Delete confirmation shortcut ───────────────────── */
+  function confirmDelete(url, name) {
+    if (confirm(`Delete "${name}"? This cannot be undone.`)) {
+      const f = document.createElement('form');
+      f.method = 'POST'; f.action = url; f.style.display = 'none';
+      const token = document.querySelector('input[name="csrf_token"]');
+      if (token) { const t = token.cloneNode(); f.appendChild(t); }
+      document.body.appendChild(f);
+      f.submit();
+    }
+  }
+
+  /* ── Toast notifications ─────────────────────────────── */
+  function showToast(msg, type = 'info') {
+    const stack = document.getElementById('toastStack');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icons = { success: '<i class="bi bi-check-circle-fill"></i>', error: '<i class="bi bi-x-circle-fill"></i>', info: '<i class="bi bi-info-circle-fill"></i>' };
+    toast.innerHTML = `${icons[type] || ''} ${msg}`;
+    stack.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0'; toast.style.transform = 'translateX(20px)'; toast.style.transition = '.3s';
+      setTimeout(() => toast.remove(), 350);
+    }, 3000);
+  }
+
+  // Flash messages from Flask
+  {% with messages = get_flashed_messages(with_categories = true) %}
+  {% for cat, msg in messages %}
+  window.addEventListener('load', () => showToast({{ msg| tojson }}, '{{ "success" if cat == "success" else "error" if cat == "danger" else "info" }}'));
+  {% endfor %}
+  {% endwith %}
+
+  /* ── Form submit feedback ────────────────────────────── */
+  document.getElementById('badgeForm').addEventListener('submit', function () {
+    const btn = document.getElementById('submitBtnText');
+    btn.textContent = 'Creating…';
+    document.getElementById('submitBtn').style.opacity = '.7';
+  });
+
+  /* ══════════════════════════════════════════════════════
+     CHARTS
+  ═══════════════════════════════════════════════════════ */
+
+  // ── 1. XP History Bar Chart ──────────────────────────
+  (function () {
+    const el = document.getElementById('xpHistoryChart');
+    if (!el) return;
+
+    // Build XP distribution from existing badges
+    const xpBuckets = { '0–99': 0, '100–249': 0, '250–499': 0, '500+': 0 };
+    EXISTING_BADGES.forEach(b => {
+      if (b.xp < 100) xpBuckets['0–99']++;
+      else if (b.xp < 250) xpBuckets['100–249']++;
+      else if (b.xp < 500) xpBuckets['250–499']++;
+      else xpBuckets['500+']++;
+    });
+
+    const labels = Object.keys(xpBuckets);
+    const data = Object.values(xpBuckets);
+    const hasData = data.some(v => v > 0);
+
+    const ctx = el.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 120);
+    grad.addColorStop(0, 'rgba(45,106,79,.9)');
+    grad.addColorStop(1, 'rgba(116,198,157,.4)');
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: hasData ? labels : ['No badges yet'],
+        datasets: [{
+          data: hasData ? data : [0],
+          backgroundColor: grad,
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0d1b14', titleColor: '#74c69d', bodyColor: '#fff',
+            padding: 10, cornerRadius: 8,
+            titleFont: { family: 'Clash Display', size: 11 },
+            bodyFont: { family: 'DM Mono', size: 12 },
+            callbacks: { label: c => ` ${c.parsed.y} badge${c.parsed.y !== 1 ? 's' : ''} in this range` }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#7a9080', font: { family: 'Satoshi', size: 10 } }, border: { display: false } },
+          y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { color: '#7a9080', font: { family: 'DM Mono', size: 10 }, stepSize: 1 }, border: { display: false }, beginAtZero: true }
+        }
+      }
+    });
+
+    document.getElementById('chartUpdatedAt').textContent = 'Updated now';
+  })();
+
+  // ── 2. Activity Sparkline ────────────────────────────
+  (function () {
+    const el = document.getElementById('activityChart');
+    if (!el) return;
+
+    // Simulate weekly badge creation activity (or use real data if available)
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const vals = [0, 0, 0, 0, 0, 0, 0];
+
+    // Spread existing badges across days (rough simulation)
+    EXISTING_BADGES.forEach((b, i) => { vals[i % 7]++; });
+
+    const ctx = el.getContext('2d');
+    const g = ctx.createLinearGradient(0, 0, 0, 90);
+    g.addColorStop(0, 'rgba(45,106,79,.3)');
+    g.addColorStop(1, 'rgba(45,106,79,0)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [{
+          data: vals,
+          borderColor: '#40916c', borderWidth: 2.5,
+          pointRadius: 4, pointBackgroundColor: '#40916c',
+          pointHoverRadius: 6, pointHoverBackgroundColor: '#2d6a4f',
+          fill: true, backgroundColor: g, tension: 0.35
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0d1b14', titleColor: '#74c69d', bodyColor: '#fff',
+            padding: 8, cornerRadius: 8,
+            titleFont: { family: 'Clash Display', size: 10 },
+            bodyFont: { family: 'DM Mono', size: 12 }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#7a9080', font: { size: 10 } }, border: { display: false } },
+          y: { display: false, beginAtZero: true }
+        }
+      }
+    });
+  })();
+
+  /* ── Real-time: poll for new badges every 30s ──────── */
+  (function () {
+    // Only poll if socket.io not available
+    if (typeof io !== 'undefined') return;
+
+    let pollTimeout;
+    function pollStats() {
+      // In production this would fetch /api/badge-stats
+      // For now we sync from DOM state
+      pollTimeout = setTimeout(pollStats, 30000);
+    }
+    pollStats();
+  })();
+
+  /* ── Socket.IO integration (if available) ──────────── */
+  if (typeof io !== 'undefined') {
+    const socket = io();
+    socket.on('connect', () => {
+      socket.emit('join', { room: 'user_{{ current_user.id }}' });
+    });
+
+    socket.on('badge_created', function (data) {
+      showToast(`New badge available: ${data.name}`, 'success');
+    });
+
+    socket.on('new_notification', function (data) {
+      if (data.title) showToast(data.title, 'info');
+    });
+  }
+
+  /* ── Keyboard shortcut: Ctrl+Enter submits ─────────── */
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      document.getElementById('badgeForm').submit();
+    }
+  });
+
+  /* ── Auto-save draft to sessionStorage ─────────────── */
+  const DRAFT_KEY = 'badge_draft_v1';
+
+  function saveDraft() {
+    const draft = {
+      name: document.getElementById('badgeName').value,
+      level: document.getElementById('badgeLevel').value,
+      desc: document.getElementById('badgeDesc').value,
+      xp: document.getElementById('xpSlider').value,
+      condition: document.getElementById('conditionTypeSelect').value,
+      condVal: document.getElementById('conditionValue').value,
+      tags: [...tags]
+    };
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) { }
+  }
+
+  function loadDraft() {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.name) { document.getElementById('badgeName').value = d.name; }
+      if (d.level) { document.getElementById('badgeLevel').value = d.level; }
+      if (d.desc) { document.getElementById('badgeDesc').value = d.desc; }
+      if (d.xp) { document.getElementById('xpSlider').value = d.xp; syncXP(d.xp); }
+      if (d.condition) { document.getElementById('conditionTypeSelect').value = d.condition; }
+      if (d.condVal) { document.getElementById('conditionValue').value = d.condVal; }
+      if (d.tags) { d.tags.forEach(addTag); }
+      syncPreview();
+      syncCondition();
+    } catch (e) { }
+  }
+
+  ['badgeName', 'badgeLevel', 'badgeDesc', 'xpSlider', 'conditionTypeSelect', 'conditionValue'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', saveDraft);
+  });
+
+  // Load draft on page load (won't override server-populated values)
+  loadDraft();
+</script>
+{% endblock %}

@@ -1,0 +1,1285 @@
+{% extends 'base.html' %}
+{% block title %}Generate Certificates — ReEarth{% endblock %}
+{% block page_title %}Generate Certificates{% endblock %}
+{% block page_subtitle %}Certificates{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.96);
+      opacity: 0;
+    }
+
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-dot {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: .4;
+    }
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 16px 18px 14px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    margin-bottom: 10px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .10);
+    color: #10b981;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .cert-layout {
+    display: grid;
+    grid-template-columns: 1fr 460px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ── TABLE CARD ── */
+  .table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .1s ease both;
+  }
+
+  .table-card-head {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #f3f4f6;
+    flex-wrap: wrap;
+  }
+
+  .table-card-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* toolbar */
+  .toolbar-search {
+    position: relative;
+    flex: 1;
+    min-width: 180px;
+  }
+
+  .toolbar-search i {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .82rem;
+    pointer-events: none;
+  }
+
+  .toolbar-search input {
+    width: 100%;
+    padding: 7px 12px 7px 32px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #111827;
+    outline: none;
+    background: #f9fafb;
+    transition: all .18s;
+  }
+
+  .toolbar-search input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .toolbar-search input::placeholder {
+    color: #9ca3af;
+  }
+
+  /* event filter select */
+  .ev-select {
+    height: 34px;
+    padding: 0 32px 0 12px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+    appearance: none;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .ev-select:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  /* export btn */
+  .export-btn {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    font-size: .76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all .2s;
+  }
+
+  .export-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  /* cert table */
+  .cert-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .cert-table thead th {
+    padding: 10px 20px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+  }
+
+  .cert-table thead th:hover {
+    color: #16a34a;
+    cursor: pointer;
+  }
+
+  .cert-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+    cursor: pointer;
+  }
+
+  .cert-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .cert-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .cert-table tbody tr.selected {
+    background: #dcfce7;
+  }
+
+  .cert-table tbody td {
+    padding: 13px 20px;
+    font-size: .82rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .td-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .td-ava {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .74rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .td-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ev-badge {
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: #dcfce7;
+    color: #15803d;
+    display: inline-block;
+  }
+
+  .xp-badge {
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: #fffbeb;
+    color: #b45309;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .hr-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 600;
+    color: #6b7280;
+  }
+
+  /* action buttons */
+  .act-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    font-size: .82rem;
+    transition: all .18s;
+    text-decoration: none;
+  }
+
+  .act-btn.dl {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .act-btn.dl:hover {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+  }
+
+  .act-btn.eye {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+  }
+
+  .act-btn.eye:hover {
+    background: #2563eb;
+    color: #fff;
+  }
+
+  /* empty */
+  .cert-empty {
+    padding: 48px 32px;
+    text-align: center;
+  }
+
+  .cert-empty i {
+    font-size: 2.5rem;
+    color: #d1d5db;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .cert-empty p {
+    font-size: .86rem;
+    color: #9ca3af;
+    margin: 0;
+  }
+
+  /* pagination */
+  .cert-pagination {
+    padding: 14px 20px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .pg-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .pg-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .pg-btn.active {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+  }
+
+  .pg-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+  }
+
+  /* ── PREVIEW CARD ── */
+  .preview-col {
+    position: sticky;
+    top: 88px;
+  }
+
+  .preview-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .18s ease both;
+  }
+
+  .preview-card-title {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .preview-card-title i {
+    color: #16a34a;
+    font-size: .9rem;
+  }
+
+  /* Certificate doc */
+  .cert-doc {
+    position: relative;
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+    border-radius: 14px;
+    padding: 24px 28px 20px;
+    overflow: hidden;
+    text-align: center;
+    border: 1.5px solid #dcfce7;
+    box-shadow: 0 2px 16px rgba(22, 163, 74, .08), inset 0 0 40px rgba(255, 255, 255, .5);
+    transition: box-shadow .3s;
+    animation: scaleIn .4s ease both;
+  }
+
+  .cert-doc:hover {
+    box-shadow: 0 6px 28px rgba(22, 163, 74, .14), inset 0 0 40px rgba(255, 255, 255, .5);
+  }
+
+  .cert-doc::before,
+  .cert-doc::after {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border: 2.5px solid rgba(34, 197, 94, .25);
+    border-radius: 4px;
+  }
+
+  .cert-doc::before {
+    top: 10px;
+    left: 10px;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .cert-doc::after {
+    bottom: 10px;
+    right: 10px;
+    border-left: none;
+    border-top: none;
+  }
+
+  .cert-top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #16a34a, #4ade80, #10b981);
+    border-radius: 14px 14px 0 0;
+  }
+
+  .cert-ribbon {
+    position: absolute;
+    top: 18px;
+    left: -36px;
+    background: #16a34a;
+    color: #fff;
+    font-size: .56rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 5px 52px;
+    transform: rotate(-45deg);
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .4);
+    z-index: 5;
+  }
+
+  .cert-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-20deg);
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: .1em;
+    color: rgba(34, 197, 94, .07);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 0;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .cert-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #15803d;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 1;
+    letter-spacing: -.01em;
+  }
+
+  .cert-heading::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 2.5px;
+    background: linear-gradient(90deg, #22c55e, #10b981);
+    margin: 6px auto 0;
+    border-radius: 99px;
+  }
+
+  .cert-sub {
+    font-size: .68rem;
+    color: #6b7280;
+    margin: 8px 0 4px;
+    position: relative;
+    z-index: 1;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .cert-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #111827;
+    position: relative;
+    z-index: 1;
+    min-height: 1.4em;
+    transition: all .25s;
+    animation: fadeInUp .3s ease;
+  }
+
+  .cert-name.empty {
+    color: #d1d5db;
+    font-style: italic;
+    font-size: 1rem;
+  }
+
+  .cert-vol {
+    font-size: .64rem;
+    color: #9ca3af;
+    position: relative;
+    z-index: 1;
+    margin: 2px 0 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .cert-event-label {
+    font-size: .68rem;
+    color: #6b7280;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 2px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .cert-event {
+    font-family: 'Playfair Display', serif;
+    font-size: .95rem;
+    font-weight: 700;
+    color: #16a34a;
+    position: relative;
+    z-index: 1;
+    min-height: 1.2em;
+    transition: all .25s;
+  }
+
+  .cert-event.empty {
+    color: #d1d5db;
+    font-style: italic;
+    font-size: .85rem;
+  }
+
+  .cert-desc {
+    font-size: .64rem;
+    color: #6b7280;
+    max-width: 320px;
+    margin: 10px auto 8px;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .cert-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #dcfce7, transparent);
+    margin: 10px 0;
+  }
+
+  .cert-meta {
+    font-size: .62rem;
+    color: #9ca3af;
+    position: relative;
+    z-index: 1;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .cert-meta strong {
+    color: #6b7280;
+    font-weight: 600;
+  }
+
+  .cert-sigs {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    margin-top: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cert-sig {
+    text-align: center;
+  }
+
+  .cert-sig-line {
+    width: 90px;
+    height: 1px;
+    background: #d1d5db;
+    margin: 0 auto 4px;
+  }
+
+  .cert-sig-name {
+    font-size: .58rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .cert-footer {
+    font-size: .55rem;
+    color: #d1d5db;
+    margin-top: 12px;
+    position: relative;
+    z-index: 1;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* cert chips */
+  .cert-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .cert-chip {
+    font-size: .68rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .cert-chip.green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .cert-chip.blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .cert-chip.amber {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  /* download btn */
+  .cert-dl-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 40px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 16px;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    transition: box-shadow .2s, transform .2s;
+    text-decoration: none;
+  }
+
+  .cert-dl-btn:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+    color: #fff;
+  }
+
+  .cert-dl-btn.disabled {
+    opacity: .4;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+  }
+
+  /* bulk action bar */
+  .bulk-bar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: #111827;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin-bottom: 16px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+    animation: fadeUp .25s ease;
+  }
+
+  .bulk-bar.show {
+    display: flex;
+  }
+
+  .bulk-count {
+    font-weight: 700;
+    color: #4ade80;
+  }
+
+  .bulk-btn {
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .76rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all .18s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .bulk-btn.primary {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+  }
+
+  .bulk-btn.outline {
+    background: transparent;
+    color: #9ca3af;
+    border-color: #374151;
+  }
+
+  .bulk-btn.outline:hover {
+    color: #fff;
+    border-color: #6b7280;
+  }
+
+  @media (max-width: 1100px) {
+    .cert-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .preview-col {
+      position: static;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-patch-check-fill"></i></div>
+    <div class="tile-val">{{ participants|length }}</div>
+    <div class="tile-lbl">Total Certificates</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-people-fill"></i></div>
+    <div class="tile-val">{{ participants|map(attribute='name')|unique|list|length if participants else 0 }}</div>
+    <div class="tile-lbl">Volunteers</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-calendar2-event"></i></div>
+    <div class="tile-val">{{ events|length }}</div>
+    <div class="tile-lbl">Events</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-val">{{ participants | map(attribute='xp_earned') | map('default', 0) | sum }}</div>
+    <div class="tile-lbl">Total XP Awarded</div>
+  </div>
+</div>
+
+<!-- BULK ACTION BAR -->
+<div class="bulk-bar" id="bulkBar">
+  <span><span class="bulk-count" id="bulkCount">0</span> selected</span>
+  <button class="bulk-btn primary" id="bulkDownloadBtn"><i class="bi bi-download"></i> Download All</button>
+  <button class="bulk-btn outline" id="bulkClearBtn"><i class="bi bi-x"></i> Clear</button>
+  <div style="margin-left:auto;font-size:.72rem;color:#6b7280;">Shift+Click to multi-select</div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="cert-layout">
+
+  <!-- LEFT: Table -->
+  <div>
+    <div class="table-card">
+      <div class="table-card-head">
+        <i class="bi bi-people-fill" style="color:#16a34a;font-size:1rem;"></i>
+        <span class="table-card-title">Completed Participants</span>
+
+        <div class="toolbar-search" style="margin-left:auto;">
+          <i class="bi bi-search"></i>
+          <input type="text" id="certSearch" placeholder="Search name or event...">
+        </div>
+
+        <select id="eventFilter" class="ev-select" onchange="filterByEvent()">
+          <option value="">All Events</option>
+          {% for e in events %}
+          <option value="{{ e.title }}" {% if e.title==selected_event %}selected{% endif %}>{{ e.title }}</option>
+          {% endfor %}
+        </select>
+
+        <button class="export-btn" id="exportCsvBtn">
+          <i class="bi bi-download"></i> Export CSV
+        </button>
+      </div>
+
+      <table class="cert-table" id="certTable">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" style="accent-color:#16a34a;cursor:pointer;"></th>
+            <th>#</th>
+            <th>Volunteer</th>
+            <th>Event</th>
+            <th>Hours</th>
+            <th>XP</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="certTbody">
+          {% for p in participants %}
+          <tr id="row-{{ loop.index }}" onclick="selectParticipant(
+              '{{ p.name | replace("'","\\'") | e }}',
+              '{{ p.volunteer_id }}',
+              '{{ p.event | replace("'","\\'") | e }}',
+              '{{ p.issued_date }}',
+              '{{ p.hours }}',
+              '{{ p.xp_earned }}',
+              {{ loop.index }},
+              '{{ url_for('events.certificate', event_id=p.event_id, user_id=p.volunteer_id) }}'
+            )" data-name="{{ p.name | lower }}" data-event="{{ p.event | lower }}">
+            <td onclick="event.stopPropagation();">
+              <input type="checkbox" class="row-check" data-idx="{{ loop.index }}"
+                style="accent-color:#16a34a;cursor:pointer;">
+            </td>
+            <td style="color:#9ca3af;font-family:'JetBrains Mono',monospace;font-size:.76rem;font-weight:600;">
+              {{ "%02d"|format(loop.index) }}
+            </td>
+            <td>
+              <div class="td-user">
+                <div class="td-ava"
+                  style="background:{{ ['#22c55e','#3b82f6','#f59e0b','#10b981','#a855f7','#ef4444'][loop.index0 % 6] }};">
+                  {{ p.name[:2].upper() }}
+                </div>
+                <div>
+                  <div class="td-name">{{ p.name }}</div>
+                  <div style="font-size:.68rem;color:#9ca3af;font-family:'JetBrains Mono',monospace;">ID: {{
+                    p.volunteer_id }}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="ev-badge">{{ p.event }}</span></td>
+            <td><span class="hr-badge"><i class="bi bi-clock" style="margin-right:3px;"></i>{{ p.hours }}h</span></td>
+            <td><span class="xp-badge">⚡ {{ p.xp_earned }}</span></td>
+            <td onclick="event.stopPropagation();">
+              <div style="display:flex;gap:6px;align-items:center;">
+                <a href="{{ url_for('events.certificate', event_id=p.event_id, user_id=p.volunteer_id) }}" class="act-btn dl"
+                  title="Download Certificate">
+                  <i class="bi bi-download"></i>
+                </a>
+                <button class="act-btn eye" title="Preview Certificate" onclick="selectParticipant(
+                    '{{ p.name | replace("'","\\'") | e }}',
+                    '{{ p.volunteer_id }}',
+                    '{{ p.event | replace("'","\\'") | e }}',
+                    '{{ p.issued_date }}',
+                    '{{ p.hours }}',
+                    '{{ p.xp_earned }}',
+                    {{ loop.index }},
+                    '{{ url_for('events.certificate', event_id=p.event_id, user_id=p.volunteer_id) }}'
+                  )">
+                  <i class="bi bi-eye-fill"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7">
+              <div class="cert-empty">
+                <i class="bi bi-hourglass-split"></i>
+                <p>No certificates available yet.</p>
+                <small style="font-size:.76rem;color:#d1d5db;">Complete all tasks in an event to unlock your
+                  certificate! 🌱</small>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="cert-pagination" id="paginationWrap"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Preview -->
+  <div class="preview-col">
+    <div class="preview-card">
+      <div class="preview-card-title">
+        <i class="bi bi-eye-fill"></i> Live Preview
+        <span style="margin-left:auto;font-size:.68rem;color:#9ca3af;font-weight:400;">Click a row to preview</span>
+      </div>
+
+      <!-- Certificate document -->
+      <div class="cert-doc" id="certDoc">
+        <div class="cert-top-bar"></div>
+        <div class="cert-ribbon">PREVIEW</div>
+        <div class="cert-watermark">PREVIEW</div>
+        <div class="cert-heading">Certificate of Appreciation</div>
+        <div class="cert-sub">This is to proudly certify that</div>
+        <div class="cert-name empty" id="prevName">— Select a participant —</div>
+        <div class="cert-vol" id="prevVolId"></div>
+        <div class="cert-event-label">has actively contributed to</div>
+        <div class="cert-event empty" id="prevEvent">[Event Name]</div>
+        <div class="cert-desc">
+          In sincere recognition of your environmental initiative, passion, and commitment
+          towards creating a greener world, we express our heartfelt gratitude.
+        </div>
+        <div class="cert-divider"></div>
+        <div class="cert-meta">Issued on: <strong id="prevDate">—</strong></div>
+        <div class="cert-sigs">
+          <div class="cert-sig">
+            <div class="cert-sig-line"></div>
+            <div class="cert-sig-name">Event Coordinator</div>
+          </div>
+          <div style="font-size:1.4rem;">🌿</div>
+          <div class="cert-sig">
+            <div class="cert-sig-line"></div>
+            <div class="cert-sig-name">ReEarth Director</div>
+          </div>
+        </div>
+        <div class="cert-footer">This certificate was digitally generated and verified by ReEarth Initiative.</div>
+      </div>
+
+      <!-- Chips -->
+      <div class="cert-chips" id="certChips" style="display:none;">
+        <span class="cert-chip green"><i class="bi bi-clock"></i> <span id="chipHrs">—</span>h volunteered</span>
+        <span class="cert-chip amber"><i class="bi bi-lightning-charge-fill"></i> <span id="chipXp">—</span> XP</span>
+        <span class="cert-chip blue"><i class="bi bi-patch-check-fill"></i> Verified</span>
+      </div>
+
+      <!-- Download btn -->
+      <a href="#" class="cert-dl-btn disabled" id="certDlBtn">
+        <i class="bi bi-download"></i> Download Certificate
+      </a>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+
+  let currentRow = null;
+  let selectedRows = new Set();
+  const PAGE_SIZE = 8;
+  let currentPage = 1;
+  let filteredRows = [];
+
+  /* ── Init ── */
+  document.addEventListener('DOMContentLoaded', function () {
+    filteredRows = Array.from(document.querySelectorAll('#certTbody tr[id]'));
+    buildPagination();
+    showPage(1);
+  });
+
+  /* ── Select participant (preview) ── */
+  function selectParticipant(name, volId, event, date, hours, xp, idx, dlUrl) {
+    const nameEl = document.getElementById('prevName');
+    const eventEl = document.getElementById('prevEvent');
+
+    nameEl.textContent = name || '— Select a participant —';
+    eventEl.textContent = event || '[Event Name]';
+    nameEl.className = 'cert-name' + (name ? '' : ' empty');
+    eventEl.className = 'cert-event' + (event ? '' : ' empty');
+
+    document.getElementById('prevVolId').textContent = volId ? 'Volunteer ID: ' + volId : '';
+    document.getElementById('prevDate').textContent = date || '—';
+    document.getElementById('chipHrs').textContent = hours || '—';
+    document.getElementById('chipXp').textContent = xp || '—';
+    document.getElementById('certChips').style.display = name ? 'flex' : 'none';
+
+    const dlBtn = document.getElementById('certDlBtn');
+    if (name && dlUrl) {
+      dlBtn.href = dlUrl;
+      dlBtn.classList.remove('disabled');
+    } else {
+      dlBtn.href = '#';
+      dlBtn.classList.add('disabled');
+    }
+
+    if (currentRow) document.getElementById('row-' + currentRow)?.classList.remove('selected');
+    currentRow = idx;
+    document.getElementById('row-' + idx)?.classList.add('selected');
+
+    if (window.innerWidth < 1100) {
+      document.querySelector('.preview-col')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  /* ── Pagination ── */
+  function buildPagination() {
+    const wrap = document.getElementById('paginationWrap');
+    if (!wrap) return;
+    const totalPages = Math.ceil(filteredRows.length / PAGE_SIZE);
+    if (totalPages <= 1) { wrap.innerHTML = ''; return; }
+
+    let html = `<button class="pg-btn" onclick="showPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="pg-btn ${i === currentPage ? 'active' : ''}" onclick="showPage(${i})">${i}</button>`;
+    }
+    html += `<button class="pg-btn" onclick="showPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+    wrap.innerHTML = html;
+  }
+
+  function showPage(page) {
+    const totalPages = Math.ceil(filteredRows.length / PAGE_SIZE);
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+
+    /* Show only current page rows */
+    document.querySelectorAll('#certTbody tr[id]').forEach(r => r.style.display = 'none');
+    const start = (page - 1) * PAGE_SIZE;
+    filteredRows.slice(start, start + PAGE_SIZE).forEach(r => r.style.display = '');
+
+    buildPagination();
+  }
+
+  /* ── Search & filter ── */
+  document.getElementById('certSearch').addEventListener('input', function () {
+    applyFilters();
+  });
+
+  function filterByEvent() {
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const q = document.getElementById('certSearch').value.toLowerCase();
+    const ev = document.getElementById('eventFilter').value.toLowerCase();
+
+    filteredRows = Array.from(document.querySelectorAll('#certTbody tr[id]')).filter(row => {
+      const name = row.dataset.name || '';
+      const event = row.dataset.event || '';
+      const matchQ = !q || name.includes(q) || event.includes(q);
+      const matchEv = !ev || event.includes(ev);
+      return matchQ && matchEv;
+    });
+
+    /* hide all first */
+    document.querySelectorAll('#certTbody tr[id]').forEach(r => r.style.display = 'none');
+    currentPage = 1;
+    showPage(1);
+  }
+
+  /* ── Checkbox: select all ── */
+  document.getElementById('selectAll').addEventListener('change', function () {
+    const checks = document.querySelectorAll('.row-check');
+    checks.forEach(c => {
+      c.checked = this.checked;
+      const idx = parseInt(c.dataset.idx);
+      this.checked ? selectedRows.add(idx) : selectedRows.delete(idx);
+    });
+    updateBulkBar();
+  });
+
+  document.addEventListener('change', function (e) {
+    if (!e.target.classList.contains('row-check')) return;
+    const idx = parseInt(e.target.dataset.idx);
+    e.target.checked ? selectedRows.add(idx) : selectedRows.delete(idx);
+    updateBulkBar();
+  });
+
+  function updateBulkBar() {
+    const bar = document.getElementById('bulkBar');
+    document.getElementById('bulkCount').textContent = selectedRows.size;
+    bar.classList.toggle('show', selectedRows.size > 0);
+  }
+
+  document.getElementById('bulkClearBtn').addEventListener('click', function () {
+    selectedRows.clear();
+    document.querySelectorAll('.row-check').forEach(c => c.checked = false);
+    document.getElementById('selectAll').checked = false;
+    updateBulkBar();
+  });
+
+  document.getElementById('bulkDownloadBtn').addEventListener('click', function () {
+    if (selectedRows.size === 0) return;
+    selectedRows.forEach(idx => {
+      if (dlUrls[idx]) {
+        const a = document.createElement('a');
+        a.href = dlUrls[idx];
+        a.target = '_blank';
+        a.click();
+      }
+    });
+  });
+
+  /* ── Export CSV ── */
+  document.getElementById('exportCsvBtn').addEventListener('click', function () {
+    let csv = 'Name,Volunteer ID,Event,Hours,XP Earned,Status\n';
+    document.querySelectorAll('#certTbody tr[id]').forEach(row => {
+      if (row.style.display === 'none') return;
+      const cells = row.querySelectorAll('td');
+      const name = cells[2]?.querySelector('.td-name')?.textContent.trim() || '';
+      const volId = cells[2]?.querySelector('div:last-child')?.textContent.replace('ID: ', '').trim() || '';
+      const event = cells[3]?.textContent.trim() || '';
+      const hours = cells[4]?.textContent.replace(/[^\d.]/g, '').trim() || '';
+      const xp = cells[5]?.textContent.replace(/[^\d]/g, '').trim() || '';
+      csv += `"${name}","${volId}","${event}","${hours}","${xp}","Eligible"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `certificates_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
+{% endblock %}

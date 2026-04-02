@@ -1,0 +1,2165 @@
+{% extends 'base.html' %}
+{% block title %}Manage Events — ReEarth{% endblock %}
+{% block page_title %}Manage Events{% endblock %}
+{% block page_subtitle %}Events{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes pulse-green {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .4);
+    }
+
+    50% {
+      box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-grey::before {
+    background: #9ca3af;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .04s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .08s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .12s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .16s;
+  }
+
+  .tile:nth-child(5) {
+    animation-delay: .20s;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-grey .tile-icon {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── CHART CARD ── */
+  .chart-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .18s ease both;
+  }
+
+  .chart-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .chart-card-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chart-card-title i {
+    color: #16a34a;
+  }
+
+  .chart-tabs {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .chart-tab {
+    padding: 5px 12px;
+    border-radius: 7px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .chart-tab.active {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .3);
+  }
+
+  .chart-body {
+    position: relative;
+    width: 100%;
+    height: 200px;
+  }
+
+  .chart-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    animation: fadeUp .4s .24s ease both;
+  }
+
+  .toolbar-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .toolbar-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .85rem;
+    pointer-events: none;
+  }
+
+  .toolbar-search input {
+    width: 100%;
+    padding: 8px 14px 8px 34px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    color: #111827;
+    outline: none;
+    background: #f9fafb;
+    transition: all .18s;
+  }
+
+  .toolbar-search input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .toolbar-search input::placeholder {
+    color: #9ca3af;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .fpill {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .fpill:hover:not(.active) {
+    color: #16a34a;
+  }
+
+  .fpill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .sort-select {
+    padding: 7px 32px 7px 12px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    outline: none;
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    appearance: none;
+    transition: all .18s;
+  }
+
+  .sort-select:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .vtbtn {
+    width: 32px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: .85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .vtbtn.active {
+    background: #fff;
+    color: #374151;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+  }
+
+  .toolbar-right-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .tb-action-btn {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .18s;
+    white-space: nowrap;
+  }
+
+  .tb-action-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .tb-action-btn.danger:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: #fef2f2;
+  }
+
+  .tb-action-btn.primary {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+  }
+
+  .tb-action-btn.primary:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .38);
+    transform: translateY(-1px);
+  }
+
+  .record-count {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+  }
+
+  /* ── SELECT ALL ROW ── */
+  .select-all-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 4px;
+    margin-bottom: 12px;
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  .bulk-delete-btn {
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 99px;
+    border: 1.5px solid #fecaca;
+    background: #fff;
+    color: #ef4444;
+    font-family: 'Sora', sans-serif;
+    font-size: .76rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    transition: all .18s;
+  }
+
+  .bulk-delete-btn.show {
+    display: inline-flex;
+  }
+
+  .bulk-delete-btn:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+  }
+
+  .select-count {
+    font-size: .76rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* ── EVENT GRID ── */
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 18px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .3s ease both;
+  }
+
+  .event-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    position: relative;
+  }
+
+  .event-card:hover {
+    box-shadow: 0 8px 28px rgba(22, 163, 74, .12);
+    transform: translateY(-2px);
+  }
+
+  .event-card.selected {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .2);
+  }
+
+  .event-card-check {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid #e4ece6;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .event-card-check.checked {
+    background: #16a34a;
+    border-color: #16a34a;
+  }
+
+  .event-card-check.checked::after {
+    content: '✓';
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 800;
+  }
+
+  .event-thumb {
+    width: 100%;
+    height: 170px;
+    object-fit: cover;
+    display: block;
+    background: #f3f4f6;
+  }
+
+  .event-thumb-placeholder {
+    width: 100%;
+    height: 170px;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #16a34a;
+  }
+
+  .event-card-body {
+    padding: 16px;
+  }
+
+  .event-card-title {
+    font-size: .92rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .event-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .event-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .74rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .event-meta-row i {
+    color: #16a34a;
+    width: 14px;
+    flex-shrink: 0;
+    font-size: .8rem;
+  }
+
+  .event-badges {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .ebadge {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .eb-upcoming {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .eb-past {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .eb-bookings {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .eb-xp {
+    background: #1f2937;
+    color: #fff;
+  }
+
+  .eb-trending {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .eb-distance {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+
+  .countdown-badge {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #dcfce7;
+    font-family: 'JetBrains Mono', monospace;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+
+  .event-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .ecard-btn {
+    flex: 1;
+    height: 34px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .74rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all .18s;
+  }
+
+  .ecard-btn-edit {
+    background: #f0fdf4;
+    color: #16a34a;
+    border-color: #dcfce7;
+  }
+
+  .ecard-btn-edit:hover {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .ecard-btn-view {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+  }
+
+  .ecard-btn-view:hover {
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .ecard-btn-delete {
+    background: #fef2f2;
+    color: #ef4444;
+    border-color: #fecaca;
+  }
+
+  .ecard-btn-delete:hover {
+    background: #ef4444;
+    color: #fff;
+  }
+
+  .ecard-btn-qr {
+    background: #f5f3ff;
+    color: #7c3aed;
+    border-color: #e9d5ff;
+  }
+
+  .ecard-btn-qr:hover {
+    background: #7c3aed;
+    color: #fff;
+  }
+
+  /* ── TABLE VIEW ── */
+  .events-table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    margin-bottom: 20px;
+    animation: fadeUp .4s .3s ease both;
+  }
+
+  .events-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .events-table thead th {
+    padding: 12px 18px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color .18s;
+  }
+
+  .events-table thead th:hover {
+    color: #16a34a;
+  }
+
+  .events-table thead th.sorted {
+    color: #16a34a;
+  }
+
+  .events-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+  }
+
+  .events-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .events-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .events-table tbody tr.selected {
+    background: #f0fdf4;
+  }
+
+  .events-table tbody td {
+    padding: 14px 18px;
+    font-size: .8rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .td-thumb {
+    width: 48px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #f3f4f6;
+    display: block;
+  }
+
+  .td-title {
+    font-size: .84rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .td-sub {
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  .td-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  .td-green {
+    color: #16a34a;
+  }
+
+  .td-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+    transition: all .18s;
+  }
+
+  .td-icon-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .td-icon-btn.del:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: #fef2f2;
+  }
+
+  .td-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #16a34a;
+  }
+
+  /* ── EMPTY STATE ── */
+  .events-empty {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 70px 24px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+  }
+
+  .events-empty-icon {
+    font-size: 3.5rem;
+    opacity: .2;
+    margin-bottom: 14px;
+  }
+
+  .events-empty h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .events-empty p {
+    font-size: .84rem;
+    color: #9ca3af;
+    margin-bottom: 22px;
+  }
+
+  .create-event-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .84rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .create-event-btn:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .38);
+    transform: translateY(-1px);
+    color: #fff;
+  }
+
+  /* ── MODALS ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal-box {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .18);
+    overflow: hidden;
+    animation: modalPop .25s cubic-bezier(.34, 1.56, .64, 1) both;
+  }
+
+  @keyframes modalPop {
+    from {
+      opacity: 0;
+      transform: scale(.92) translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  /* BOOKINGS MODAL */
+  .bmodal-box {
+    max-width: 720px;
+  }
+
+  .bmodal-head {
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .bmodal-title {
+    font-size: .95rem;
+    font-weight: 800;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .bmodal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    transition: all .18s;
+  }
+
+  .bmodal-close:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: #fef2f2;
+  }
+
+  .bmodal-body {
+    padding: 0;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  .bmodal-body::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .bmodal-body::-webkit-scrollbar-thumb {
+    background: #e4ece6;
+    border-radius: 99px;
+  }
+
+  .bmodal-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .bmodal-table thead th {
+    padding: 11px 18px;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .bmodal-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .12s;
+  }
+
+  .bmodal-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .bmodal-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .bmodal-table tbody td {
+    padding: 12px 18px;
+    font-size: .8rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .bmodal-checkin-btn {
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 99px;
+    border: 1.5px solid #dcfce7;
+    background: #f0fdf4;
+    color: #15803d;
+    font-family: 'Sora', sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .18s;
+  }
+
+  .bmodal-checkin-btn:hover {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .bmodal-empty {
+    padding: 40px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: .84rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .bmodal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .bmodal-close-btn {
+    height: 36px;
+    padding: 0 20px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s;
+  }
+
+  .bmodal-close-btn:hover {
+    border-color: #9ca3af;
+  }
+
+  /* QR MODAL */
+  .qr-modal-body {
+    padding: 28px 24px;
+    text-align: center;
+  }
+
+  .qr-img {
+    max-width: 180px;
+    border: 4px solid #f3f4f6;
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
+
+  .qr-passcode-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #f9fafb;
+    border: 1px solid #e4ece6;
+    border-radius: 12px;
+    padding: 10px 16px;
+  }
+
+  .qr-passcode-label {
+    font-size: .74rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .qr-passcode-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .qr-copy-btn {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 99px;
+    border: 1.5px solid #dcfce7;
+    background: #f0fdf4;
+    color: #16a34a;
+    font-family: 'Sora', sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .18s;
+  }
+
+  .qr-copy-btn:hover {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .qr-modal-head {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* DELETE CONFIRM MODAL */
+  .del-modal-body {
+    padding: 28px 24px;
+  }
+
+  .del-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: #fef2f2;
+    color: #ef4444;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .del-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 6px;
+  }
+
+  .del-desc {
+    font-size: .82rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .del-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .del-cancel-btn {
+    flex: 1;
+    height: 40px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s;
+  }
+
+  .del-cancel-btn:hover {
+    border-color: #9ca3af;
+  }
+
+  .del-confirm-btn {
+    flex: 1;
+    height: 40px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, .3);
+    transition: all .2s;
+  }
+
+  .del-confirm-btn:hover {
+    box-shadow: 0 8px 24px rgba(239, 68, 68, .42);
+    transform: translateY(-1px);
+  }
+
+  /* ── TOAST ── */
+  .me-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #111827;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
+    z-index: 9999;
+    pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+  }
+
+  .me-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .me-toast i {
+    color: #4ade80;
+  }
+
+  .me-toast.err i {
+    color: #f87171;
+  }
+
+  /* ── FLASH ── */
+  .flash-row {
+    margin-bottom: 16px;
+    animation: fadeUp .3s ease both;
+  }
+
+  .flash-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: .82rem;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+  }
+
+  .flash-item.success {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+
+  .flash-item.danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+
+  .flash-item.warning {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+
+  .flash-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font-size: .85rem;
+    opacity: .7;
+  }
+
+  .flash-close:hover {
+    opacity: 1;
+  }
+
+  @media (max-width: 1200px) {
+    .stat-tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .page-content {
+      padding: 16px;
+    }
+
+    .events-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- FLASH MESSAGES -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-row">
+  {% for category, message in messages %}
+  <div class="flash-item {{ category }}">
+    <i
+      class="bi bi-{% if category == 'success' %}check-circle-fill{% elif category == 'danger' %}x-circle-fill{% else %}exclamation-triangle-fill{% endif %}"></i>
+    {{ message }}
+    <button class="flash-close" onclick="this.closest('.flash-item').remove()"><i class="bi bi-x"></i></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-calendar2-check"></i></div>
+    <div class="tile-val">{{ events | length }}</div>
+    <div class="tile-lbl">Total Events</div>
+  </div>
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="tile-val">{{ events | selectattr('date', 'ge', now) | list | length }}</div>
+    <div class="tile-lbl">Upcoming</div>
+  </div>
+  <div class="tile t-grey">
+    <div class="tile-icon"><i class="bi bi-calendar-x"></i></div>
+    <div class="tile-val">{{ events | selectattr('date', 'lt', now) | list | length }}</div>
+    <div class="tile-lbl">Past</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-stars"></i></div>
+    <div class="tile-val">{{ events | map(attribute='xp_reward') | select | sum if events | length > 0 else 0 }}</div>
+    <div class="tile-lbl">XP Offered</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-people-fill"></i></div>
+    <div class="tile-val">{{ events | map(attribute='bookings') | map('length') | sum if events else 0 }}</div>
+    <div class="tile-lbl">Total Bookings</div>
+  </div>
+</div>
+
+<!-- CHART CARD -->
+{% if events %}
+<div class="chart-card">
+  <div class="chart-card-head">
+    <div class="chart-card-title">
+      <i class="bi bi-bar-chart-fill"></i> Event Participation
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="bookings">Bookings</button>
+        <button class="chart-tab" data-chart="xp">XP</button>
+      </div>
+      <button class="tb-action-btn" onclick="exportCSV()">
+        <i class="bi bi-download"></i> Export CSV
+      </button>
+    </div>
+  </div>
+  <div class="chart-body">
+    <canvas id="participationChart"></canvas>
+  </div>
+</div>
+{% endif %}
+
+<!-- TOOLBAR -->
+<div class="toolbar-card">
+  <div class="toolbar-search">
+    <i class="bi bi-search"></i>
+    <input type="text" id="searchInput" placeholder="Search events by title or location...">
+  </div>
+  <div class="filter-group">
+    <button class="fpill active" data-filter="all">All</button>
+    <button class="fpill" data-filter="upcoming">Upcoming</button>
+    <button class="fpill" data-filter="past">Past</button>
+    <button class="fpill" data-filter="trending">🔥 Trending</button>
+  </div>
+  <select class="sort-select" id="sortSelect">
+    <option value="date-asc">Date ↑</option>
+    <option value="date-desc">Date ↓</option>
+    <option value="bookings">Most Booked</option>
+    <option value="xp">Highest XP</option>
+    <option value="title">Title A–Z</option>
+  </select>
+  <div class="view-toggle">
+    <button class="vtbtn active" id="gridViewBtn" title="Grid"><i class="bi bi-grid-fill"></i></button>
+    <button class="vtbtn" id="tableViewBtn" title="Table"><i class="bi bi-list-ul"></i></button>
+  </div>
+  <div class="toolbar-right-group">
+    <a href="{{ url_for('events.create_event') }}" class="tb-action-btn primary">
+      <i class="bi bi-plus-lg"></i> New Event
+    </a>
+    <span class="record-count"><span id="recordCount">{{ events | length }}</span> events</span>
+  </div>
+</div>
+
+{% if events %}
+
+<!-- SELECT ALL ROW -->
+<div class="select-all-row">
+  <label
+    style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.8rem;font-weight:600;color:#374151;font-family:'Sora',sans-serif;">
+    <input type="checkbox" id="selectAllCb" style="width:16px;height:16px;accent-color:#16a34a;cursor:pointer;">
+    Select All
+  </label>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="select-count" id="selectCountLabel"></span>
+    <button class="bulk-delete-btn" id="bulkDeleteBtn">
+      <i class="bi bi-trash3-fill"></i> Delete Selected
+    </button>
+  </div>
+</div>
+
+<!-- GRID VIEW -->
+<div id="gridView">
+  <div class="events-grid" id="eventsGrid">
+    {% for event in events %}
+    {% set is_upcoming = event.date >= now %}
+    <div class="event-card" data-id="{{ event.id }}" data-title="{{ event.title | lower }}"
+      data-status="{{ 'upcoming' if is_upcoming else 'past' }}" data-bookings="{{ event.bookings | length }}"
+      data-xp="{{ event.xp_reward or 0 }}" data-date="{{ event.date.isoformat() }}">
+
+      <!-- Checkbox -->
+      <div class="event-card-check" data-id="{{ event.id }}" onclick="toggleCardSelect(this, '{{ event.id }}')"></div>
+
+      <!-- Thumbnail -->
+      {% if event.thumbnail %}
+      <img class="event-thumb" src="{{ url_for('static', filename='uploads/' ~ event.thumbnail) }}"
+        alt="{{ event.title }}">
+      {% else %}
+      <div class="event-thumb-placeholder">🌿</div>
+      {% endif %}
+
+      <div class="event-card-body">
+        <div class="event-card-title">{{ event.title }}</div>
+        <div class="event-card-meta">
+          <div class="event-meta-row"><i class="bi bi-geo-alt-fill"></i><span>{{ event.location }}</span></div>
+          <div class="event-meta-row"><i class="bi bi-calendar3"></i><span>{{ event.date.strftime('%d %b %Y, %I:%M %p')
+              }}</span></div>
+          {% if event.distance %}
+          <div class="event-meta-row"><i class="bi bi-pin-map-fill"></i><span>{{ '%.1f' % event.distance }} km
+              away</span></div>
+          {% endif %}
+        </div>
+
+        <!-- Countdown badge for upcoming -->
+        {% if is_upcoming %}
+        <div class="countdown-badge" data-time="{{ event.date.isoformat() }}">⏳ Loading...</div>
+        {% endif %}
+
+        <div class="event-badges">
+          <span class="ebadge {{ 'eb-upcoming' if is_upcoming else 'eb-past' }}">
+            {{ 'Upcoming' if is_upcoming else 'Past' }}
+          </span>
+          <span class="ebadge eb-bookings"><i class="bi bi-people-fill"></i> {{ event.bookings | length }}</span>
+          {% if event.xp_reward %}
+          <span class="ebadge eb-xp"><i class="bi bi-lightning-charge-fill"></i> {{ event.xp_reward }} XP</span>
+          {% endif %}
+          {% if event.bookings | length > 10 %}
+          <span class="ebadge eb-trending">🔥 Trending</span>
+          {% endif %}
+        </div>
+
+        <div class="event-card-actions">
+          <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="ecard-btn ecard-btn-edit">
+            <i class="bi bi-pencil-fill"></i> Edit
+          </a>
+          <button class="ecard-btn ecard-btn-view open-bookings-modal" data-event-id="{{ event.id }}"
+            data-event-title="{{ event.title | e }}">
+            <i class="bi bi-people"></i> Bookings
+          </button>
+          {% if event.qr_code %}
+          <button class="ecard-btn ecard-btn-qr open-qr-modal" data-event-id="{{ event.id }}"
+            data-qr="{{ event.qr_code }}" data-passcode="{{ event.passcode or '' }}">
+            <i class="bi bi-qr-code"></i>
+          </button>
+          {% endif %}
+          <button class="ecard-btn ecard-btn-delete open-delete-modal" data-event-id="{{ event.id }}"
+            data-event-title="{{ event.title | e }}"
+            data-delete-url="{{ url_for('events.delete_event', event_id=event.id) }}">
+            <i class="bi bi-trash3-fill"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div id="gridEmpty" class="events-empty" style="display:none;">
+    <div class="events-empty-icon"><i class="bi bi-calendar-x"></i></div>
+    <h3>No events match your search</h3>
+    <p>Try a different keyword or filter.</p>
+  </div>
+</div>
+
+<!-- TABLE VIEW -->
+<div id="tableView" style="display:none;">
+  <div class="events-table-card">
+    <table class="events-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAllTable" style="accent-color:#16a34a;cursor:pointer;"></th>
+          <th>Image</th>
+          <th class="sortable" data-col="title">Title <i class="bi bi-chevron-expand"
+              style="font-size:.6rem;opacity:.5;"></i></th>
+          <th class="sortable" data-col="location">Location</th>
+          <th class="sortable" data-col="date">Date <i class="bi bi-chevron-expand"
+              style="font-size:.6rem;opacity:.5;"></i></th>
+          <th class="sortable" data-col="bookings">Bookings <i class="bi bi-chevron-expand"
+              style="font-size:.6rem;opacity:.5;"></i></th>
+          <th class="sortable" data-col="xp">XP <i class="bi bi-chevron-expand" style="font-size:.6rem;opacity:.5;"></i>
+          </th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="eventsTableBody">
+        {% for event in events %}
+        {% set is_upcoming = event.date >= now %}
+        <tr data-id="{{ event.id }}" data-title="{{ event.title | lower }}"
+          data-status="{{ 'upcoming' if is_upcoming else 'past' }}" data-bookings="{{ event.bookings | length }}"
+          data-xp="{{ event.xp_reward or 0 }}" data-date="{{ event.date.isoformat() }}">
+          <td>
+            <input type="checkbox" class="td-checkbox table-row-cb" data-id="{{ event.id }}"
+              style="accent-color:#16a34a;">
+          </td>
+          <td>
+            {% if event.thumbnail %}
+            <img class="td-thumb" src="{{ url_for('static', filename='uploads/' ~ event.thumbnail) }}" alt="">
+            {% else %}
+            <div class="td-thumb"
+              style="display:flex;align-items:center;justify-content:center;background:#f0fdf4;color:#16a34a;font-size:1.1rem;">
+              🌿</div>
+            {% endif %}
+          </td>
+          <td>
+            <div class="td-title">{{ event.title }}</div>
+            {% if event.category %}<div class="td-sub">{{ event.category }}</div>{% endif %}
+          </td>
+          <td
+            style="font-size:.78rem;color:#6b7280;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            {{ event.location }}</td>
+          <td class="td-mono" style="font-size:.74rem;">{{ event.date.strftime('%d %b %Y') }}</td>
+          <td class="td-mono td-green">{{ event.bookings | length }}</td>
+          <td class="td-mono" style="color:#f59e0b;">{{ event.xp_reward or 0 }}</td>
+          <td>
+            <span class="ebadge {{ 'eb-upcoming' if is_upcoming else 'eb-past' }}">
+              {{ 'Upcoming' if is_upcoming else 'Past' }}
+            </span>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="td-icon-btn" title="Edit"><i
+                  class="bi bi-pencil-fill"></i></a>
+              <button class="td-icon-btn open-bookings-modal" title="Bookings" data-event-id="{{ event.id }}"
+                data-event-title="{{ event.title | e }}">
+                <i class="bi bi-people-fill"></i>
+              </button>
+              {% if event.qr_code %}
+              <button class="td-icon-btn open-qr-modal" title="QR Code" data-event-id="{{ event.id }}"
+                data-qr="{{ event.qr_code }}" data-passcode="{{ event.passcode or '' }}">
+                <i class="bi bi-qr-code"></i>
+              </button>
+              {% endif %}
+              <button class="td-icon-btn del open-delete-modal" title="Delete" data-event-id="{{ event.id }}"
+                data-event-title="{{ event.title | e }}"
+                data-delete-url="{{ url_for('events.delete_event', event_id=event.id) }}">
+                <i class="bi bi-trash3-fill"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div id="tableEmpty" class="events-empty" style="display:none;border:none;border-radius:0;">
+      <div class="events-empty-icon"><i class="bi bi-calendar-x"></i></div>
+      <h3>No events match your search</h3>
+      <p>Try a different keyword or filter.</p>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<!-- EMPTY STATE -->
+<div class="events-empty">
+  <div class="events-empty-icon"><i class="bi bi-calendar-plus"></i></div>
+  <h3>No Events Yet</h3>
+  <p>Create your first event to get started.</p>
+  <a href="{{ url_for('events.create_event') }}" class="create-event-btn">
+    <i class="bi bi-plus-circle-fill"></i> Create Your First Event
+  </a>
+</div>
+{% endif %}
+
+<!-- ═══════════════ BOOKINGS MODAL ═══════════════ -->
+<div class="modal-overlay" id="bookingsModalOverlay">
+  <div class="modal-box bmodal-box">
+    <div class="bmodal-head">
+      <div class="bmodal-title">
+        <i class="bi bi-people-fill" style="color:#16a34a;margin-right:8px;"></i>
+        <span id="bookingsModalTitle">Bookings</span>
+      </div>
+      <button class="bmodal-close close-bookings-modal"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="bmodal-body" id="bookingsModalBody">
+      <div class="bmodal-empty">Loading...</div>
+    </div>
+    <div class="bmodal-footer">
+      <button class="bmodal-close-btn close-bookings-modal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ QR MODAL ═══════════════ -->
+<div class="modal-overlay" id="qrModalOverlay">
+  <div class="modal-box" style="max-width:380px;">
+    <div class="qr-modal-head">
+      <span style="font-size:.9rem;font-weight:800;color:#111827;font-family:'Sora',sans-serif;">
+        <i class="bi bi-qr-code" style="color:#7c3aed;margin-right:8px;"></i>QR Code &amp; Passcode
+      </span>
+      <button class="bmodal-close close-qr-modal"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="qr-modal-body">
+      <img id="qrModalImg" class="qr-img" src="" alt="QR Code">
+      <div class="qr-passcode-row">
+        <span class="qr-passcode-label">Passcode</span>
+        <code class="qr-passcode-code" id="qrPasscode">—</code>
+        <button class="qr-copy-btn" id="qrCopyBtn"><i class="bi bi-clipboard"></i> Copy</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DELETE CONFIRM MODAL ═══════════════ -->
+<div class="modal-overlay" id="deleteModalOverlay">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="del-modal-body">
+      <div class="del-icon"><i class="bi bi-trash3-fill"></i></div>
+      <div class="del-title">Delete Event?</div>
+      <div class="del-desc" id="delModalDesc">This will permanently delete this event and all its bookings. This action
+        cannot be undone.</div>
+      <div class="del-actions">
+        <button class="del-cancel-btn close-delete-modal">Cancel</button>
+        <form id="deleteForm" method="POST" style="flex:1;">
+          <button type="submit" class="del-confirm-btn" style="width:100%;">
+            <i class="bi bi-trash3-fill"></i> Delete Event
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BULK DELETE FORM -->
+<form id="bulkDeleteForm" method="POST" action="{{ url_for('events.bulk_delete') }}" style="display:none;">
+  <div id="bulkDeleteInputs"></div>
+</form>
+
+<!-- TOAST -->
+<div class="me-toast" id="meToast">
+  <i class="bi bi-check-circle-fill"></i>
+  <span id="meToastMsg">Done!</span>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    /* ─── DATA from Jinja ─────────────────────────────────── */
+    const EVENT_DATA = [
+      {% for event in events %}
+    {
+      id: {{ event.id }},
+    title: {{ event.title | tojson }},
+    location: {{ event.location | tojson }},
+    status: "{{ 'upcoming' if event.date >= now else 'past' }}",
+    bookings: {{ event.bookings | length }},
+    xp: {{ event.xp_reward or 0 }},
+    date: "{{ event.date.isoformat() }}"
+    },
+    {% endfor %}
+  ];
+
+  /* ─── COUNTDOWN BADGES ────────────────────────────────── */
+  function updateCountdowns() {
+    document.querySelectorAll('.countdown-badge').forEach(badge => {
+      const t = new Date(badge.dataset.time);
+      const diff = t - new Date();
+      if (diff > 0) {
+        const hrs = Math.floor(diff / 3600000);
+        const mins = Math.floor((diff % 3600000) / 60000);
+        badge.textContent = `⏳ Starts in ${hrs}h ${mins}m`;
+      } else {
+        badge.textContent = '✅ Live / Started';
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#15803d';
+      }
+    });
+  }
+  updateCountdowns();
+  setInterval(updateCountdowns, 60000);
+
+  /* ─── CHART ───────────────────────────────────────────── */
+  const chartCanvas = document.getElementById('participationChart');
+  let chartInstance = null;
+
+  function buildChart(metric) {
+    if (!chartCanvas) return;
+    const ctx = chartCanvas.getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    const labels = EVENT_DATA.map(e => e.title.length > 16 ? e.title.slice(0, 14) + '…' : e.title);
+    const data = metric === 'bookings'
+      ? EVENT_DATA.map(e => e.bookings)
+      : EVENT_DATA.map(e => e.xp);
+
+    const colors = EVENT_DATA.map(e => e.status === 'upcoming' ? 'rgba(22,163,74,.7)' : 'rgba(156,163,175,.6)');
+    const borders = EVENT_DATA.map(e => e.status === 'upcoming' ? '#16a34a' : '#9ca3af');
+
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: metric === 'bookings' ? 'Bookings' : 'XP Offered',
+          data,
+          backgroundColor: colors,
+          borderColor: borders,
+          borderWidth: 1.5,
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#111827', titleColor: '#9ca3af', bodyColor: '#fff',
+            padding: 10, cornerRadius: 10,
+            titleFont: { family: 'Sora', size: 11 },
+            bodyFont: { family: 'JetBrains Mono', size: 13 }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { family: 'Sora', size: 10 }, maxRotation: 30 }, border: { display: false } },
+          y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 10 }, stepSize: 1 }, border: { display: false }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  if (EVENT_DATA.length) buildChart('bookings');
+
+  document.querySelectorAll('[data-chart]').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('[data-chart]').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      buildChart(this.dataset.chart);
+    });
+  });
+
+  /* ─── FILTER + SEARCH + SORT ──────────────────────────── */
+  let activeFilter = 'all';
+  let activeSearch = '';
+  let isGridView = true;
+
+  function getCardElements() {
+    return [...document.querySelectorAll('#eventsGrid .event-card')];
+  }
+  function getRowElements() {
+    return [...document.querySelectorAll('#eventsTableBody tr')];
+  }
+
+  function filterAndSearch() {
+    const cards = getCardElements();
+    const rows = getRowElements();
+    let visible = 0;
+
+    function matches(el) {
+      const status = el.dataset.status;
+      const title = el.dataset.title || '';
+      const bookings = parseInt(el.dataset.bookings) || 0;
+      if (activeFilter === 'upcoming' && status !== 'upcoming') return false;
+      if (activeFilter === 'past' && status !== 'past') return false;
+      if (activeFilter === 'trending' && bookings <= 10) return false;
+      if (activeSearch && !title.includes(activeSearch.toLowerCase())) return false;
+      return true;
+    }
+
+    cards.forEach(c => { const show = matches(c); c.style.display = show ? '' : 'none'; if (show) visible++; });
+    rows.forEach(r => { r.style.display = matches(r) ? '' : 'none'; });
+    document.getElementById('recordCount').textContent = visible;
+
+    document.getElementById('gridEmpty').style.display = (!isGridView || visible > 0) ? 'none' : '';
+    document.getElementById('tableEmpty').style.display = (isGridView || visible > 0) ? 'none' : '';
+  }
+
+  document.querySelectorAll('.fpill').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      activeFilter = this.dataset.filter;
+      filterAndSearch();
+    });
+  });
+
+  document.getElementById('searchInput').addEventListener('input', function () {
+    activeSearch = this.value;
+    filterAndSearch();
+  });
+
+  /* ─── SORT ────────────────────────────────────────────── */
+  document.getElementById('sortSelect').addEventListener('change', function () {
+    const val = this.value;
+    const grid = document.getElementById('eventsGrid');
+    const cards = [...grid.querySelectorAll('.event-card')];
+    cards.sort((a, b) => {
+      if (val === 'date-asc') return a.dataset.date.localeCompare(b.dataset.date);
+      if (val === 'date-desc') return b.dataset.date.localeCompare(a.dataset.date);
+      if (val === 'bookings') return parseInt(b.dataset.bookings) - parseInt(a.dataset.bookings);
+      if (val === 'xp') return parseInt(b.dataset.xp) - parseInt(a.dataset.xp);
+      if (val === 'title') return a.dataset.title.localeCompare(b.dataset.title);
+      return 0;
+    });
+    cards.forEach(c => grid.appendChild(c));
+  });
+
+  /* ─── VIEW TOGGLE ─────────────────────────────────────── */
+  document.getElementById('gridViewBtn').addEventListener('click', function () {
+    isGridView = true;
+    this.classList.add('active');
+    document.getElementById('tableViewBtn').classList.remove('active');
+    document.getElementById('gridView').style.display = '';
+    document.getElementById('tableView').style.display = 'none';
+    filterAndSearch();
+  });
+  document.getElementById('tableViewBtn').addEventListener('click', function () {
+    isGridView = false;
+    this.classList.add('active');
+    document.getElementById('gridViewBtn').classList.remove('active');
+    document.getElementById('gridView').style.display = 'none';
+    document.getElementById('tableView').style.display = '';
+    filterAndSearch();
+  });
+
+  /* ─── SELECTION ───────────────────────────────────────── */
+  let selectedIds = new Set();
+
+  function updateBulkDeleteBtn() {
+    const btn = document.getElementById('bulkDeleteBtn');
+    const lbl = document.getElementById('selectCountLabel');
+    if (selectedIds.size > 0) {
+      btn.classList.add('show');
+      lbl.textContent = `${selectedIds.size} selected`;
+    } else {
+      btn.classList.remove('show');
+      lbl.textContent = '';
+    }
+  }
+
+  window.toggleCardSelect = function (checkEl, id) {
+    const card = checkEl.closest('.event-card');
+    const numId = parseInt(id);
+    if (selectedIds.has(numId)) {
+      selectedIds.delete(numId);
+      checkEl.classList.remove('checked');
+      card.classList.remove('selected');
+    } else {
+      selectedIds.add(numId);
+      checkEl.classList.add('checked');
+      card.classList.add('selected');
+    }
+    updateBulkDeleteBtn();
+    // Sync header checkbox
+    const allCards = getCardElements().filter(c => c.style.display !== 'none');
+    const allChecked = allCards.every(c => selectedIds.has(parseInt(c.dataset.id)));
+    document.getElementById('selectAllCb').checked = allChecked && allCards.length > 0;
+  };
+
+  // Select all (grid)
+  document.getElementById('selectAllCb').addEventListener('change', function () {
+    const cards = getCardElements().filter(c => c.style.display !== 'none');
+    cards.forEach(card => {
+      const id = parseInt(card.dataset.id);
+      const chk = card.querySelector('.event-card-check');
+      if (this.checked) {
+        selectedIds.add(id); chk.classList.add('checked'); card.classList.add('selected');
+      } else {
+        selectedIds.delete(id); chk.classList.remove('checked'); card.classList.remove('selected');
+      }
+    });
+    updateBulkDeleteBtn();
+  });
+
+  // Select all (table)
+  const selectAllTable = document.getElementById('selectAllTable');
+  if (selectAllTable) {
+    selectAllTable.addEventListener('change', function () {
+      document.querySelectorAll('.table-row-cb').forEach(cb => {
+        cb.checked = this.checked;
+        const id = parseInt(cb.dataset.id);
+        const row = cb.closest('tr');
+        if (this.checked) { selectedIds.add(id); row.classList.add('selected'); }
+        else { selectedIds.delete(id); row.classList.remove('selected'); }
+      });
+      document.getElementById('selectAllCb').checked = this.checked;
+      updateBulkDeleteBtn();
+    });
+    document.querySelectorAll('.table-row-cb').forEach(cb => {
+      cb.addEventListener('change', function () {
+        const id = parseInt(this.dataset.id);
+        const row = this.closest('tr');
+        if (this.checked) { selectedIds.add(id); row.classList.add('selected'); }
+        else { selectedIds.delete(id); row.classList.remove('selected'); }
+        updateBulkDeleteBtn();
+      });
+    });
+  }
+
+  // Bulk delete
+  document.getElementById('bulkDeleteBtn').addEventListener('click', function () {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected event(s)? This cannot be undone.`)) return;
+    const form = document.getElementById('bulkDeleteForm');
+    const inputs = document.getElementById('bulkDeleteInputs');
+    inputs.innerHTML = '';
+    selectedIds.forEach(id => {
+      const inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = 'delete_ids'; inp.value = id;
+      inputs.appendChild(inp);
+    });
+    form.submit();
+  });
+
+  /* ─── BOOKINGS MODAL ──────────────────────────────────── */
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.open-bookings-modal');
+    if (!btn) return;
+
+    const eventId = btn.dataset.eventId;
+    const eventTitle = btn.dataset.eventTitle;
+    document.getElementById('bookingsModalTitle').textContent = `Bookings — ${eventTitle}`;
+    document.getElementById('bookingsModalBody').innerHTML = '<div class="bmodal-empty">Loading...</div>';
+    document.getElementById('bookingsModalOverlay').classList.add('open');
+
+    // Fetch bookings via AJAX
+    fetch(`/api/event/${eventId}/bookings`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.json())
+      .then(data => {
+        if (!data || data.length === 0) {
+          document.getElementById('bookingsModalBody').innerHTML = '<div class="bmodal-empty">No bookings yet for this event.</div>';
+          return;
+        }
+        let html = `<table class="bmodal-table"><thead><tr>
+          <th>#</th><th>Name</th><th>Email</th><th>Booked At</th><th>Status</th><th>Action</th>
+        </tr></thead><tbody>`;
+        data.forEach((b, i) => {
+          const ci_badge = b.checked_in
+            ? '<span class="ebadge eb-upcoming">Checked In</span>'
+            : '<span class="ebadge eb-past">Pending</span>';
+          const action = b.checked_in
+            ? '<span style="color:#9ca3af;font-size:.78rem;">—</span>'
+            : `<button class="bmodal-checkin-btn" onclick="markCheckin(${b.id}, this)">✅ Check-In</button>`;
+          html += `<tr>
+            <td style="color:#9ca3af;font-family:'JetBrains Mono',monospace;font-size:.76rem;">${String(i + 1).padStart(2, '0')}</td>
+            <td style="font-weight:600;font-family:'Sora',sans-serif;">${escHtml(b.name)}</td>
+            <td style="font-size:.76rem;color:#6b7280;">${escHtml(b.email)}</td>
+            <td style="font-size:.74rem;font-family:'JetBrains Mono',monospace;">${escHtml(b.booked_at)}</td>
+            <td>${ci_badge}</td>
+            <td>${action}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('bookingsModalBody').innerHTML = html;
+      })
+      .catch(() => {
+        /* Fallback: render from DOM data if API not available */
+        document.getElementById('bookingsModalBody').innerHTML = '<div class="bmodal-empty">Could not load bookings. Please check the API endpoint.</div>';
+      });
+  });
+
+  /* ─── QR MODAL ────────────────────────────────────────── */
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.open-qr-modal');
+    if (!btn) return;
+    const qrFile = btn.dataset.qr;
+    const passcode = btn.dataset.passcode;
+    document.getElementById('qrModalImg').src = `/static/qr_codes/${qrFile}`;
+    document.getElementById('qrPasscode').textContent = passcode || '—';
+    document.getElementById('qrModalOverlay').classList.add('open');
+  });
+
+  document.getElementById('qrCopyBtn').addEventListener('click', function () {
+    const code = document.getElementById('qrPasscode').textContent;
+    navigator.clipboard.writeText(code).then(() => showToast('Passcode copied!'));
+  });
+
+  /* ─── DELETE MODAL ────────────────────────────────────── */
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.open-delete-modal');
+    if (!btn) return;
+    const title = btn.dataset.eventTitle;
+    const url = btn.dataset.deleteUrl;
+    document.getElementById('delModalDesc').textContent =
+      `"${title}" and all its bookings will be permanently deleted. This cannot be undone.`;
+    document.getElementById('deleteForm').action = url;
+    document.getElementById('deleteModalOverlay').classList.add('open');
+  });
+
+  /* ─── CLOSE MODALS ────────────────────────────────────── */
+  document.querySelectorAll('.close-bookings-modal').forEach(b => {
+    b.addEventListener('click', () => document.getElementById('bookingsModalOverlay').classList.remove('open'));
+  });
+  document.querySelectorAll('.close-qr-modal').forEach(b => {
+    b.addEventListener('click', () => document.getElementById('qrModalOverlay').classList.remove('open'));
+  });
+  document.querySelectorAll('.close-delete-modal').forEach(b => {
+    b.addEventListener('click', () => document.getElementById('deleteModalOverlay').classList.remove('open'));
+  });
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  });
+
+  /* ─── MANUAL CHECK-IN from bookings modal ────────────── */
+  window.markCheckin = function (bookingId, btn) {
+    btn.disabled = true; btn.textContent = '...';
+    fetch(`/checkin/manual/${bookingId}`, { method: 'POST', headers: { 'X-CSRFToken': getCsrf() } })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success || data.message?.includes('checked in')) {
+          btn.closest('td').innerHTML = '<span class="ebadge eb-upcoming">Checked In</span>';
+          btn.closest('tr').querySelector('td:nth-child(5)').innerHTML = '<span class="ebadge eb-upcoming">Checked In</span>';
+          showToast('Volunteer marked as checked in ✓');
+        } else {
+          btn.disabled = false; btn.textContent = '✅ Check-In';
+          showToast(data.message || 'Failed', true);
+        }
+      })
+      .catch(() => { btn.disabled = false; btn.textContent = '✅ Check-In'; showToast('Network error', true); });
+  };
+
+  /* ─── TABLE SORT ──────────────────────────────────────── */
+  document.querySelectorAll('.sortable').forEach(th => {
+    th.addEventListener('click', function () {
+      const col = this.dataset.col;
+      const tbody = document.getElementById('eventsTableBody');
+      const rows = [...tbody.querySelectorAll('tr')];
+      const asc = this.dataset.order !== 'asc';
+      this.dataset.order = asc ? 'asc' : 'desc';
+      document.querySelectorAll('.sortable').forEach(h => h.classList.remove('sorted'));
+      this.classList.add('sorted');
+      rows.sort((a, b) => {
+        let av = a.dataset[col] || '', bv = b.dataset[col] || '';
+        if (col === 'bookings' || col === 'xp') { av = parseInt(av) || 0; bv = parseInt(bv) || 0; }
+        if (av < bv) return asc ? -1 : 1;
+        if (av > bv) return asc ? 1 : -1;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+
+  /* ─── CSV EXPORT ──────────────────────────────────────── */
+  window.exportCSV = function () {
+    const rows = [['ID', 'Title', 'Location', 'Date', 'Bookings', 'XP', 'Status']];
+    EVENT_DATA.forEach(e => rows.push([e.id, e.title, e.location || '', e.date, e.bookings, e.xp, e.status]));
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `ReEarth_Events_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    showToast('CSV exported successfully');
+  };
+
+  /* ─── TOAST ───────────────────────────────────────────── */
+  let toastTimer;
+  function showToast(msg, isErr = false) {
+    const el = document.getElementById('meToast');
+    document.getElementById('meToastMsg').textContent = msg;
+    el.className = `me-toast show${isErr ? ' err' : ''}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  /* ─── HELPERS ─────────────────────────────────────────── */
+  function escHtml(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function getCsrf() {
+    const m = document.cookie.match(/csrf_token=([^;]+)/);
+    return m ? m[1] : '';
+  }
+
+  /* Flash auto-dismiss */
+  document.querySelectorAll('.flash-item').forEach(el => {
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .4s'; setTimeout(() => el.remove(), 400); }, 5000);
+  });
+
+});
+</script>
+
+<!-- ─── Add this route to your dashboard.py or events.py ───
+@events.route('/api/event/<int:event_id>/bookings')
+@login_required
+def api_event_bookings(event_id):
+    event = Event.query.get_or_404(event_id)
+    if event.creator_id != current_user.id and not current_user.is_admin:
+        return jsonify([]), 403
+    result = []
+    for b in event.bookings:
+        result.append({
+            'id': b.id,
+            'name': b.user.name,
+            'email': b.user.email,
+            'booked_at': b.timestamp.strftime('%d %b %Y, %I:%M %p'),
+            'checked_in': b.checked_in or False
+        })
+    return jsonify(result)
+-->
+{% endblock %}

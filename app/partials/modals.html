@@ -1,0 +1,137 @@
+<!-- Join Confirmation Modal -->
+<div class="modal fade" id="joinModal" tabindex="-1" aria-labelledby="joinModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Booking</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p>Are you sure you want to join this event?</p>
+        <input type="hidden" id="joinEventId">
+        <button class="btn btn-success" onclick="confirmJoin()">Yes, Book</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 🕑 Check-In Modal -->
+<div class="modal fade" id="verifyModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-4">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">🔐 Verify Check-In</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Enter Passcode</label>
+          <input type="text" id="passcodeInput" class="form-control" placeholder="Enter event passcode">
+        </div>
+        <div class="text-center text-muted mb-3">— OR —</div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Upload QR Code</label>
+          <input type="file" id="qrInput" class="form-control" accept="image/*">
+        </div>
+        <div id="checkin-error" class="text-danger small mb-2 d-none">Invalid passcode or QR.</div>
+        <button class="btn btn-success w-100" onclick="verifyCheckIn()">✅ Verify & Check-In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ PRO TASK MODAL -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg">
+
+      <!-- Header -->
+      <div class="modal-header text-white rounded-top-4" style="background: linear-gradient(135deg,#1b5e20,#43a047);">
+        <div>
+          <h5 class="modal-title mb-0">🌿 Eco Task Mission</h5>
+          <small id="task-event-title" class="opacity-75">Loading...</small>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="px-4 pt-3">
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>Task Progress</span>
+          <span id="task-progress-text">0 / 0 completed</span>
+        </div>
+        <div class="progress rounded-pill" style="height:8px;">
+          <div id="task-progress-bar" class="progress-bar bg-success" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="modal-body p-4">
+
+        <!-- Task List -->
+        <div id="task-list-view">
+          <div id="task-cards-container" class="d-flex flex-column gap-3"></div>
+        </div>
+
+        <!-- Single Task Detail View -->
+        <div id="task-detail-view" style="display:none;">
+          <button class="btn btn-sm btn-outline-secondary mb-3" onclick="showTaskList()">← Back to Tasks</button>
+
+          <div class="card border-0 shadow-sm rounded-4 p-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span id="detail-task-order" class="badge bg-success rounded-pill">Task 1</span>
+              <span id="detail-task-xp" class="badge bg-warning text-dark">⭐ 10 XP</span>
+            </div>
+            <h5 id="detail-task-title" class="fw-bold"></h5>
+            <p id="detail-task-desc" class="text-muted"></p>
+
+            <!-- Proof Upload -->
+            <div id="proof-section">
+              <label class="form-label fw-semibold">📸 Upload Proof Photo</label>
+              <input type="file" id="taskProofFile" accept="image/*" class="form-control mb-2">
+              <img id="taskProofPreview" class="img-thumbnail mb-3" style="max-height:180px;display:none;">
+
+              <!-- AI Verify Status -->
+              <div id="ai-status" style="display:none;" class="alert alert-info d-flex align-items-center gap-2">
+                <div class="spinner-border spinner-border-sm"></div>
+                <span>AI verifying your photo...</span>
+              </div>
+              <div id="ai-result" style="display:none;"></div>
+
+              <button class="btn btn-success w-100" id="uploadProofBtn" onclick="uploadTaskProof()">
+                📤 Upload & Verify
+              </button>
+            </div>
+
+            <!-- Questions Section (shown after verify) -->
+            <div id="questions-section" style="display:none;" class="mt-4">
+              <h6 class="fw-bold text-success mb-3">🧠 Answer These Questions to Earn Bonus XP</h6>
+              <div id="questions-container"></div>
+              <button class="btn btn-primary w-100 mt-3" onclick="submitAnswers()">
+                ✅ Submit Answers
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ Celebration Modal -->
+<div class="modal fade" id="xpCelebrationModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow text-center p-4">
+      <div style="font-size:4rem;">🎉</div>
+      <h4 class="fw-bold text-success mt-2">All Tasks Completed!</h4>
+      <div class="display-5 fw-bold text-warning my-2">+<span id="celebrate-xp">0</span> XP</div>
+      <p>Total XP: <strong id="celebrate-total-xp">0</strong> | Level <strong id="celebrate-level">1</strong></p>
+      <div id="celebrate-badges" class="mb-3"></div>
+      <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <a id="cert-download-btn" href="#" class="btn btn-outline-success">🏆 Download Certificate</a>
+        <button class="btn btn-success" data-bs-dismiss="modal" onclick="location.reload()">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>

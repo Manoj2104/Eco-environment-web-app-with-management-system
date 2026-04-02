@@ -1,0 +1,1555 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — ReEarth{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block page_subtitle %}Overview{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-red::before {
+    background: #ef4444;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .05s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .10s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .15s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .20s;
+  }
+
+  .tile:nth-child(5) {
+    animation-delay: .25s;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-red .tile-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .tile-change {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .tile-change.up {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .tile-change.down {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile-change.neu {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── CHART CARD ── */
+  .chart-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .18s ease both;
+  }
+
+  .chart-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .chart-big-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.04em;
+    line-height: 1;
+  }
+
+  .chart-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .74rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 99px;
+    margin-top: 8px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .time-tabs {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .time-tab {
+    padding: 6px 13px;
+    border-radius: 7px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .time-tab.active {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .3);
+  }
+
+  /* CRITICAL: explicit height so Chart.js canvas renders */
+  .chart-body {
+    position: relative;
+    width: 100%;
+    height: 220px;
+  }
+
+  .chart-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* empty-state overlay inside chart box */
+  .chart-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: .84rem;
+    gap: 6px;
+    font-family: 'Sora', sans-serif;
+    pointer-events: none;
+  }
+
+  .chart-empty i {
+    font-size: 2rem;
+    opacity: .3;
+  }
+
+  /* ── TABLE CARD ── */
+  .table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    margin-bottom: 20px;
+    animation: fadeUp .4s .26s ease both;
+  }
+
+  .table-card-head {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #f3f4f6;
+    flex-wrap: wrap;
+  }
+
+  .table-card-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    margin-right: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .tab-strip {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .tab-strip-btn {
+    padding: 5px 13px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .tab-strip-btn:hover {
+    color: #16a34a;
+  }
+
+  .tab-strip-btn.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .th-spacer {
+    flex: 1;
+    min-width: 8px;
+  }
+
+  .time-pills {
+    display: flex;
+    gap: 3px;
+  }
+
+  .time-pill {
+    padding: 5px 12px;
+    border-radius: 7px;
+    font-size: .72rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .time-pill.active {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .prof-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .prof-table thead th {
+    padding: 11px 20px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    white-space: nowrap;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+  }
+
+  .prof-table thead th:hover {
+    color: #16a34a;
+  }
+
+  .prof-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+  }
+
+  .prof-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .prof-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .prof-table tbody td {
+    padding: 13px 20px;
+    font-size: .82rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .td-rank {
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  .td-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .td-ava {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .td-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .td-sub {
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .td-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .td-up {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #16a34a;
+  }
+
+  .status-pill {
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 99px;
+    display: inline-block;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .status-pill.done {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .status-pill.upcoming {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .status-pill.pending {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .act-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .act-btn.green {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .act-btn.green:hover {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+  }
+
+  .act-btn.blue {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+  }
+
+  .act-btn.blue:hover {
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .act-btn.amber {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+  }
+
+  .table-empty {
+    padding: 48px 24px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: .88rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .table-empty i {
+    display: block;
+    font-size: 2.2rem;
+    opacity: .3;
+    margin-bottom: 10px;
+  }
+
+  /* ── BOTTOM GRID ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    gap: 20px;
+    animation: fadeUp .4s .34s ease both;
+  }
+
+  .prof-panel {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 24px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .prof-ava-wrap {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.7rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 28px rgba(22, 163, 74, .28);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .prof-ava-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .lv-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: #16a34a;
+    color: #fff;
+    font-size: .56rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 99px;
+    border: 2px solid #fff;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .prof-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .prof-role {
+    font-size: .76rem;
+    color: #9ca3af;
+    margin-top: 2px;
+    margin-bottom: 14px;
+  }
+
+  .prof-stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .psr-item {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 10px 6px;
+  }
+
+  .psr-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .9rem;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .psr-lbl {
+    font-size: .6rem;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  .xp-label-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: .74rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .xp-label-row span:last-child {
+    font-family: 'JetBrains Mono', monospace;
+    color: #9ca3af;
+    font-size: .7rem;
+  }
+
+  .xp-bar-wrap {
+    position: relative;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .xp-track {
+    height: 10px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: visible;
+    position: relative;
+  }
+
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #4ade80, #10b981);
+    border-radius: 99px;
+    position: relative;
+    overflow: visible;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, .35);
+    transition: width 1.2s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .xp-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .45) 50%, transparent 100%);
+    border-radius: 99px;
+    animation: shimmer 2.2s infinite;
+    background-size: 200% 100%;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .xp-thumb {
+    position: absolute;
+    right: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border: 2.5px solid #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, .18), 0 2px 8px rgba(0, 0, 0, .12);
+    transition: box-shadow .2s, transform .2s;
+    z-index: 2;
+  }
+
+  .xp-track:hover .xp-thumb {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, .18), 0 2px 8px rgba(0, 0, 0, .12);
+    transform: translateY(-50%) scale(1.15);
+  }
+
+  .xp-ticks {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+    margin-top: 4px;
+    width: 100%;
+  }
+
+  .xp-tick {
+    font-size: .6rem;
+    color: #d1d5db;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .xp-tick.reached {
+    color: #22c55e;
+  }
+
+  .xp-meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 3px;
+    width: 100%;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .xp-pct {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 14px 0;
+    width: 100%;
+  }
+
+  .mini-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .mini-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .mini-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #dcfce7;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+    flex-shrink: 0;
+  }
+
+  .mini-label {
+    font-size: .76rem;
+    font-weight: 600;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .mini-sub {
+    font-size: .68rem;
+    color: #9ca3af;
+  }
+
+  .mini-val {
+    margin-left: auto;
+    font-size: .76rem;
+    font-weight: 700;
+    color: #16a34a;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .view-profile-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    border-radius: 99px;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    transition: box-shadow .2s, transform .2s;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .view-profile-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .38);
+    color: #fff;
+  }
+
+  /* ── RIGHT COL ── */
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .section-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+  }
+
+  .section-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 16px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .section-title i {
+    color: #16a34a;
+  }
+
+  .section-title .count {
+    margin-left: auto;
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 400;
+  }
+
+  .badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 10px;
+  }
+
+  .badge-tile {
+    background: #f9fafb;
+    border: 1px solid #e4ece6;
+    border-radius: 14px;
+    padding: 12px 8px;
+    text-align: center;
+    transition: transform .2s, box-shadow .2s;
+    cursor: default;
+  }
+
+  .badge-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(22, 163, 74, .12);
+  }
+
+  .badge-tile img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 6px;
+  }
+
+  .badge-tile-name {
+    font-size: .7rem;
+    font-weight: 600;
+    color: #374151;
+    line-height: 1.2;
+  }
+
+  .badge-tile-xp {
+    font-size: .62rem;
+    color: #f59e0b;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .badge-empty {
+    text-align: center;
+    padding: 24px;
+    color: #9ca3af;
+    font-size: .86rem;
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .mini-chart-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+  }
+
+  .mini-chart-title {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #9ca3af;
+    text-align: center;
+    margin-bottom: 12px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* CRITICAL: explicit height + canvas fill */
+  .mini-chart-body {
+    position: relative;
+    width: 100%;
+    height: 140px;
+  }
+
+  .mini-chart-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width:1200px) {
+    .stat-tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width:1000px) {
+    .bottom-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width:700px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .charts-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> +12%</div>
+    <div class="tile-val">{{ current_user.xp or 0 }}</div>
+    <div class="tile-lbl">Total XP</div>
+  </div>
+  <div class="tile t-red">
+    <div class="tile-icon"><i class="bi bi-calendar2-check"></i></div>
+    <div class="tile-change down"><i class="bi bi-arrow-down-short"></i> -2</div>
+    <div class="tile-val">{{ impact_stats.total_events if impact_stats else 0 }}</div>
+    <div class="tile-lbl">Events Joined</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> +4.5h</div>
+    <div class="tile-val">{{ impact_stats.total_hours if impact_stats else 0 }}h</div>
+    <div class="tile-lbl">Volunteer Hours</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-award-fill"></i></div>
+    <div class="tile-change neu">{{ earned_badges|length if earned_badges else 0 }} earned</div>
+    <div class="tile-val">{{ earned_badges|length if earned_badges else 0 }}</div>
+    <div class="tile-lbl">Badges</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-patch-check-fill"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> new</div>
+    <div class="tile-val">{{ impact_stats.total_certificates if impact_stats else 0 }}</div>
+    <div class="tile-lbl">Certificates</div>
+  </div>
+</div>
+
+<!-- MAIN XP CHART -->
+<div class="chart-card">
+  <div class="chart-head">
+    <div>
+      <div class="chart-big-val">{{ current_user.xp or 0 }} XP</div>
+      <div class="chart-pill">
+        <i class="bi bi-arrow-up-short"></i>
+        {% if progress %}
+        +{{ progress.xp_for_next_level - progress.current_xp }} XP to Level {{ progress.current_level + 1 }}
+        {% else %}
+        Keep earning XP!
+        {% endif %}
+      </div>
+    </div>
+    <div class="time-tabs">
+      <button class="time-tab">1D</button>
+      <button class="time-tab">1W</button>
+      <button class="time-tab active">1M</button>
+      <button class="time-tab">3M</button>
+      <button class="time-tab">All</button>
+    </div>
+  </div>
+  <div class="chart-body">
+    <canvas id="xpChart"></canvas>
+    <div class="chart-empty" id="xpEmpty" style="display:none;">
+      <i class="bi bi-graph-up-arrow"></i>
+      Complete events to see your XP chart
+    </div>
+  </div>
+</div>
+
+<!-- ACTIVITY TABLE -->
+<div class="table-card">
+  <div class="table-card-head">
+    <span class="table-card-title">Activity Feed</span>
+    <div class="tab-strip">
+      <button class="tab-strip-btn active">All</button>
+      <button class="tab-strip-btn">Upcoming</button>
+      <button class="tab-strip-btn">Completed</button>
+      <button class="tab-strip-btn">Biggest Gains</button>
+      <button class="tab-strip-btn">Recent</button>
+    </div>
+    <div class="th-spacer"></div>
+    <div class="time-pills">
+      <button class="time-pill active">1H</button>
+      <button class="time-pill">1D</button>
+      <button class="time-pill">1W</button>
+      <button class="time-pill">1M</button>
+      <button class="time-pill">1Y</button>
+    </div>
+  </div>
+  <table class="prof-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Activity</th>
+        <th>XP Trend</th>
+        <th>XP Gained <i class="bi bi-arrow-down-short" style="opacity:.45;font-size:.7rem;"></i></th>
+        <th>Hours</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="activityTbody"></tbody>
+  </table>
+  <div id="tableEmpty" class="table-empty" style="display:none;">
+    <i class="bi bi-calendar-x"></i>
+    No activity yet — join an event to get started!
+  </div>
+</div>
+
+<!-- BOTTOM: Profile panel + Right col -->
+<div class="bottom-grid">
+
+  <!-- Profile card -->
+  <div class="prof-panel">
+    <div class="prof-ava-wrap">
+      {% if current_user.profile_pic %}
+      <img src="{{ url_for('static', filename='uploads/' + current_user.profile_pic) }}" alt="">
+      {% else %}
+      {{ current_user.name[0].upper() }}
+      {% endif %}
+      <span class="lv-badge">Lv {{ current_user.level or 1 }}</span>
+    </div>
+    <div class="prof-name">{{ current_user.name }}</div>
+    <div class="prof-role">{{ current_user.role|capitalize }}</div>
+
+    <div class="prof-stat-row">
+      <div class="psr-item">
+        <div class="psr-val">{{ total_achievements or 0 }}</div>
+        <div class="psr-lbl">Achievements</div>
+      </div>
+      <div class="psr-item">
+        <div class="psr-val">{{ earned_badges|length if earned_badges else 0 }}</div>
+        <div class="psr-lbl">Badges</div>
+      </div>
+      <div class="psr-item">
+        <div class="psr-val">{{ impact_stats.total_hours if impact_stats else 0 }}h</div>
+        <div class="psr-lbl">Hours</div>
+      </div>
+    </div>
+
+    <div class="xp-label-row">
+      <span>XP Progress</span>
+      <span>
+        {% if progress %}{{ progress.current_xp }} / {{ progress.xp_for_next_level }}{% else %}0 / 400{% endif %}
+      </span>
+    </div>
+    <div class="xp-bar-wrap">
+      <div class="xp-track">
+        <div class="xp-fill" style="width:{{ progress.progress_percent if progress else 0 }}%;">
+          <div class="xp-thumb"></div>
+        </div>
+      </div>
+    </div>
+    <div class="xp-ticks">
+      {% set pct = progress.progress_percent if progress else 0 %}
+      {% set max = progress.xp_for_next_level if progress else 400 %}
+      <span class="xp-tick reached">0</span>
+      <span class="xp-tick {% if pct >= 25 %}reached{% endif %}">{{ (max * 0.25)|int }}</span>
+      <span class="xp-tick {% if pct >= 50 %}reached{% endif %}">{{ (max * 0.5)|int }}</span>
+      <span class="xp-tick {% if pct >= 75 %}reached{% endif %}">{{ (max * 0.75)|int }}</span>
+      <span class="xp-tick">{{ max }}</span>
+    </div>
+    <div class="xp-meta-row">
+      <span>Level {{ progress.current_level if progress else 1 }}</span>
+      <span class="xp-pct">{{ progress.progress_percent if progress else 0 }}%</span>
+      <span>Level {{ (progress.current_level + 1) if progress else 2 }}</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="mini-list">
+      <div class="mini-item">
+        <div class="mini-icon"><i class="bi bi-geo-alt-fill"></i></div>
+        <div>
+          <div class="mini-label">Last Event</div>
+          <div class="mini-sub">
+            {% if activities and activities|length > 0 %}{{ activities[0] }}{% else %}No events yet{% endif %}
+          </div>
+        </div>
+        <div class="mini-val">+XP</div>
+      </div>
+      <div class="mini-item">
+        <div class="mini-icon"><i class="bi bi-bullseye"></i></div>
+        <div>
+          <div class="mini-label">Weekly Goal</div>
+          <div class="mini-sub">Keep going!</div>
+        </div>
+        <div class="mini-val">{{ progress.progress_percent if progress else 0 }}%</div>
+      </div>
+      <div class="mini-item">
+        <div class="mini-icon"><i class="bi bi-stars"></i></div>
+        <div>
+          <div class="mini-label">Next Badge</div>
+          <div class="mini-sub">Keep earning XP</div>
+        </div>
+        <div class="mini-val">→</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <a href="{{ url_for('dashboard.view_volunteer_profile', user_id=current_user.id) }}" class="view-profile-btn">
+      <i class="bi bi-person-circle"></i> View Full Profile
+    </a>
+  </div>
+
+  <!-- Right column -->
+  <div class="right-col">
+
+    <!-- Badges -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="bi bi-award-fill"></i> Earned Badges
+        {% if earned_badges %}<span class="count">{{ earned_badges|length }} total</span>{% endif %}
+      </div>
+      {% if earned_badges and earned_badges|length > 0 %}
+      <div class="badge-grid">
+        {% for badge in earned_badges[:10] %}
+        <div class="badge-tile" title="{{ badge.description }}">
+          <img src="{{ badge.icon_url }}" alt="{{ badge.name }}" onerror="this.src='/static/badges/default.png'">
+          <div class="badge-tile-name">{{ badge.name }}</div>
+          <div class="badge-tile-xp">⚡ {{ badge.xp }} XP</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if earned_badges|length > 10 %}
+      <div style="text-align:center;margin-top:12px;">
+        <a href="{{ url_for('dashboard.view_badgess') }}"
+          style="font-size:.78rem;font-weight:600;color:#16a34a;text-decoration:none;">
+          View All {{ earned_badges|length }} Badges →
+        </a>
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="badge-empty">
+        <div style="font-size:2.2rem;opacity:.3;margin-bottom:8px;">🏅</div>
+        No badges yet — complete events to unlock!
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Mini charts 2×2 -->
+    <div class="charts-grid">
+      <div class="mini-chart-card">
+        <div class="mini-chart-title">📅 Volunteer Hours</div>
+        <div class="mini-chart-body"><canvas id="hoursChart"></canvas></div>
+      </div>
+      <div class="mini-chart-card">
+        <div class="mini-chart-title">🎪 Event Types</div>
+        <div class="mini-chart-body"><canvas id="eventChart"></canvas></div>
+      </div>
+      <div class="mini-chart-card">
+        <div class="mini-chart-title">📊 Monthly XP</div>
+        <div class="mini-chart-body"><canvas id="monthlyXpChart"></canvas></div>
+      </div>
+      <div class="mini-chart-card">
+        <div class="mini-chart-title">🏅 Badge XP</div>
+        <div class="mini-chart-body"><canvas id="badgeChart"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  /* ── shared defaults ─────────────────────────────── */
+  const FONT_SORA = { family: 'Sora', size: 10 };
+  const FONT_MONO = { family: 'JetBrains Mono', size: 10 };
+  const BASE_SCALES = {
+    x: { grid: { display: false }, ticks: { color: '#9ca3af', font: FONT_SORA, maxTicksLimit: 6 }, border: { display: false } },
+    y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { color: '#9ca3af', font: FONT_MONO }, border: { display: false }, beginAtZero: true }
+  };
+  const BASE_OPTS = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: BASE_SCALES
+  };
+
+  /* Fallback data when backend returns empty arrays */
+  function orFallback(arr, fb) { return (arr && arr.length > 0) ? arr : fb; }
+
+  /* ── 1. Main XP line chart ───────────────────────── */
+  (function () {
+    const el = document.getElementById('xpChart');
+    if (!el) return;
+
+    const rawLabels = {{ xp_labels | tojson | default ('[]')
+  }};
+  const rawData = {{ xp_data   | tojson | default ('[]') }};
+
+  if (!rawData || rawData.length === 0) {
+    /* show empty state overlay, draw a ghost flat line */
+    document.getElementById('xpEmpty').style.display = 'flex';
+    const ghostLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+    const ghostData = [0, 0, 0, 0, 0, 0, 0];
+    const ctx = el.getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ghostLabels,
+        datasets: [{
+          data: ghostData, borderColor: '#e5e7eb', borderWidth: 2,
+          pointRadius: 0, fill: true, backgroundColor: 'rgba(229,231,235,.2)', tension: 0.4
+        }]
+      },
+      options: { ...BASE_OPTS, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+    });
+    return;
+  }
+
+  const ctx = el.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, 220);
+  g.addColorStop(0, 'rgba(34,197,94,.22)');
+  g.addColorStop(1, 'rgba(34,197,94,0)');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: rawLabels,
+      datasets: [{
+        data: rawData,
+        borderColor: '#16a34a', borderWidth: 2.5,
+        pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: '#16a34a',
+        fill: true, backgroundColor: g, tension: 0.4
+      }]
+    },
+    options: {
+      ...BASE_OPTS,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111827', titleColor: '#9ca3af', bodyColor: '#fff',
+          padding: 10, cornerRadius: 10,
+          titleFont: { family: 'Sora', size: 11 },
+          bodyFont: { family: 'JetBrains Mono', size: 13 },
+          callbacks: { label: c => ` ${c.parsed.y} XP` }
+        }
+      }
+    }
+  });
+}) ();
+
+
+  /* ── 2. Volunteer Hours bar ─────────────────────── */
+  (function () {
+    const el = document.getElementById('hoursChart');
+    if (!el) return;
+
+    const rawL = {{ volunteer_hours_labels | tojson | default ('[]')
+  }};
+  const rawD = {{ volunteer_hours_data   | tojson | default ('[]') }};
+
+  const labels = orFallback(rawL, ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']);
+  const data = orFallback(rawD, [0.5, 1.0, 0, 1.5, 0.5, 0]);
+  const hasReal = rawD && rawD.length > 0;
+
+  new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: hasReal ? '#16a34a' : 'rgba(22,163,74,.15)',
+        borderRadius: 6, borderSkipped: false
+      }]
+    },
+    options: BASE_OPTS
+  });
+}) ();
+
+
+  /* ── 3. Event Types doughnut ─────────────────────── */
+  (function () {
+    const el = document.getElementById('eventChart');
+    if (!el) return;
+
+    const rawL = {{ event_participation_labels | tojson | default ('[]')
+  }};
+  const rawD = {{ event_participation_data   | tojson | default ('[]') }};
+  const hasReal = rawD && rawD.length > 0 && rawD.some(v => v > 0);
+
+  if (hasReal) {
+    new Chart(el.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: rawL,
+        datasets: [{
+          data: rawD,
+          backgroundColor: ['#16a34a', '#22c55e', '#3b82f6', '#f59e0b', '#7c3aed'],
+          borderWidth: 2, borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true, position: 'bottom',
+            labels: { color: '#374151', font: { family: 'Sora', size: 10 }, boxWidth: 10, padding: 8 }
+          }
+        }
+      }
+    });
+  } else {
+    /* Ghost doughnut with placeholder segments */
+    new Chart(el.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['No data yet'],
+        datasets: [{ data: [1], backgroundColor: ['rgba(22,163,74,.12)'], borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { color: '#9ca3af', font: { family: 'Sora', size: 10 }, boxWidth: 10 } },
+          tooltip: { enabled: false }
+        }
+      }
+    });
+  }
+}) ();
+
+
+  /* ── 4. Monthly XP line ──────────────────────────── */
+  (function () {
+    const el = document.getElementById('monthlyXpChart');
+    if (!el) return;
+
+    const rawL = {{ monthly_xp_labels | tojson | default ('[]')
+  }};
+  const rawD = {{ monthly_xp_data   | tojson | default ('[]') }};
+
+  const labels = orFallback(rawL, ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']);
+  const data = orFallback(rawD, [0, 0, 0, 0, 0, 0]);
+  const hasReal = rawD && rawD.length > 0;
+
+  new Chart(el.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: hasReal ? '#7c3aed' : '#e5e7eb',
+        backgroundColor: hasReal ? 'rgba(124,58,237,.1)' : 'rgba(229,231,235,.15)',
+        fill: true, tension: 0.35,
+        pointRadius: hasReal ? 3 : 0,
+        borderWidth: 2,
+        pointBackgroundColor: '#7c3aed'
+      }]
+    },
+    options: {
+      ...BASE_OPTS,
+      plugins: { legend: { display: false }, tooltip: { enabled: hasReal } }
+    }
+  });
+}) ();
+
+
+  /* ── 5. Badge XP horizontal bar ─────────────────── */
+  (function () {
+    const el = document.getElementById('badgeChart');
+    if (!el) return;
+
+    const rawL = {{ badge_labels | tojson | default ('[]')
+  }};
+  const rawD = {{ badge_data   | tojson | default ('[]') }};
+
+  const labels = orFallback(rawL, ['No badges', 'yet', '—', '—']);
+  const data = orFallback(rawD, [0, 0, 0, 0]);
+  const hasReal = rawD && rawD.length > 0;
+
+  new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: hasReal ? '#f59e0b' : 'rgba(245,158,11,.15)',
+        borderRadius: 6, borderSkipped: false
+      }]
+    },
+    options: {
+      ...BASE_OPTS,
+      indexAxis: 'y',
+      plugins: { legend: { display: false }, tooltip: { enabled: hasReal } }
+    }
+  });
+}) ();
+
+
+  /* ── Tab strip interactions ──────────────────────── */
+  document.querySelectorAll('.tab-strip-btn, .time-pill, .time-tab').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const group = this.closest('.tab-strip, .time-pills, .time-tabs');
+      if (group) group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+
+  /* ── Activity table builder ──────────────────────── */
+  (function () {
+    const tbody = document.getElementById('activityTbody');
+    const emptyDiv = document.getElementById('tableEmpty');
+    if (!tbody) return;
+
+    /* Build rows from Flask activities list */
+    const rawActivities = {{ activities | tojson | default ('[]')
+  }};
+
+  if (!rawActivities || rawActivities.length === 0) {
+    tbody.closest('table').style.display = 'none';
+    if (emptyDiv) emptyDiv.style.display = 'block';
+    return;
+  }
+
+  const COLORS = ['#22c55e', '#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#a855f7'];
+  const STATUS_CLASS = { completed: 'done', upcoming: 'upcoming', pending: 'pending' };
+
+  function sparkSVG(color) {
+    const pts = Array.from({ length: 8 }, (_, i) => {
+      const x = (i / 7) * 80;
+      const y = 28 - (Math.random() * 20 + 4);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    return `<svg width="80" height="28" viewBox="0 0 80 28">
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+    </svg>`;
+  }
+
+  rawActivities.forEach((activity, i) => {
+    /* activity can be a string (event name) or an object */
+    const name = typeof activity === 'object' ? (activity.name || activity.title || 'Event') : String(activity);
+    const loc = typeof activity === 'object' ? (activity.location || '—') : '—';
+    const xp = typeof activity === 'object' ? (`+${activity.xp || '?'} XP`) : '+XP';
+    const hrs = typeof activity === 'object' ? (activity.hours ? activity.hours + 'h' : '—') : '—';
+    const status = typeof activity === 'object' ? (activity.status || 'completed') : 'completed';
+    const action = status === 'upcoming' ? 'Join' : status === 'pending' ? 'Book' : 'View';
+    const acClass = status === 'upcoming' ? 'blue' : status === 'pending' ? 'amber' : 'green';
+
+    const color = COLORS[i % COLORS.length];
+    const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const sClass = STATUS_CLASS[status] || 'done';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-rank">${String(i + 1).padStart(2, '0')}</td>
+      <td>
+        <div class="td-user">
+          <div class="td-ava" style="background:${color};">${initials}</div>
+          <div>
+            <div class="td-name">${name}</div>
+            <div class="td-sub">${loc}</div>
+          </div>
+        </div>
+      </td>
+      <td>${sparkSVG(color)}</td>
+      <td><span class="td-up">${xp}</span></td>
+      <td class="td-mono">${hrs}</td>
+      <td><span class="status-pill ${sClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+      <td><button class="act-btn ${acClass}">${action}</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}) ();
+</script>
+{% endblock %}

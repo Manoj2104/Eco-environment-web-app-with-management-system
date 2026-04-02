@@ -1,0 +1,1366 @@
+{% extends 'base.html' %}
+{% block title %}XP Progress — ReEarth{% endblock %}
+{% block page_title %}XP Progress{% endblock %}
+{% block page_subtitle %}Progress{% endblock %}
+
+{% block xp_current %}{{ current_xp }}{% endblock %}
+{% block xp_max %}{{ xp_for_next_level }}{% endblock %}
+{% block xp_pct %}{{ xp_percent }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .4);
+    }
+
+    70% {
+      box-shadow: 0 0 0 12px rgba(34, 197, 94, 0);
+    }
+
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 24px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    animation: fadeUp .5s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .tile.t-green::before { background: #10b981; }
+  .tile.t-red::before { background: #ef4444; }
+  .tile.t-blue::before { background: #3b82f6; }
+  .tile.t-amber::before { background: #f59e0b; }
+  .tile.t-teal::before { background: #06b6d4; }
+
+  .tile:hover {
+    background: #ffffff;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+    transform: translateY(-4px);
+  }
+
+  .tile-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    margin-bottom: 16px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-red .tile-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .10);
+    color: #10b981;
+  }
+
+  .tile-change {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+
+  .tile-change.up {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .tile-change.down {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile-change.neu {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── TWO-COL HERO ── */
+  .hero-row {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .2s ease both;
+  }
+
+  /* ── XP HERO CARD ── */
+  .xp-hero-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+  }
+
+  .xp-hero-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .xp-hero-big {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.04em;
+    line-height: 1;
+  }
+
+  .xp-hero-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .74rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 99px;
+    margin-top: 8px;
+  }
+
+  .time-tabs {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .time-tab {
+    padding: 6px 13px;
+    border-radius: 7px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .time-tab.active {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .3);
+  }
+
+  .chart-body {
+    position: relative;
+    width: 100%;
+    height: 240px;
+  }
+
+  .chart-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ── LEVEL CARD (right) ── */
+  .level-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .level-ring {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 28px rgba(22, 163, 74, .3);
+    animation: pulse-ring 2s infinite;
+    position: relative;
+  }
+
+  .level-ring .lv-sup {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    background: #f59e0b;
+    color: #fff;
+    font-size: .55rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 99px;
+    border: 2px solid #fff;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .level-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 2px;
+  }
+
+  .level-sub {
+    font-size: .76rem;
+    color: #9ca3af;
+    margin-bottom: 16px;
+  }
+
+  /* XP bar inside level card */
+  .lc-xp-label {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: .72rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .lc-xp-label span:last-child {
+    font-family: 'JetBrains Mono', monospace;
+    color: #9ca3af;
+    font-size: .68rem;
+  }
+
+  .lc-xp-track {
+    width: 100%;
+    height: 10px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: visible;
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 6px;
+  }
+
+  .lc-xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #4ade80, #10b981);
+    border-radius: 99px;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, .35);
+    overflow: visible;
+    transition: width 1.2s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .lc-xp-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .45) 50%, transparent 100%);
+    border-radius: 99px;
+    animation: shimmer 2.2s infinite;
+    background-size: 200% 100%;
+  }
+
+  .lc-xp-thumb {
+    position: absolute;
+    right: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border: 2.5px solid #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, .18), 0 2px 8px rgba(0, 0, 0, .12);
+    z-index: 2;
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .lc-xp-track:hover .lc-xp-thumb {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, .18), 0 2px 8px rgba(0, 0, 0, .12);
+    transform: translateY(-50%) scale(1.15);
+  }
+
+  .lc-xp-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 2px;
+    width: 100%;
+  }
+
+  .lc-xp-pct {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .lc-divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 16px 0;
+    width: 100%;
+  }
+
+  /* streak / stats mini */
+  .lc-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 14px;
+  }
+
+  .lc-stat {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  .lc-stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .9rem;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .lc-stat-lbl {
+    font-size: .62rem;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  /* quote box */
+  .lc-quote {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .lc-quote p {
+    font-size: .72rem;
+    color: #15803d;
+    font-family: 'Sora', sans-serif;
+    margin: 0;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  .lc-quote cite {
+    font-size: .65rem;
+    color: #9ca3af;
+    font-style: normal;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* ── MILESTONE TIMELINE ── */
+  .milestone-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    margin-bottom: 20px;
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  .mc-head {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .mc-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .mc-count {
+    margin-left: auto;
+    font-size: .72rem;
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .mc-body {
+    padding: 22px;
+  }
+
+  .milestone-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+
+  .ms-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 12px;
+    padding: 14px;
+    transition: box-shadow .2s, transform .2s;
+    position: relative;
+  }
+
+  .ms-item:hover {
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .1);
+    transform: translateY(-1px);
+  }
+
+  .ms-item.reached {
+    border-color: #dcfce7;
+    background: #f0fdf4;
+  }
+
+  .ms-item.reached .ms-icon {
+    background: #22c55e;
+    color: #fff;
+  }
+
+  .ms-item .ms-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: #f3f4f6;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    transition: background .2s, color .2s;
+  }
+
+  .ms-title {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .ms-date {
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  .ms-xp {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #16a34a;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+
+  .ms-empty {
+    text-align: center;
+    padding: 32px;
+    color: #9ca3af;
+    font-size: .86rem;
+  }
+
+  .ms-empty i {
+    display: block;
+    font-size: 2.2rem;
+    opacity: .3;
+    margin-bottom: 10px;
+  }
+
+  /* ── LEADERBOARD + ACHIEVEMENTS ROW ── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    animation: fadeUp .4s .36s ease both;
+  }
+
+  /* leaderboard */
+  .lb-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+  }
+
+  .lb-head {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .lb-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .lb-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .lb-table thead th {
+    padding: 10px 20px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .lb-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+  }
+
+  .lb-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .lb-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .lb-table tbody tr.current-user {
+    background: #f0fdf4;
+  }
+
+  .lb-table tbody td {
+    padding: 12px 20px;
+    font-size: .82rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .lb-rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #9ca3af;
+  }
+
+  .lb-rank.gold {
+    color: #f59e0b;
+  }
+
+  .lb-rank.silver {
+    color: #94a3b8;
+  }
+
+  .lb-rank.bronze {
+    color: #ca8a04;
+  }
+
+  .lb-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .lb-ava {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .lb-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .lb-sub {
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .lb-xp {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .8rem;
+    font-weight: 700;
+    color: #374151;
+  }
+
+  .lb-xp.me {
+    color: #16a34a;
+  }
+
+  .lb-loading {
+    padding: 32px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: .84rem;
+  }
+
+  /* achievements panel */
+  .ach-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .ach-head {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .ach-head i {
+    color: #f59e0b;
+  }
+
+  .ach-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .ach-tile {
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+    transition: transform .2s, box-shadow .2s;
+    cursor: default;
+  }
+
+  .ach-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(22, 163, 74, .12);
+  }
+
+  .ach-tile.locked {
+    opacity: .45;
+    filter: grayscale(1);
+  }
+
+  .ach-icon {
+    font-size: 1.6rem;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .ach-name {
+    font-size: .68rem;
+    font-weight: 600;
+    color: #374151;
+    line-height: 1.3;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .ach-xp {
+    font-size: .62rem;
+    color: #f59e0b;
+    font-weight: 700;
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* tip box */
+  .tip-box {
+    background: #f0fdf4;
+    border: 1px solid #dcfce7;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    animation: fadeUp .4s .44s ease both;
+    margin-top: 20px;
+  }
+
+  .tip-box i {
+    color: #16a34a;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .tip-box p {
+    font-size: .78rem;
+    color: #15803d;
+    font-family: 'Sora', sans-serif;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .tip-box strong {
+    font-weight: 700;
+  }
+
+  /* download btn */
+  .dl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    font-size: .76rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .2s;
+  }
+
+  .dl-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  @media (max-width: 1200px) {
+    .stat-tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .hero-row {
+      grid-template-columns: 1fr;
+    }
+
+    .bottom-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .milestone-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ach-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ── STAT TILES ── -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> +12%</div>
+    <div class="tile-val">{{ current_xp }}</div>
+    <div class="tile-lbl">Current XP</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-bar-chart-fill"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> Active</div>
+    <div class="tile-val">{{ current_level }}</div>
+    <div class="tile-lbl">Current Level</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-stars"></i></div>
+    <div class="tile-change neu">Target</div>
+    <div class="tile-val">{{ next_level }}</div>
+    <div class="tile-lbl">Next Level</div>
+  </div>
+  <div class="tile t-red">
+    <div class="tile-icon"><i class="bi bi-hourglass-split"></i></div>
+    <div class="tile-change down">remaining</div>
+    <div class="tile-val">{{ xp_remaining }}</div>
+    <div class="tile-lbl">XP to Level Up</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-fire"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> Top 10%</div>
+    <div class="tile-val">{{ streak_days | default(0) }}</div>
+    <div class="tile-lbl">Day Streak 🔥</div>
+  </div>
+</div>
+
+<!-- ── HERO ROW: Chart + Level card ── -->
+<div class="hero-row">
+
+  <!-- XP Growth Chart -->
+  <div class="xp-hero-card">
+    <div class="xp-hero-head">
+      <div>
+        <div class="xp-hero-big">{{ current_xp }} XP</div>
+        <div class="xp-hero-pill">
+          <i class="bi bi-arrow-up-short"></i>
+          +{{ xp_remaining }} XP to Level {{ next_level }}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <a href="/download-xp-report" class="dl-btn">
+          <i class="bi bi-download"></i> Download Report
+        </a>
+        <div class="time-tabs">
+          <button class="time-tab">1D</button>
+          <button class="time-tab">1W</button>
+          <button class="time-tab active">1M</button>
+          <button class="time-tab">3M</button>
+          <button class="time-tab">All</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-body">
+      <canvas id="xpMainChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Level / XP card -->
+  <div class="level-card">
+    <div class="level-ring">
+      Lv{{ current_level }}
+      <span class="lv-sup">★</span>
+    </div>
+    <div class="level-name">{{ current_user.name }}</div>
+    <div class="level-sub">{{ current_user.role|capitalize }} · ReEarth</div>
+
+    <div class="lc-stats">
+      <div class="lc-stat">
+        <div class="lc-stat-val">{{ milestones|length if milestones else 0 }}</div>
+        <div class="lc-stat-lbl">Milestones</div>
+      </div>
+      <div class="lc-stat">
+        <div class="lc-stat-val">{{ earned_badges|length if earned_badges else 0 }}</div>
+        <div class="lc-stat-lbl">Badges</div>
+      </div>
+      <div class="lc-stat">
+        <div class="lc-stat-val">{{ xp_percent }}%</div>
+        <div class="lc-stat-lbl">Progress</div>
+      </div>
+      <div class="lc-stat">
+        <div class="lc-stat-val">{{ streak_days | default(0) }}</div>
+        <div class="lc-stat-lbl">Streak</div>
+      </div>
+    </div>
+
+    <div class="lc-xp-label">
+      <span>XP Progress</span>
+      <span>{{ current_xp }} / {{ xp_for_next_level }}</span>
+    </div>
+    <div class="lc-xp-track">
+      <div class="lc-xp-fill" style="width:{{ xp_percent }}%;">
+        <div class="lc-xp-thumb"></div>
+      </div>
+    </div>
+    <div class="lc-xp-meta">
+      <span>Level {{ current_level }}</span>
+      <span class="lc-xp-pct">{{ xp_percent }}%</span>
+      <span>Level {{ next_level }}</span>
+    </div>
+
+    <div class="lc-divider"></div>
+
+    <div class="lc-quote">
+      <p>"Every step you take plants a seed of impact. Keep earning, keep growing!"</p>
+      <cite>— ReEarth Team</cite>
+    </div>
+  </div>
+</div>
+
+<!-- ── MILESTONE TIMELINE ── -->
+<div class="milestone-card">
+  <div class="mc-head">
+    <i class="bi bi-trophy-fill" style="color:#f59e0b;font-size:1rem;"></i>
+    <span class="mc-title">Milestone Timeline</span>
+    <span class="mc-count">{{ milestones|length if milestones else 0 }} reached</span>
+  </div>
+  <div class="mc-body">
+    {% if milestones %}
+    <div class="milestone-grid">
+      {% for m in milestones %}
+      <div class="ms-item reached">
+        <div class="ms-icon"><i class="bi bi-check-lg"></i></div>
+        <div>
+          <div class="ms-title">{{ m.title }}</div>
+          <div class="ms-date"><i class="bi bi-calendar3" style="margin-right:4px;"></i>{{ m.date }}</div>
+          {% if m.xp is defined %}<div class="ms-xp">+{{ m.xp }} XP</div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- locked placeholders -->
+      {% set locked_list = [
+      ('Beach Cleanup Pro', 500),
+      ('Eco Champion', 1000),
+      ('Green Guardian', 2000)
+      ] %}
+      {% for name, threshold in locked_list %}
+      {% if current_xp < threshold %} <div class="ms-item">
+        <div class="ms-icon"><i class="bi bi-lock"></i></div>
+        <div>
+          <div class="ms-title" style="color:#9ca3af;">{{ name }}</div>
+          <div class="ms-date">Unlock at {{ threshold }} XP</div>
+          <div class="ms-xp" style="color:#9ca3af;">{{ threshold - current_xp }} XP away</div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ms-empty">
+    <i class="bi bi-trophy"></i>
+    No milestones reached yet — complete events to unlock them!
+  </div>
+  {% endif %}
+</div>
+</div>
+
+<!-- ── BOTTOM ROW: Leaderboard + Achievements ── -->
+<div class="bottom-row">
+
+  <!-- Leaderboard -->
+  <div class="lb-card">
+    <div class="lb-head">
+      <i class="bi bi-trophy" style="color:#f59e0b;font-size:1rem;"></i>
+      <span class="lb-title">Leaderboard</span>
+      <span style="margin-left:auto;font-size:.72rem;color:#9ca3af;">Live · updates every 30s</span>
+    </div>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Volunteer</th>
+          <th>XP</th>
+          <th>Level</th>
+        </tr>
+      </thead>
+      <tbody id="lbTbody">
+        <tr>
+          <td colspan="4" class="lb-loading"><i class="bi bi-arrow-repeat"
+              style="animation:spin 1s linear infinite;display:inline-block;margin-right:6px;"></i>Loading
+            leaderboard…
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Achievements -->
+  <div class="ach-card">
+    <div class="ach-head"><i class="bi bi-gem"></i> Achievements</div>
+
+    {% set static_achs = [
+    ('🌿', 'Verified Hero', 50, true),
+    ('⏰', 'Early Riser', 25, true),
+    ('🌍', 'Global Impact', 100, false),
+    ('⚡', 'XP Sprinter', 75, false),
+    ('🏅', 'Consistent', 30, true),
+    ('🔥', 'On Fire', 60, false),
+    ] %}
+
+    <div class="ach-grid">
+      {% for icon, name, xp, unlocked in static_achs %}
+      <div class="ach-tile {% if not unlocked %}locked{% endif %}"
+        title="{{ name }} — {{ xp }} XP{% if not unlocked %} (locked){% endif %}">
+        <span class="ach-icon">{{ icon }}</span>
+        <div class="ach-name">{{ name }}</div>
+        <div class="ach-xp">⚡ {{ xp }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="lc-divider" style="margin:4px 0;"></div>
+
+    <!-- Unlocked badge XP mini chart -->
+    <div
+      style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin-bottom:8px;font-family:'Sora',sans-serif;">
+      📊 Monthly XP</div>
+    <div style="position:relative;width:100%;height:100px;">
+      <canvas id="monthlyXpChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── TIP BOX ── -->
+<div class="tip-box">
+  <i class="bi bi-lightbulb-fill"></i>
+  <p>
+    <strong>Pro Tip:</strong> Complete your profile, participate in high-impact events, and maintain
+    check-in streaks for bonus XP. Each streak day multiplies your XP gain by 1.5×!
+  </p>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script type="application/json" id="xpData">
+{
+  "xp_labels":    {{ xp_labels         | tojson }},
+  "xp_history":   {{ xp_history        | tojson }},
+  "monthly_l":    {{ monthly_xp_labels  | tojson }},
+  "monthly_d":    {{ monthly_xp_data    | tojson }},
+  "current_xp":   {{ current_xp        | tojson }},
+  "current_level":{{ current_level     | tojson }},
+  "my_name":      {{ current_user.name | tojson }}
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  (function () {
+    /* ── Read Jinja data from island ── */
+    const D = JSON.parse(document.getElementById('xpData').textContent);
+    const XP_LABELS = D.xp_labels;
+    const XP_HISTORY = D.xp_history;
+    const MONTHLY_L = D.monthly_l;
+    const MONTHLY_D = D.monthly_d;
+    const CURRENT_XP = D.current_xp;
+    const CURRENT_LV = D.current_level;
+    const MY_NAME = D.my_name;
+
+    /* ── shared scale config ── */
+    const SCALES = {
+      x: {
+        grid: { display: false },
+        ticks: { color: '#9ca3af', font: { family: 'Sora', size: 10 }, maxTicksLimit: 8 },
+        border: { display: false }
+      },
+      y: {
+        grid: { color: 'rgba(0,0,0,.04)' },
+        ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 10 } },
+        border: { display: false },
+        beginAtZero: true
+      }
+    };
+
+    /* ── fallback labels: last 30 days ── */
+    const fallbackLabels = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - 29 + i);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    /* cumulative growth curve ending at CURRENT_XP */
+    const base = [0, 0, 10, 10, 20, 20, 30, 40, 40, 50, 60, 70, 70, 80, 90,
+      100, 110, 110, 120, 130, 140, 155, 160, 170, 185, 200, 215, 220, 230];
+    const fallbackData = [...base, CURRENT_XP];
+
+    const finalLabels = XP_LABELS.length ? XP_LABELS : fallbackLabels;
+    const finalData = XP_HISTORY.length ? XP_HISTORY : fallbackData;
+
+    /* ══ MAIN XP LINE CHART ══ */
+    const mainEl = document.getElementById('xpMainChart');
+    if (mainEl) {
+      const ctx = mainEl.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 240);
+      grad.addColorStop(0, 'rgba(34,197,94,.28)');
+      grad.addColorStop(1, 'rgba(34,197,94,0)');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: finalLabels,
+          datasets: [{
+            data: finalData,
+            borderColor: '#16a34a',
+            borderWidth: 2.5,
+            pointRadius: finalData.length === 1 ? 4 : 0,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: '#16a34a',
+            fill: true,
+            backgroundColor: grad,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 800 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#111827',
+              titleColor: '#9ca3af',
+              bodyColor: '#fff',
+              padding: 10,
+              cornerRadius: 10,
+              titleFont: { family: 'Sora', size: 11 },
+              bodyFont: { family: 'JetBrains Mono', size: 13 },
+              callbacks: { label: c => ` ${c.parsed.y} XP` }
+            }
+          },
+          scales: SCALES
+        }
+      });
+    }
+
+    /* ══ MONTHLY XP BAR ══ */
+    const monthlyEl = document.getElementById('monthlyXpChart');
+    if (monthlyEl) {
+      const fallL = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+      const fallD = [0, 0, 0, 0, 0, CURRENT_XP];
+
+      new Chart(monthlyEl.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: MONTHLY_L.length ? MONTHLY_L : fallL,
+          datasets: [{
+            data: MONTHLY_D.length ? MONTHLY_D : fallD,
+            backgroundColor: '#16a34a',
+            borderRadius: 5,
+            borderSkipped: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 600 },
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#9ca3af', font: { family: 'Sora', size: 9 } },
+              border: { display: false }
+            },
+            y: { display: false, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    /* ══ TIME TAB SWITCHING ══ */
+    document.querySelectorAll('.time-tab').forEach(btn => {
+      btn.addEventListener('click', function () {
+        this.closest('.time-tabs').querySelectorAll('.time-tab')
+          .forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    /* ══ LEADERBOARD ══ */
+    const LB_COLORS = ['#22c55e', '#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#a855f7', '#ec4899', '#14b8a6'];
+    const RANK_CLASS = ['gold', 'silver', 'bronze'];
+    const RANK_ICON = ['🥇', '🥈', '🥉'];
+
+    function renderLeaderboard(data) {
+      const tbody = document.getElementById('lbTbody');
+      if (!tbody) return;
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="lb-loading" style="color:#9ca3af;">
+        <i class="bi bi-people" style="font-size:1.4rem;opacity:.3;display:block;margin-bottom:8px;"></i>
+        No leaderboard data yet</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = '';
+      data.forEach((u, i) => {
+        const isMe = u.name === MY_NAME;
+        const c = LB_COLORS[i % LB_COLORS.length];
+        const ini = (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const tr = document.createElement('tr');
+        if (isMe) tr.className = 'current-user';
+        tr.innerHTML = `
+        <td><span class="lb-rank ${RANK_CLASS[i] || ''}">${i < 3 ? RANK_ICON[i] : String(i + 1).padStart(2, '0')}</span></td>
+        <td><div class="lb-user">
+          <div class="lb-ava" style="background:${c};">${ini}</div>
+          <div>
+            <div class="lb-name">${isMe ? '<strong>You</strong>' : u.name}</div>
+            <div class="lb-sub">Level ${u.level || 1}</div>
+          </div>
+        </div></td>
+        <td><span class="lb-xp${isMe ? ' me' : ''}">${u.xp} XP</span></td>
+        <td><span style="font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:99px;background:#f0fdf4;color:#16a34a;font-family:'JetBrains Mono',monospace;">Lv ${u.level || 1}</span></td>
+      `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* 1️⃣ HTTP fetch */
+    let lbLoaded = false;
+    fetch('/api/leaderboard')
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(data => { lbLoaded = true; renderLeaderboard(data); })
+      .catch(() => { });
+
+    /* 2️⃣ Socket.IO fallback */
+    if (typeof io !== 'undefined') {
+      const socket = io();
+      socket.on('connect', () => {
+        {% if current_user.is_authenticated %}
+        socket.emit('join', { room: 'user_{{ current_user.id }}' });
+        {% endif %}
+        if (!lbLoaded) socket.emit('request_leaderboard');
+      });
+      socket.on('update_leaderboard', data => { lbLoaded = true; renderLeaderboard(data); });
+    }
+
+    /* 3️⃣ 4s timeout fallback — use data from island (no Jinja in timeout!) */
+    setTimeout(() => {
+      if (!lbLoaded) {
+        const tbody = document.getElementById('lbTbody');
+        if (tbody && tbody.querySelector('.lb-loading')) {
+          renderLeaderboard([{ name: MY_NAME, xp: CURRENT_XP, level: CURRENT_LV }]);
+        }
+      }
+    }, 4000);
+
+  })(); /* IIFE — runs immediately, no DOMContentLoaded needed */
+</script>
+
+<style>
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+{% endblock %}

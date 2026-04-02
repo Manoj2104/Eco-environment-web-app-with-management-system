@@ -1,0 +1,61 @@
+<!-- Dashboard -->
+<a href="{{ url_for('dashboard.home') }}" class="{% if request.endpoint == 'dashboard.home' %}active{% endif %}">
+  <i class="bi bi-house"></i> Dashboard
+</a>
+
+<!-- Admin Menu -->
+{% if current_user.role == 'admin' %}
+  <a class="dropdown-toggle d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#adminMenu" role="button">
+    <span><i class="bi bi-shield-lock"></i> Admin Panel</span>
+    <i class="bi bi-chevron-down"></i>
+  </a>
+  <div class="collapse ps-3" id="adminMenu">
+    <a href="{{ url_for('admin.analytics') }}" class="d-block py-1"><i class="bi bi-graph-up"></i> Analytics</a>
+    <a href="{{ url_for('admin.manage_users') }}" class="d-block py-1"><i class="bi bi-people"></i> Manage Users</a>
+    <a href="{{ url_for('admin.event_approval') }}" class="d-block py-1"><i class="bi bi-check-circle"></i> Approve Events</a>
+    <a href="{{ url_for('admin.reports') }}" class="d-block py-1"><i class="bi bi-flag"></i> Reports</a>
+    <a href="{{ url_for('admin.logs') }}" class="d-block py-1"><i class="bi bi-journal-text"></i> Logs</a>
+    <a href="{{ url_for('admin.announcements') }}" class="d-block py-1"><i class="bi bi-megaphone"></i> Announcements</a>
+  </div>
+{% endif %}
+
+<!-- Host Menu -->
+{% if current_user.role == 'host' %}
+  <a class="dropdown-toggle d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#hostMenu" role="button">
+    <span><i class="bi bi-calendar-event"></i> Host Panel</span>
+    <i class="bi bi-chevron-down"></i>
+  </a>
+  <div class="collapse ps-3" id="hostMenu">
+    <a href="{{ url_for('events.create_event') }}" class="d-block py-1"><i class="bi bi-calendar-plus"></i> Create Event</a>
+    <a href="{{ url_for('events.manage_events') }}" class="d-block py-1"><i class="bi bi-tools"></i> Manage Events</a>
+    <a href="{{ url_for('dashboard.see_volunteers') }}" class="d-block py-1"><i class="bi bi-person-lines-fill"></i> Volunteer List</a>
+    <a href="{{ url_for('dashboard.my_attendance') }}" class="d-block py-1"><i class="bi bi-clipboard-check"></i> My Attendance</a>
+    <a href="{{ url_for('dashboard.event_stats') }}" class="d-block py-1"><i class="bi bi-bar-chart-line"></i> Event Stats</a>
+    <a href="{{ url_for('dashboard.upload_gallery') }}" class="d-block py-1"><i class="bi bi-image"></i> Upload Gallery</a>
+    <a href="{{ url_for('dashboard.event_feedback') }}" class="d-block py-1"><i class="bi bi-chat-square-text"></i> Event Feedback</a>
+  </div>
+{% endif %}
+
+<!-- Volunteer Menu -->
+{% if current_user.role == 'volunteer' %}
+  <a class="dropdown-toggle d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#volunteerMenu" role="button">
+    <span><i class="bi bi-person-heart"></i> Volunteer Panel</span>
+    <i class="bi bi-chevron-down"></i>
+  </a>
+  <div class="collapse ps-3" id="volunteerMenu">
+    <a href="{{ url_for('bookings.my_bookings') }}" class="d-block py-1"><i class="bi bi-bookmark-check"></i> My Bookings</a>
+    <a href="{{ url_for('dashboard.my_attendance') }}" class="d-block py-1"><i class="bi bi-check2-square"></i> My Attendance</a>
+    <a href="{{ url_for('dashboard.event_recommend') }}" class="d-block py-1"><i class="bi bi-lightbulb"></i> Recommended Events</a>
+    <a href="{{ url_for('dashboard.xp_progress') }}" class="d-block py-1"><i class="bi bi-trophy"></i> XP Progress</a>
+    <a href="{{ url_for('dashboard.upload_selfie') }}" class="d-block py-1"><i class="bi bi-camera"></i> Upload Selfie</a>
+    <a href="{{ url_for('dashboard.task_history') }}" class="d-block py-1"><i class="bi bi-journal-check"></i> Task History</a>
+    <a href="{{ url_for('dashboard.leaderboard') }}" class="d-block py-1"><i class="bi bi-stars"></i> Leaderboard</a>
+  </div>
+{% endif %}
+
+<!-- Common -->
+<hr>
+<a href="{{ url_for('dashboard.history') }}"><i class="bi bi-clock-history"></i> History</a>
+<a href="{{ url_for('badges.view_badges') }}"><i class="bi bi-award"></i> Badges</a>
+<a href="#" data-bs-toggle="modal" data-bs-target="#settingsModal"><i class="bi bi-gear"></i> Settings</a>
+<a href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-left"></i> Logout</a>

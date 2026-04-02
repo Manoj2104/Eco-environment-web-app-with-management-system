@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Arial'; padding: 40px; text-align: center; }
+    .cert-box { border: 4px double #000; padding: 50px; }
+    .title { font-size: 32px; font-weight: bold; margin-bottom: 20px; }
+    .content { font-size: 20px; margin: 20px 0; }
+    .qr { margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="cert-box">
+    <div class="title">Certificate of Participation</div>
+    <div class="content">This certifies that <strong>{{ name }}</strong></div>
+    <div class="content">has successfully participated in</div>
+    <div class="content"><strong>{{ event }}</strong></div>
+    <div class="qr">
+      <img src="{{ qr }}" alt="QR Code" width="100">
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1275 @@
+{% extends 'base.html' %}
+{% block title %}Event Calendar — ReEarth{% endblock %}
+{% block page_title %}Event Calendar{% endblock %}
+{% block page_subtitle %}Calendar{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css" rel="stylesheet">
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .tile {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 24px 20px;
+    position: relative;
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    animation: fadeUp .5s ease both;
+    overflow: hidden;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #10b981;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #06b6d4;
+  }
+
+  .tile:hover {
+    background: #ffffff;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+    transform: translateY(-4px);
+  }
+
+  .tile-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+  }
+
+  .tile.t-green .tile-icon {
+    background: #ecfdf5;
+    color: #059669;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #d97706;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: #ecfeff;
+    color: #0891b2;
+  }
+
+  .tile-val {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .tile-lbl {
+    font-size: .8rem;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+  }
+
+  .cal-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .cal-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .18s ease both;
+  }
+
+  .cal-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .cal-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cal-title i {
+    color: #16a34a;
+  }
+
+  .view-tabs {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .view-tab {
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .view-tab.active {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .3);
+  }
+
+  /* FullCalendar theme overrides */
+  .fc {
+    font-family: 'Sora', sans-serif !important;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+  }
+
+  .fc .fc-button {
+    background: #fff !important;
+    border: 1.5px solid #e4ece6 !important;
+    color: #374151 !important;
+    font-family: 'Sora', sans-serif !important;
+    font-size: .76rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    padding: 5px 12px !important;
+    box-shadow: none !important;
+    transition: all .18s !important;
+  }
+
+  .fc .fc-button:hover {
+    border-color: #16a34a !important;
+    color: #16a34a !important;
+    background: #f0fdf4 !important;
+  }
+
+  .fc .fc-button-primary:not(:disabled).fc-button-active,
+  .fc .fc-button-primary:not(:disabled):active {
+    background: #16a34a !important;
+    border-color: #16a34a !important;
+    color: #fff !important;
+  }
+
+  .fc .fc-col-header-cell-cushion {
+    font-size: .72rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .06em !important;
+    color: #9ca3af !important;
+    text-decoration: none !important;
+  }
+
+  .fc .fc-daygrid-day-number {
+    font-size: .78rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    text-decoration: none !important;
+  }
+
+  .fc .fc-day-today {
+    background: #f0fdf4 !important;
+  }
+
+  .fc .fc-day-today .fc-daygrid-day-number {
+    color: #16a34a !important;
+    font-weight: 800 !important;
+  }
+
+  .fc .fc-daygrid-event {
+    border-radius: 6px !important;
+    font-size: .7rem !important;
+    font-weight: 600 !important;
+    padding: 2px 6px !important;
+    border: none !important;
+    cursor: pointer !important;
+  }
+
+  .fc .fc-event-title {
+    font-family: 'Sora', sans-serif !important;
+  }
+
+  .fc thead {
+    background: #f9fafb !important;
+  }
+
+  .fc .fc-scrollgrid {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid #f3f4f6 !important;
+  }
+
+  .fc .fc-scrollgrid td,
+  .fc .fc-scrollgrid th {
+    border-color: #f3f4f6 !important;
+  }
+
+  .fc .fc-daygrid-day:hover {
+    background: #f9fafb !important;
+    cursor: pointer;
+  }
+
+  .fc .fc-toolbar {
+    margin-bottom: 16px !important;
+  }
+
+  .fc .fc-list-event:hover td {
+    background: #f0fdf4 !important;
+  }
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeUp .4s .22s ease both;
+  }
+
+  .day-detail-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+  }
+
+  .day-detail-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .day-detail-date {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .day-detail-sub {
+    font-size: .72rem;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  .today-dot {
+    width: 8px;
+    height: 8px;
+    background: #16a34a;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, .2);
+  }
+
+  .day-events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .day-event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: all .18s;
+  }
+
+  .day-event-item:hover {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+
+  .day-event-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .day-event-title {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .day-event-meta {
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  .day-empty {
+    text-align: center;
+    padding: 20px 10px;
+    color: #9ca3af;
+    font-size: .8rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .day-empty i {
+    display: block;
+    font-size: 1.8rem;
+    opacity: .3;
+    margin-bottom: 6px;
+  }
+
+  .mini-cal-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+  }
+
+  .mini-cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .mini-cal-title {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .mini-nav-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: .8rem;
+    transition: all .18s;
+  }
+
+  .mini-nav-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+  }
+
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+  }
+
+  .mini-dow {
+    font-size: .6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #9ca3af;
+    padding: 4px 0;
+    letter-spacing: .06em;
+  }
+
+  .mini-day {
+    font-size: .72rem;
+    font-weight: 500;
+    color: #374151;
+    padding: 5px 2px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: 'JetBrains Mono', monospace;
+    position: relative;
+  }
+
+  .mini-day:hover {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+
+  .mini-day.today {
+    background: #16a34a;
+    color: #fff !important;
+    font-weight: 700;
+  }
+
+  .mini-day.other-month {
+    color: #d1d5db;
+  }
+
+  .mini-day.has-event::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: #16a34a;
+    border-radius: 50%;
+  }
+
+  .mini-day.today::after {
+    background: #fff;
+  }
+
+  .mini-day.selected {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+  }
+
+  .upcoming-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  .upcoming-head {
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .upcoming-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    padding: 4px 11px;
+    border-radius: 99px;
+    font-size: .7rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .filter-pill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .filter-pill:hover:not(.active) {
+    color: #16a34a;
+  }
+
+  .event-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+  }
+
+  .event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .18s;
+    margin-bottom: 2px;
+  }
+
+  .event-item:hover {
+    background: #f0fdf4;
+  }
+
+  .event-date-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .event-date-box .eday {
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .event-date-box .emon {
+    font-size: .56rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-top: 2px;
+  }
+
+  .event-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .event-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .event-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+  }
+
+  .event-meta {
+    font-size: .68rem;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .event-status-pill {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    display: inline-block;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .esp-upcoming {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .esp-completed {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .esp-cancelled {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .esp-ongoing {
+    background: #fff7ed;
+    color: #c2410c;
+  }
+
+  .event-action {
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: .7rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  .ea-join {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .ea-join:hover {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+  }
+
+  .ea-view {
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #e5e7eb;
+  }
+
+  .ea-view:hover {
+    border-color: #9ca3af;
+  }
+
+  .event-empty {
+    padding: 32px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: .84rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .event-empty i {
+    display: block;
+    font-size: 2rem;
+    opacity: .3;
+    margin-bottom: 8px;
+  }
+
+  .search-events {
+    position: relative;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .search-events input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    color: #111827;
+    outline: none;
+    transition: all .18s;
+    background: #f9fafb;
+  }
+
+  .search-events input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .search-events input::placeholder {
+    color: #9ca3af;
+  }
+
+  .search-events i {
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .82rem;
+  }
+
+  .evt-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .4);
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .evt-modal-overlay.open {
+    display: flex;
+  }
+
+  .evt-modal {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .18);
+    animation: modalPop .25s cubic-bezier(.34, 1.56, .64, 1) both;
+    overflow: hidden;
+  }
+
+  @keyframes modalPop {
+    from {
+      opacity: 0;
+      transform: scale(.92) translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .evt-modal-top {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    padding: 24px 24px 20px;
+    color: #fff;
+    position: relative;
+  }
+
+  .evt-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    transition: background .18s;
+  }
+
+  .evt-modal-close:hover {
+    background: rgba(255, 255, 255, .35);
+  }
+
+  .evt-modal-event-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    margin-bottom: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .evt-modal-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, .2);
+    border-radius: 99px;
+    padding: 3px 10px;
+    font-size: .68rem;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+
+  .evt-modal-body {
+    padding: 20px 24px;
+  }
+
+  .evt-detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: .82rem;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .evt-detail-row i {
+    width: 22px;
+    color: #16a34a;
+    font-size: .9rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .evt-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .evt-modal-btn {
+    flex: 1;
+    height: 40px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .emb-primary {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+  }
+
+  .emb-primary:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .emb-outline {
+    background: #fff;
+    border: 1.5px solid #e4ece6 !important;
+    color: #374151;
+  }
+
+  .emb-outline:hover {
+    border-color: #9ca3af !important;
+  }
+
+  .quick-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 18px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .quick-add-btn:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width:1100px) {
+    .cal-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .side-panel {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .day-detail-card,
+    .mini-cal-card {
+      flex: 1;
+      min-width: 240px;
+    }
+  }
+
+  @media (max-width:900px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .side-panel {
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width:640px) {
+    .page-content {
+      padding: 16px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-calendar-event-fill"></i></div>
+    <div class="tile-val" id="stat-upcoming">{{ upcoming_count }}</div>
+    <div class="tile-lbl">Upcoming Events</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-check2-circle"></i></div>
+    <div class="tile-val">{{ attended_count }}</div>
+    <div class="tile-lbl">Events Attended</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-bookmark-heart-fill"></i></div>
+    <div class="tile-val">{{ booked_count }}</div>
+    <div class="tile-lbl">My Bookings</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="tile-val">{{ this_month_count }}</div>
+    <div class="tile-lbl">This Month</div>
+  </div>
+</div>
+
+<div class="cal-layout">
+  <div class="cal-card">
+    <div class="cal-card-head">
+      <div class="cal-title"><i class="bi bi-calendar3"></i> Event Calendar</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="view-tabs">
+          <button class="view-tab active" onclick="switchView('dayGridMonth',this)">Month</button>
+          <button class="view-tab" onclick="switchView('timeGridWeek',this)">Week</button>
+          <button class="view-tab" onclick="switchView('listWeek',this)">List</button>
+        </div>
+        {% if current_user.role in ['host','admin'] %}
+        <button class="quick-add-btn" data-url="{{ url_for('events.create_event') }}"
+          onclick="window.location.href=this.dataset.url">
+          <i class="bi bi-plus-lg"></i> Add Event
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    <div id="mainCalendar"></div>
+  </div>
+
+  <div class="side-panel">
+    <div class="mini-cal-card">
+      <div class="mini-cal-head">
+        <div class="mini-cal-title" id="miniMonthLabel"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="mini-nav-btn" onclick="miniPrev()"><i class="bi bi-chevron-left"></i></button>
+          <button class="mini-nav-btn" onclick="miniNext()"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="mini-grid" id="miniCalGrid"></div>
+    </div>
+    <div class="day-detail-card">
+      <div class="day-detail-head">
+        <div>
+          <div class="day-detail-date" id="selectedDayLabel">Today</div>
+          <div class="day-detail-sub" id="selectedDayFull"></div>
+        </div>
+        <div class="today-dot" id="todayDot"></div>
+      </div>
+      <div class="day-events-list" id="dayEventsList">
+        <div class="day-empty"><i class="bi bi-calendar2-x"></i> No events on this day</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="upcoming-card">
+  <div class="upcoming-head">
+    <div class="upcoming-title">All Events</div>
+    <div class="filter-pills">
+      <button class="filter-pill active" data-filter="all" onclick="filterEvents(this)">All</button>
+      <button class="filter-pill" data-filter="upcoming" onclick="filterEvents(this)">Upcoming</button>
+      <button class="filter-pill" data-filter="booked" onclick="filterEvents(this)">My Bookings</button>
+      <button class="filter-pill" data-filter="completed" onclick="filterEvents(this)">Completed</button>
+    </div>
+  </div>
+  <div class="search-events">
+    <i class="bi bi-search"></i>
+    <input type="text" id="eventSearch" placeholder="Search events..." oninput="searchEvents(this.value)">
+  </div>
+  <ul class="event-list" id="eventList"></ul>
+  <div id="eventsEmpty" class="event-empty" style="display:none;">
+    <i class="bi bi-calendar-x"></i>No events found
+  </div>
+</div>
+
+<div class="evt-modal-overlay" id="evtModalOverlay" onclick="closeModal(event)">
+  <div class="evt-modal" onclick="event.stopPropagation()">
+    <div class="evt-modal-top">
+      <button class="evt-modal-close" onclick="closeModal()"><i class="bi bi-x"></i></button>
+      <div class="evt-modal-event-name" id="mName">Event Name</div>
+      <div id="mTag" class="evt-modal-tag"></div>
+    </div>
+    <div class="evt-modal-body">
+      <div class="evt-detail-row"><i class="bi bi-calendar3"></i><span id="mDate">—</span></div>
+      <div class="evt-detail-row"><i class="bi bi-clock"></i><span id="mTime">—</span></div>
+      <div class="evt-detail-row"><i class="bi bi-geo-alt-fill"></i><span id="mLoc">—</span></div>
+      <div class="evt-detail-row"><i class="bi bi-people-fill"></i><span id="mBookings">—</span></div>
+      <div class="evt-detail-row"><i class="bi bi-lightning-charge-fill"></i><span id="mXp">—</span></div>
+      <div class="evt-detail-row"><i class="bi bi-card-text"></i><span id="mDesc">—</span></div>
+      <div class="evt-modal-actions">
+        <button class="evt-modal-btn emb-primary" id="mActionBtn">Join Event</button>
+        <button class="evt-modal-btn emb-outline" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script type="application/json" id="calData">
+{{ all_events_json | safe }}
+</script>
+<script>
+  (function () {
+    var dataEl = document.getElementById('calData');
+    if (dataEl) {
+      try {
+        window.ALL_EVENTS = JSON.parse(dataEl.textContent) || [];
+      } catch (e) { console.error("Cal data parse err", e); window.ALL_EVENTS = []; }
+    }
+  })();
+
+  const TODAY_JS = new Date();
+  TODAY_JS.setHours(0, 0, 0, 0);
+
+  /* ─── FullCalendar ──────────────────────────────── */
+  let mainCal;
+  document.addEventListener('DOMContentLoaded', () => {
+    const calendarEl = document.getElementById('mainCalendar');
+    if (calendarEl) {
+      mainCal = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 600, // Increased height
+        events: ALL_EVENTS.map(e => ({
+          id: String(e.id), title: e.title, start: e.start,
+          backgroundColor: e.color, borderColor: e.color, extendedProps: e
+        })),
+        eventClick(info) { openModal(info.event.extendedProps); },
+        dateClick(info) { selectDay(info.dateStr); },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+        dayMaxEvents: true, // allow "more" link when too many events
+      });
+      mainCal.render();
+
+      // Delay to ensure the container is ready for rendering
+      setTimeout(() => {
+        mainCal.updateSize();
+      }, 100);
+    }
+
+    buildMiniCal();
+    renderEventList('all');
+    selectDay(TODAY_JS.toISOString().split('T')[0]);
+  });
+
+  function switchView(v, btn) {
+    document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mainCal.changeView(v);
+  }
+
+  /* ─── Modal ─────────────────────────────────────── */
+  const ALL_EVENTS_MAP = {};
+  ALL_EVENTS.forEach(e => { ALL_EVENTS_MAP[e.id] = e; });
+
+  function openModal(e) {
+    if (!e) return;
+    const d = new Date(e.start + 'T00:00:00');
+    document.getElementById('mName').textContent = e.title;
+    document.getElementById('mTag').innerHTML = `<i class="bi bi-tag-fill"></i> ${e.category}`;
+    document.getElementById('mDate').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('mTime').textContent = e.startTime || '—';
+    document.getElementById('mLoc').textContent = e.location;
+    document.getElementById('mBookings').textContent = `${e.bookings} booking(s)`;
+    document.getElementById('mXp').textContent = `+${e.xp} XP on completion`;
+    document.getElementById('mDesc').textContent = e.description;
+    const btn = document.getElementById('mActionBtn');
+    btn.onclick = null;
+    if (e.status === 'completed') {
+      btn.textContent = 'View Certificate';
+      btn.style.cssText = 'background:linear-gradient(135deg,#374151,#6b7280);color:#fff;box-shadow:none;flex:1;height:40px;border-radius:99px;font-family:Sora,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;border:none;';
+    } else if (e.isBooked) {
+      btn.textContent = '✓ Already Joined';
+      btn.style.cssText = 'background:#dcfce7;color:#15803d;box-shadow:none;flex:1;height:40px;border-radius:99px;font-family:Sora,sans-serif;font-size:.82rem;font-weight:700;cursor:default;border:none;';
+    } else {
+      btn.textContent = 'Join Event';
+      btn.style.cssText = 'background:linear-gradient(135deg,#16a34a,#10b981);color:#fff;box-shadow:0 4px 16px rgba(22,163,74,.28);flex:1;height:40px;border-radius:99px;font-family:Sora,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;border:none;';
+      btn.onclick = () => { window.location.href = '/view-event/' + e.id; };
+    }
+    document.getElementById('evtModalOverlay').classList.add('open');
+  }
+
+  function openModalById(id) {
+    openModal(ALL_EVENTS_MAP[id]);
+  }
+  function closeModal(ev) {
+    if (!ev || ev.target === document.getElementById('evtModalOverlay'))
+      document.getElementById('evtModalOverlay').classList.remove('open');
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  /* ─── Day click → side panel ────────────────────── */
+  function selectDay(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const isToday = d.toDateString() === TODAY_JS.toDateString();
+    document.getElementById('selectedDayLabel').textContent = isToday
+      ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    document.getElementById('selectedDayFull').textContent =
+      d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('todayDot').style.display = isToday ? 'block' : 'none';
+
+    const dayEvts = ALL_EVENTS.filter(e => e.start === dateStr);
+    const list = document.getElementById('dayEventsList');
+    if (!dayEvts.length) {
+      list.innerHTML = '<div class="day-empty"><i class="bi bi-calendar2-x"></i> No events on this day</div>';
+    } else {
+      list.innerHTML = dayEvts.map(e => `
+      <div class="day-event-item" onclick="openModalById(${e.id})">
+        <div class="day-event-dot" style="background:${e.color};"></div>
+        <div>
+          <div class="day-event-title">${e.title}</div>
+          <div class="day-event-meta"><i class="bi bi-clock me-1"></i>${e.startTime} · ${e.location}</div>
+        </div>
+      </div>`).join('');
+    }
+    if (mainCal) mainCal.gotoDate(dateStr);
+    renderMiniCal(d.getFullYear(), d.getMonth(), dateStr);
+  }
+
+  /* ─── Mini calendar ─────────────────────────────── */
+  let miniYear, miniMonth;
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const DAYS_HDR = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  function buildMiniCal() {
+    miniYear = TODAY_JS.getFullYear(); miniMonth = TODAY_JS.getMonth();
+    renderMiniCal(miniYear, miniMonth, TODAY_JS.toISOString().split('T')[0]);
+  }
+  function renderMiniCal(yr, mo, sel) {
+    miniYear = yr; miniMonth = mo;
+    document.getElementById('miniMonthLabel').textContent = `${MONTHS[mo]} ${yr}`;
+    const eventDays = new Set(ALL_EVENTS.map(e => e.start));
+    const todayStr = TODAY_JS.toISOString().split('T')[0];
+    const firstDay = new Date(yr, mo, 1).getDay();
+    const daysIn = new Date(yr, mo + 1, 0).getDate();
+    let html = DAYS_HDR.map(d => `<div class="mini-dow">${d}</div>`).join('');
+    for (let i = 0; i < firstDay; i++) html += '<div class="mini-day other-month"></div>';
+    for (let d = 1; d <= daysIn; d++) {
+      const ds = `${yr}-${String(mo + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const cls = ['mini-day', ds === todayStr ? 'today' : '', ds === sel ? 'selected' : '', eventDays.has(ds) ? 'has-event' : ''].filter(Boolean).join(' ');
+      html += `<div class="${cls}" onclick="selectDay('${ds}')">${d}</div>`;
+    }
+    document.getElementById('miniCalGrid').innerHTML = html;
+  }
+  function miniPrev() { miniMonth--; if (miniMonth < 0) { miniMonth = 11; miniYear--; } renderMiniCal(miniYear, miniMonth, null); }
+  function miniNext() { miniMonth++; if (miniMonth > 11) { miniMonth = 0; miniYear++; } renderMiniCal(miniYear, miniMonth, null); }
+
+  /* ─── Upcoming list ─────────────────────────────── */
+  let curFilter = 'all', curSearch = '';
+  function renderEventList(filter) {
+    curFilter = filter;
+    const q = curSearch.toLowerCase();
+    let evts = [...ALL_EVENTS].sort((a, b) => a.start.localeCompare(b.start));
+    if (filter === 'upcoming') evts = evts.filter(e => e.status === 'upcoming' || e.status === 'ongoing');
+    if (filter === 'booked') evts = evts.filter(e => e.isBooked);
+    if (filter === 'completed') evts = evts.filter(e => e.status === 'completed');
+    if (q) evts = evts.filter(e => e.title.toLowerCase().includes(q) || e.location.toLowerCase().includes(q));
+    const list = document.getElementById('eventList');
+    const empty = document.getElementById('eventsEmpty');
+    if (!evts.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    const SC = { upcoming: 'esp-upcoming', completed: 'esp-completed', cancelled: 'esp-cancelled', ongoing: 'esp-ongoing' };
+    list.innerHTML = evts.map(e => {
+      const d = new Date(e.start + 'T00:00:00');
+      const sc = SC[e.status] || 'esp-upcoming';
+      const act = e.status === 'completed'
+        ? `<button class="event-action ea-view">View</button>`
+        : e.isBooked
+          ? `<button class="event-action ea-view">Booked ✓</button>`
+          : `<button class="event-action ea-join" onclick="event.stopPropagation();window.location.href='/view-event/${e.id}'">Join</button>`;
+      return `
+      <li class="event-item" onclick="openModalById(${e.id})">
+        <div class="event-date-box" style="background:${e.color}18;color:${e.color};">
+          <div class="eday">${d.getDate()}</div>
+          <div class="emon">${d.toLocaleDateString('en-US', { month: 'short' })}</div>
+        </div>
+        <div class="event-info">
+          <div class="event-name">${e.title}</div>
+          <div class="event-meta-row">
+            <span class="event-meta"><i class="bi bi-clock"></i>${e.startTime}</span>
+            <span class="event-meta"><i class="bi bi-geo-alt"></i>${e.location}</span>
+            <span class="event-status-pill ${sc}">${e.status.charAt(0).toUpperCase() + e.status.slice(1)}</span>
+          </div>
+        </div>
+        ${act}
+      </li>`;
+    }).join('');
+  }
+  function filterEvents(btn) { document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderEventList(btn.dataset.filter); }
+  function searchEvents(val) { curSearch = val; renderEventList(curFilter); }
+</script>
+{% endblock %}

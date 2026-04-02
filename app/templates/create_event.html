@@ -1,0 +1,1098 @@
+{% extends "base.html" %}
+{% block title %}Create Event — ReEarth{% endblock %}
+{% block page_title %}Create Event{% endblock %}
+{% block page_subtitle %}New Event{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+  /* ── Page background ── */
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 28px;
+  }
+
+  /* ── Section card ── */
+  .ev-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 12px rgba(0, 0, 0, .05);
+    padding: 28px 28px 24px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s ease both;
+  }
+
+  .ev-card:nth-child(2) {
+    animation-delay: .06s;
+  }
+
+  .ev-card:nth-child(3) {
+    animation-delay: .12s;
+  }
+
+  .ev-card:nth-child(4) {
+    animation-delay: .18s;
+  }
+
+  .ev-card:nth-child(5) {
+    animation-delay: .24s;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .ev-card-title {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .ev-card-title i {
+    color: #16a34a;
+    font-size: 1rem;
+  }
+
+  /* ── Form elements ── */
+  .ev-label {
+    font-size: .76rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+    display: block;
+    font-family: 'Sora', sans-serif;
+    letter-spacing: .01em;
+  }
+
+  .ev-label .req {
+    color: #ef4444;
+    margin-left: 2px;
+  }
+
+  .ev-input,
+  .ev-select,
+  .ev-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .83rem;
+    color: #111827;
+    background: #fff;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    appearance: none;
+  }
+
+  .ev-input:focus,
+  .ev-select:focus,
+  .ev-textarea:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, .12);
+  }
+
+  .ev-input::placeholder,
+  .ev-textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  .ev-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  .ev-textarea {
+    resize: vertical;
+    min-height: 90px;
+  }
+
+  /* input with icon right */
+  .input-icon-wrap {
+    position: relative;
+  }
+
+  .input-icon-wrap .ev-input {
+    padding-right: 40px;
+  }
+
+  .input-icon-wrap .i-right {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    cursor: pointer;
+    transition: color .2s;
+    font-size: .95rem;
+  }
+
+  .input-icon-wrap .i-right:hover {
+    color: #16a34a;
+  }
+
+  /* input group (passcode + button) */
+  .ev-input-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .ev-input-group .ev-input {
+    flex: 1;
+  }
+
+  .ev-input-group .gen-btn {
+    height: 42px;
+    width: 42px;
+    border-radius: 10px;
+    border: 1.5px solid #e4ece6;
+    background: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all .2s;
+    flex-shrink: 0;
+    color: #374151;
+  }
+
+  .ev-input-group .gen-btn:hover {
+    border-color: #4ade80;
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+
+  /* ── Map ── */
+  #map {
+    width: 100%;
+    height: 260px;
+    border-radius: 14px;
+    border: 1.5px solid #e4ece6;
+    z-index: 1;
+  }
+
+  /* ── Suggestions dropdown ── */
+  #suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1.5px solid #e4ece6;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+  }
+
+  #suggestions li {
+    padding: 10px 14px;
+    font-size: .8rem;
+    color: #374151;
+    cursor: pointer;
+    list-style: none;
+    font-family: 'Sora', sans-serif;
+    transition: background .15s;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  #suggestions li:last-child {
+    border-bottom: none;
+  }
+
+  #suggestions li:hover {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+
+  #suggestions:empty {
+    display: none;
+  }
+
+  /* ── QR preview ── */
+  .qr-box {
+    border: 1.5px solid #e4ece6;
+    border-radius: 14px;
+    background: #fafafa;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 110px;
+  }
+
+  .qr-box img {
+    max-width: 90px;
+    border-radius: 8px;
+  }
+
+  .qr-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #d1d5db;
+    font-size: .72rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .qr-placeholder i {
+    font-size: 2rem;
+  }
+
+  /* ── Dropzone ── */
+  .ev-dropzone {
+    border: 2px dashed #c6deca;
+    background: #f6fdf7;
+    border-radius: 14px;
+    cursor: pointer;
+    padding: 28px 20px;
+    text-align: center;
+    transition: border-color .2s, background .2s;
+  }
+
+  .ev-dropzone:hover {
+    border-color: #4ade80;
+    background: #f0fdf4;
+  }
+
+  .ev-dropzone i {
+    font-size: 2rem;
+    color: #86efac;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .ev-dropzone p {
+    font-size: .8rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    margin: 0;
+  }
+
+  .ev-dropzone p strong {
+    color: #16a34a;
+  }
+
+  .thumb-preview {
+    width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-top: 10px;
+    border: 1.5px solid #e4ece6;
+    display: none;
+  }
+
+  /* ── Tag chips ── */
+  .tags-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    padding: 7px 10px;
+    background: #fff;
+    min-height: 42px;
+    cursor: text;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .tags-wrap:focus-within {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, .12);
+  }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #dcfce7;
+    color: #15803d;
+    border-radius: 99px;
+    padding: 3px 10px;
+    font-size: .74rem;
+    font-weight: 600;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .tag-chip button {
+    background: none;
+    border: none;
+    color: #15803d;
+    cursor: pointer;
+    padding: 0;
+    font-size: .75rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .tag-chip button:hover {
+    color: #ef4444;
+  }
+
+  #tagInput {
+    border: none;
+    outline: none;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    color: #111827;
+    min-width: 80px;
+    flex: 1;
+    background: transparent;
+  }
+
+  #tagInput::placeholder {
+    color: #9ca3af;
+  }
+
+  /* ── Location + My location button ── */
+  .loc-btn {
+    height: 42px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+
+  .loc-btn:hover {
+    border-color: #4ade80;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  /* ── Coord inputs ── */
+  .coord-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* ── Form grid ── */
+  .ev-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .ev-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  .ev-grid-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* ── Submit row ── */
+  .submit-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    height: 42px;
+    padding: 0 22px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .btn-cancel:hover {
+    border-color: #9ca3af;
+    color: #374151;
+  }
+
+  .btn-submit {
+    height: 42px;
+    padding: 0 28px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .84rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(22, 163, 74, .3);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .btn-submit:hover {
+    box-shadow: 0 10px 28px rgba(22, 163, 74, .42);
+    transform: translateY(-1px);
+  }
+
+  /* ── Bulk upload button (topbar area) ── */
+  .btn-bulk {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .2s;
+  }
+
+  .btn-bulk:hover {
+    border-color: #4ade80;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+
+  .page-header-left h1 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    letter-spacing: -.02em;
+    margin: 0;
+  }
+
+  .page-header-left p {
+    font-size: .78rem;
+    color: #9ca3af;
+    margin: 3px 0 0;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* ── Modal styling ── */
+  .ev-modal .modal-content {
+    border-radius: 20px;
+    border: 1px solid #e4ece6;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .12);
+  }
+
+  .ev-modal .modal-header {
+    border-bottom: 1px solid #f3f4f6;
+    padding: 20px 24px;
+  }
+
+  .ev-modal .modal-title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: .95rem;
+    color: #111827;
+  }
+
+  .ev-modal .modal-body {
+    padding: 24px;
+    font-family: 'Sora', sans-serif;
+    font-size: .85rem;
+    color: #6b7280;
+  }
+
+  .ev-modal .modal-footer {
+    border-top: 1px solid #f3f4f6;
+    padding: 16px 24px;
+  }
+
+  /* ── Progress steps header ── */
+  .form-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 24px;
+  }
+
+  .form-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Sora', sans-serif;
+    font-size: .75rem;
+    font-weight: 600;
+    color: #9ca3af;
+  }
+
+  .form-step.active {
+    color: #16a34a;
+  }
+
+  .step-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .65rem;
+    font-weight: 800;
+    color: #9ca3af;
+    flex-shrink: 0;
+    transition: all .2s;
+  }
+
+  .form-step.active .step-dot {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, .15);
+  }
+
+  .form-step.done .step-dot {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .step-line {
+    flex: 1;
+    height: 1.5px;
+    background: #f3f4f6;
+    margin: 0 8px;
+    min-width: 20px;
+  }
+
+  @media (max-width: 768px) {
+
+    .ev-grid-2,
+    .ev-grid-3,
+    .ev-grid-4 {
+      grid-template-columns: 1fr;
+    }
+
+    .coord-group {
+      grid-template-columns: 1fr;
+    }
+
+    .form-steps {
+      display: none;
+    }
+
+    .page-content {
+      padding: 16px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div class="page-header">
+  <div class="page-header-left">
+    <h1><i class="bi bi-calendar-plus" style="color:#16a34a;margin-right:8px;"></i>Create New Event</h1>
+    <p>Fill in the details below to publish your event for volunteers</p>
+  </div>
+  <button class="btn-bulk" data-bs-toggle="modal" data-bs-target="#bulkEventModal">
+    <i class="bi bi-upload"></i> Bulk Upload
+  </button>
+</div>
+
+<!-- Progress steps -->
+<div class="form-steps">
+  <div class="form-step active">
+    <div class="step-dot">1</div> Basic Info
+  </div>
+  <div class="step-line"></div>
+  <div class="form-step">
+    <div class="step-dot">2</div> Location
+  </div>
+  <div class="step-line"></div>
+  <div class="form-step">
+    <div class="step-dot">3</div> Media
+  </div>
+  <div class="step-line"></div>
+  <div class="form-step">
+    <div class="step-dot">4</div> Settings
+  </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('events.create_event') }}">
+
+  <!-- ── SECTION 1: Basic Info ── -->
+  <div class="ev-card">
+    <div class="ev-card-title">
+      <i class="bi bi-info-circle-fill"></i> Basic Information
+    </div>
+
+    <!-- Title -->
+    <div style="margin-bottom:16px;">
+      <label class="ev-label">Event Title <span class="req">*</span></label>
+      <div class="input-icon-wrap">
+        <input type="text" name="title" id="title" class="ev-input" placeholder="e.g. Marina Beach Cleanup Drive"
+          required>
+        <i class="bi bi-mic-fill i-right" id="micBtn" title="Voice input"></i>
+      </div>
+    </div>
+
+    <div class="ev-grid-4" style="margin-bottom:16px;">
+      <div>
+        <label class="ev-label">Start Date & Time <span class="req">*</span></label>
+        <input type="datetime-local" name="date" class="ev-input" required>
+      </div>
+      <div>
+        <label class="ev-label">Duration (hours) <span class="req">*</span></label>
+        <input type="number" name="duration" class="ev-input" min="1" placeholder="3" required>
+      </div>
+      <div>
+        <label class="ev-label">XP Score</label>
+        <input type="number" name="xp_score" class="ev-input" min="0" placeholder="20">
+      </div>
+      <div>
+        <label class="ev-label">Repeat</label>
+        <select name="repeat" class="ev-select">
+          <option>No</option>
+          <option>Weekly</option>
+          <option>Monthly</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ev-grid-2" style="margin-bottom:16px;">
+      <div>
+        <label class="ev-label">Category <span class="req">*</span></label>
+        <select name="category" class="ev-select">
+          <option>Cleanup</option>
+          <option>Awareness</option>
+          <option>Tree Plantation</option>
+          <option>Waste Management</option>
+          <option>Coastal Survey</option>
+          <option>Park Restoration</option>
+        </select>
+      </div>
+      <div>
+        <label class="ev-label">Tags</label>
+        <div class="tags-wrap" id="tagsWrap" onclick="document.getElementById('tagInput').focus()">
+          <input id="tagInput" placeholder="Type and press Enter…" autocomplete="off">
+        </div>
+        <input type="hidden" name="tags" id="tagsHidden">
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label class="ev-label">Event Description <span class="req">*</span></label>
+      <textarea name="description" class="ev-textarea" rows="3"
+        placeholder="Describe the event goals, what volunteers will do, and the impact..." required></textarea>
+    </div>
+
+    <div>
+      <label class="ev-label">Volunteer Instructions / Safety Tips</label>
+      <textarea name="instructions" class="ev-textarea" rows="2"
+        placeholder="Wear gloves, carry water, meet at the north gate..."></textarea>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: Location ── -->
+  <div class="ev-card">
+    <div class="ev-card-title">
+      <i class="bi bi-geo-alt-fill"></i> Location & Map
+    </div>
+
+    <div class="ev-grid-2" style="margin-bottom:16px; align-items:start;">
+      <div>
+        <label class="ev-label">Search Location <span class="req">*</span></label>
+        <div class="input-icon-wrap" style="position:relative;">
+          <input type="text" name="location" id="locationInput" class="ev-input"
+            placeholder="Type place, street, landmark…" autocomplete="off" required>
+          <i class="bi bi-search i-right"></i>
+          <ul id="suggestions"></ul>
+        </div>
+
+        <div style="margin-top:12px; margin-bottom:12px;">
+          <button type="button" class="loc-btn" onclick="autoFillLocation()">
+            <i class="bi bi-crosshair2"></i> Use My Location
+          </button>
+        </div>
+
+        <div class="coord-group">
+          <div>
+            <label class="ev-label">Latitude</label>
+            <input type="text" name="latitude" id="latitude" class="ev-input" placeholder="13.082700" readonly>
+          </div>
+          <div>
+            <label class="ev-label">Longitude</label>
+            <input type="text" name="longitude" id="longitude" class="ev-input" placeholder="80.270700" readonly>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="ev-label">Map Preview</label>
+        <div id="map"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 3: Media & Check-In ── -->
+  <div class="ev-card">
+    <div class="ev-card-title">
+      <i class="bi bi-image-fill"></i> Media & Check-In
+    </div>
+
+    <div class="ev-grid-2">
+      <!-- Thumbnail dropzone -->
+      <div>
+        <label class="ev-label">Event Thumbnail <span class="req">*</span></label>
+        <div class="ev-dropzone" id="dropzone">
+          <input type="file" name="thumbnail" id="thumbnail" accept="image/*" class="d-none" required>
+          <i class="bi bi-cloud-arrow-up"></i>
+          <p><strong>Click to upload</strong> or drag & drop</p>
+          <p style="font-size:.72rem;margin-top:4px;">PNG, JPG, WEBP up to 5MB</p>
+        </div>
+        <img id="thumbPreview" class="thumb-preview">
+      </div>
+
+      <!-- Passcode + QR -->
+      <div>
+        <label class="ev-label">Check-In Passcode <span class="req">*</span></label>
+        <div class="ev-input-group" style="margin-bottom:14px;">
+          <input type="text" name="passcode" id="passcode" class="ev-input" placeholder="e.g. eco4x9z" required
+            oninput="debouncedQR()">
+          <button type="button" class="gen-btn" onclick="generatePasscode()" title="Generate random passcode">
+            🎲
+          </button>
+        </div>
+
+        <label class="ev-label">QR Preview</label>
+        <div class="qr-box">
+          <img id="qrImage" src="" style="display:none;">
+          <div class="qr-placeholder" id="qrPlaceholder">
+            <i class="bi bi-qr-code"></i>
+            <span>Enter passcode to generate</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Submit ── -->
+  <div class="ev-card" style="padding:20px 28px;">
+    <div class="submit-row">
+      <button type="button" class="btn-cancel" onclick="history.back()">Cancel</button>
+      <button type="submit" class="btn-submit">
+        <i class="bi bi-check-circle-fill"></i> Publish Event
+      </button>
+    </div>
+  </div>
+
+</form>
+
+
+<!-- ── Bulk Upload Modal ── -->
+<div class="modal fade ev-modal" id="bulkEventModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('events.bulk_create') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title"><i class="bi bi-upload" style="color:#16a34a;margin-right:8px;"></i>Bulk Event Upload
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom:14px;">Upload a <code>.csv</code> file with columns:</p>
+          <div
+            style="background:#f9fafb;border:1px solid #e4ece6;border-radius:10px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#374151;margin-bottom:16px;line-height:1.8;">
+            title, date, duration, xp_score, location, lat, lon, passcode, category, tags, description
+          </div>
+          <a href="/static/template.csv"
+            style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;color:#16a34a;text-decoration:none;margin-bottom:16px;">
+            <i class="bi bi-download"></i> Download Sample CSV
+          </a>
+          <label class="ev-label">Upload CSV File</label>
+          <input type="file" name="bulk_file" accept=".csv" class="ev-input" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-submit">
+            <i class="bi bi-cloud-upload-fill"></i> Upload Events
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  /* ── Map init ──────────────────────────────────────── */
+  const map = L.map('map').setView([13.0827, 80.2707], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  const greenIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+    width:32px;height:32px;background:linear-gradient(135deg,#16a34a,#10b981);
+    border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+    box-shadow:0 4px 14px rgba(22,163,74,.4);
+    border:3px solid #fff;
+  "></div>`,
+    iconSize: [32, 32], iconAnchor: [16, 32]
+  });
+
+  let marker = L.marker([13.0827, 80.2707], { draggable: true, icon: greenIcon }).addTo(map);
+
+  function placeMarker(lat, lon, fillLocation = false) {
+    marker.setLatLng([lat, lon]);
+    map.setView([lat, lon], 15);
+    document.getElementById('latitude').value = lat.toFixed(6);
+    document.getElementById('longitude').value = lon.toFixed(6);
+
+    if (fillLocation) {
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        .then(r => r.json())
+        .then(data => {
+          const a = data.address || {};
+          const text = [a.road, a.neighbourhood || a.suburb, a.city || a.town || a.village]
+            .filter(Boolean).join(', ');
+          const loc = document.getElementById('locationInput');
+          if (loc && !loc.value) loc.value = text;
+        })
+        .catch(() => { });
+    }
+  }
+
+  marker.on('dragend', () => {
+    const { lat, lng } = marker.getLatLng();
+    document.getElementById('latitude').value = lat.toFixed(6);
+    document.getElementById('longitude').value = lng.toFixed(6);
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => map.invalidateSize(), 400);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => placeMarker(pos.coords.latitude, pos.coords.longitude, true),
+        err => console.warn('Location denied:', err.message),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+  });
+
+  function autoFillLocation() {
+    navigator.geolocation.getCurrentPosition(
+      pos => placeMarker(pos.coords.latitude, pos.coords.longitude, true),
+      () => alert('Location access not available')
+    );
+  }
+
+
+  /* ── Location autocomplete ─────────────────────────── */
+  const locInput = document.getElementById('locationInput');
+  const suggList = document.getElementById('suggestions');
+  let locDebounce;
+
+  locInput.addEventListener('input', () => {
+    clearTimeout(locDebounce);
+    const q = locInput.value.trim();
+    if (q.length < 2) { suggList.innerHTML = ''; return; }
+    locDebounce = setTimeout(() => {
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6`)
+        .then(r => r.json())
+        .then(data => {
+          suggList.innerHTML = '';
+          data.forEach(loc => {
+            const li = document.createElement('li');
+            li.textContent = loc.display_name;
+            li.onclick = () => {
+              locInput.value = loc.display_name;
+              suggList.innerHTML = '';
+              placeMarker(parseFloat(loc.lat), parseFloat(loc.lon), false);
+            };
+            suggList.appendChild(li);
+          });
+        });
+    }, 300);
+  });
+
+  document.addEventListener('click', e => {
+    if (!locInput.contains(e.target) && !suggList.contains(e.target)) suggList.innerHTML = '';
+  });
+
+
+  /* ── QR code ───────────────────────────────────────── */
+  let qrTimer;
+  function debouncedQR() { clearTimeout(qrTimer); qrTimer = setTimeout(generateQR, 350); }
+
+  function generateQR() {
+    const val = document.getElementById('passcode').value.trim();
+    const img = document.getElementById('qrImage');
+    const ph = document.getElementById('qrPlaceholder');
+    if (val.length > 0) {
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(val)}`;
+      img.style.display = 'block';
+      if (ph) ph.style.display = 'none';
+    } else {
+      img.style.display = 'none';
+      if (ph) ph.style.display = 'flex';
+    }
+  }
+
+  function generatePasscode() {
+    const rand = Math.random().toString(36).substring(2, 8);
+    document.getElementById('passcode').value = 'eco' + rand;
+    generateQR();
+  }
+
+
+  /* ── Thumbnail dropzone ────────────────────────────── */
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('thumbnail');
+  const preview = document.getElementById('thumbPreview');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.style.borderColor = '#4ade80'; dropzone.style.background = '#f0fdf4'; });
+  dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = ''; dropzone.style.background = ''; });
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.style.borderColor = ''; dropzone.style.background = '';
+    if (e.dataTransfer.files[0]) loadPreview(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) loadPreview(e.target.files[0]);
+  });
+
+  function loadPreview(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      preview.src = reader.result;
+      preview.style.display = 'block';
+      dropzone.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+
+  /* ── Tag chips ─────────────────────────────────────── */
+  const tagInput = document.getElementById('tagInput');
+  const tagsWrap = document.getElementById('tagsWrap');
+  const tagsHidden = document.getElementById('tagsHidden');
+  let tags = [];
+
+  function renderTags() {
+    /* remove all chips */
+    tagsWrap.querySelectorAll('.tag-chip').forEach(c => c.remove());
+    tags.forEach((tag, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.innerHTML = `${tag}<button type="button" onclick="removeTag(${i})"><i class="bi bi-x"></i></button>`;
+      tagsWrap.insertBefore(chip, tagInput);
+    });
+    tagsHidden.value = tags.join(',');
+  }
+
+  function removeTag(i) { tags.splice(i, 1); renderTags(); }
+
+  tagInput.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ',') && tagInput.value.trim()) {
+      e.preventDefault();
+      const t = tagInput.value.trim().replace(/,/g, '');
+      if (t && !tags.includes(t)) { tags.push(t); renderTags(); }
+      tagInput.value = '';
+    }
+    if (e.key === 'Backspace' && !tagInput.value && tags.length) {
+      tags.pop(); renderTags();
+    }
+  });
+
+
+  /* ── Voice input for title ─────────────────────────── */
+  const micBtn = document.getElementById('micBtn');
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const sr = new SR();
+    sr.lang = 'en-IN';
+    micBtn.addEventListener('click', () => {
+      micBtn.style.color = '#ef4444';
+      sr.start();
+    });
+    sr.onresult = e => {
+      document.getElementById('title').value = e.results[0][0].transcript;
+      micBtn.style.color = '';
+    };
+    sr.onend = () => { micBtn.style.color = ''; };
+  } else {
+    micBtn.style.display = 'none';
+  }
+
+
+  /* ── Step highlight on scroll ──────────────────────── */
+  const cards = document.querySelectorAll('.ev-card');
+  const steps = document.querySelectorAll('.form-step');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = Array.from(cards).indexOf(entry.target);
+        steps.forEach((s, i) => {
+          s.classList.toggle('active', i === idx);
+          s.classList.toggle('done', i < idx);
+        });
+      }
+    });
+  }, { threshold: 0.5 });
+  cards.forEach(c => observer.observe(c));
+</script>
+{% endblock %}

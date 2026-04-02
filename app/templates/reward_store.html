@@ -1,0 +1,1813 @@
+{% extends 'base.html' %}
+{% block title %}Reward Store — ReEarth{% endblock %}
+{% block page_title %}Reward Store{% endblock %}
+{% block page_subtitle %}Redeem your XP{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes pulse-green {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .45);
+    }
+
+    50% {
+      box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
+  }
+
+  @keyframes checkPop {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+
+    70% {
+      transform: scale(1.25);
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes confettiFall {
+    0% {
+      transform: translateY(-20px) rotate(0deg);
+      opacity: 1;
+    }
+
+    100% {
+      transform: translateY(80px) rotate(360deg);
+      opacity: 0;
+    }
+  }
+
+  /* ── XP HERO BANNER ── */
+  .xp-banner {
+    background: linear-gradient(135deg, #16a34a 0%, #10b981 60%, #22c55e 100%);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    box-shadow: 0 8px 32px rgba(22, 163, 74, .3);
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp .4s ease both;
+  }
+
+  .xp-banner::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .07);
+  }
+
+  .xp-banner::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: 30%;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .05);
+  }
+
+  .xp-banner-left {
+    position: relative;
+    z-index: 1;
+  }
+
+  .xp-banner-greeting {
+    font-size: .82rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .8);
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .xp-banner-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -.04em;
+    line-height: 1;
+  }
+
+  .xp-banner-sub {
+    font-size: .76rem;
+    color: rgba(255, 255, 255, .75);
+    margin-top: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .xp-banner-right {
+    position: relative;
+    z-index: 1;
+    text-align: right;
+  }
+
+  .xp-level-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .15);
+    border: 3px solid rgba(255, 255, 255, .35);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-bottom: 8px;
+    animation: pulse-green 2s infinite;
+  }
+
+  .xp-level-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .xp-level-lbl {
+    font-size: .56rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, .75);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  .xp-banner-bar-wrap {
+    width: 160px;
+  }
+
+  .xp-banner-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: .68rem;
+    color: rgba(255, 255, 255, .75);
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 5px;
+  }
+
+  .xp-banner-track {
+    height: 6px;
+    background: rgba(255, 255, 255, .2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .xp-banner-fill {
+    height: 100%;
+    background: rgba(255, 255, 255, .9);
+    border-radius: 99px;
+    transition: width 1.2s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-purple::before {
+    background: #a855f7;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .05s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .10s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .15s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .20s;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-purple .tile-icon {
+    background: #f5f3ff;
+    color: #a855f7;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    animation: fadeUp .4s .22s ease both;
+  }
+
+  .toolbar-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .toolbar-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .85rem;
+    pointer-events: none;
+  }
+
+  .toolbar-search input {
+    width: 100%;
+    padding: 8px 14px 8px 34px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    color: #111827;
+    outline: none;
+    background: #f9fafb;
+    transition: all .18s;
+  }
+
+  .toolbar-search input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .toolbar-search input::placeholder {
+    color: #9ca3af;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .fpill {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .fpill:hover:not(.active) {
+    color: #16a34a;
+  }
+
+  .fpill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .sort-select {
+    padding: 7px 32px 7px 12px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    outline: none;
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    appearance: none;
+    transition: all .18s;
+  }
+
+  .sort-select:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .vtbtn {
+    width: 32px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: .85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .vtbtn.active {
+    background: #fff;
+    color: #374151;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+  }
+
+  .record-count {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+  }
+
+  /* ── REWARD GRID ── */
+  .reward-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  .reward-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .reward-card:hover {
+    box-shadow: 0 8px 32px rgba(22, 163, 74, .15);
+    transform: translateY(-3px);
+  }
+
+  .reward-card.sold-out {
+    opacity: .6;
+  }
+
+  .reward-card.redeemed-card {
+    border-color: #dcfce7;
+  }
+
+  .reward-card-top {
+    height: 120px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .reward-card-icon {
+    font-size: 3rem;
+    position: relative;
+    z-index: 1;
+    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+  }
+
+  .reward-card:hover .reward-card-icon {
+    transform: scale(1.2);
+  }
+
+  .reward-rarity-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+
+  .reward-sold-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #374151;
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .reward-new-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .35);
+  }
+
+  .reward-card-body {
+    padding: 18px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .reward-category-tag {
+    font-size: .62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .reward-name {
+    font-size: .95rem;
+    font-weight: 800;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .reward-desc {
+    font-size: .76rem;
+    color: #6b7280;
+    line-height: 1.55;
+    margin-bottom: 14px;
+    flex: 1;
+  }
+
+  .reward-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .reward-meta-chip {
+    font-size: .66rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .rmc-xp {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .rmc-stock {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .rmc-time {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .rmc-free {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+
+  .reward-xp-cost {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #16a34a;
+    margin-left: auto;
+  }
+
+  .redeem-btn {
+    width: 100%;
+    height: 40px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all .2s;
+  }
+
+  .redeem-btn.can-redeem {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .25);
+  }
+
+  .redeem-btn.can-redeem:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .redeem-btn.no-xp {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .redeem-btn.already-redeemed {
+    background: #dcfce7;
+    color: #16a34a;
+    cursor: default;
+  }
+
+  .redeem-btn.sold-out-btn {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  /* ── LIST VIEW ── */
+  .reward-table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    margin-bottom: 20px;
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  .reward-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .reward-table thead th {
+    padding: 11px 20px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+  }
+
+  .reward-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+  }
+
+  .reward-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .reward-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .reward-table tbody td {
+    padding: 13px 20px;
+    font-size: .82rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .td-reward-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .td-name {
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .td-desc {
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .td-xp {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .82rem;
+    font-weight: 700;
+    color: #16a34a;
+  }
+
+  .td-btn {
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 99px;
+    border: none;
+    font-family: 'Sora', sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .18s;
+  }
+
+  .td-btn.can {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .td-btn.can:hover {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .td-btn.no {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .td-btn.done {
+    background: #f0fdf4;
+    color: #16a34a;
+    cursor: default;
+  }
+
+  /* ── HISTORY SECTION ── */
+  .history-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .36s ease both;
+    margin-bottom: 20px;
+  }
+
+  .history-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .history-title i {
+    color: #16a34a;
+  }
+
+  .history-empty {
+    text-align: center;
+    padding: 28px;
+    font-size: .82rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #f9fafb;
+  }
+
+  .history-item:last-child {
+    border-bottom: none;
+  }
+
+  .hist-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #dcfce7;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    flex-shrink: 0;
+  }
+
+  .hist-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .hist-date {
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .hist-xp {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #ef4444;
+  }
+
+  /* ── BOTTOM GRID (chart + history) ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 18px;
+  }
+
+  .chart-panel {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .36s ease both;
+  }
+
+  .chart-panel-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .chart-panel-title i {
+    color: #16a34a;
+  }
+
+  .chart-body {
+    position: relative;
+    width: 100%;
+    height: 200px;
+  }
+
+  .chart-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 60px 24px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .3s ease both;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    opacity: .2;
+    margin-bottom: 12px;
+  }
+
+  .empty-state h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 6px;
+  }
+
+  .empty-state p {
+    font-size: .82rem;
+    color: #9ca3af;
+  }
+
+  /* ── CONFIRM MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .rs-modal {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .18);
+    overflow: hidden;
+    animation: fadeUp .25s cubic-bezier(.34, 1.56, .64, 1) both;
+  }
+
+  .rs-modal-top {
+    padding: 28px 28px 22px;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    position: relative;
+  }
+
+  .rs-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background .18s;
+  }
+
+  .rs-modal-close:hover {
+    background: rgba(255, 255, 255, .35);
+  }
+
+  .rs-modal-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: 2.5px solid rgba(255, 255, 255, .35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+
+  .rs-modal-reward-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 4px;
+  }
+
+  .rs-modal-reward-cat {
+    font-size: .76rem;
+    opacity: .8;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .rs-modal-body {
+    padding: 22px 28px;
+  }
+
+  .rs-modal-cost-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f0fdf4;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+  }
+
+  .rs-modal-cost-lbl {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .rs-modal-cost-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #16a34a;
+  }
+
+  .rs-modal-balance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .78rem;
+    color: #6b7280;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .rs-modal-balance-row.after {
+    font-size: .76rem;
+    color: #9ca3af;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #f3f4f6;
+    margin-bottom: 16px;
+  }
+
+  .rs-modal-desc {
+    font-size: .78rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .rs-modal-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .rs-modal-btn {
+    flex: 1;
+    height: 44px;
+    border-radius: 12px;
+    font-family: 'Sora', sans-serif;
+    font-size: .86rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: all .2s;
+  }
+
+  .rsb-confirm {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+  }
+
+  .rsb-confirm:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .rsb-cancel {
+    background: #fff;
+    border: 1.5px solid #e4ece6 !important;
+    color: #374151;
+  }
+
+  .rsb-cancel:hover {
+    border-color: #9ca3af !important;
+  }
+
+  /* ── SUCCESS TOAST ── */
+  .rs-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #111827;
+    color: #fff;
+    border-radius: 14px;
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .84rem;
+    font-weight: 600;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .22);
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
+  }
+
+  .rs-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .rs-toast i {
+    color: #4ade80;
+  }
+
+  .rs-toast.error i {
+    color: #f87171;
+  }
+
+  /* ── CONFETTI ── */
+  .confetti-piece {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 9998;
+    animation: confettiFall 1.2s ease both;
+  }
+
+  @media (max-width: 1100px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .bottom-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .page-content {
+      padding: 16px;
+    }
+
+    .reward-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- XP HERO BANNER -->
+<div class="xp-banner">
+  <div class="xp-banner-left">
+    <div class="xp-banner-greeting">
+      <i class="bi bi-lightning-charge-fill"></i> Your XP Balance
+    </div>
+    <div class="xp-banner-val" id="bannerXP">{{ current_user.xp or 0 }}</div>
+    <div class="xp-banner-sub">
+      Spend XP on exclusive rewards · Level {{ current_user.level or 1 }} Volunteer
+    </div>
+  </div>
+  <div class="xp-banner-right">
+    <div class="xp-level-ring">
+      <div class="xp-level-num">{{ current_user.level or 1 }}</div>
+      <div class="xp-level-lbl">Level</div>
+    </div>
+    <div class="xp-banner-bar-wrap">
+      <div class="xp-banner-bar-label">
+        <span>To Level {{ (current_user.level or 1) + 1 }}</span>
+        <span>{{ xp_percent or 0 }}%</span>
+      </div>
+      <div class="xp-banner-track">
+        <div class="xp-banner-fill" style="width:{{ xp_percent or 0 }}%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-gift-fill"></i></div>
+    <div class="tile-val" id="tileTotal">{{ rewards|length }}</div>
+    <div class="tile-lbl">Available Rewards</div>
+  </div>
+  <div class="tile t-purple">
+    <div class="tile-icon"><i class="bi bi-bag-check-fill"></i></div>
+    <div class="tile-val" id="tileRedeemed">{{ redeemed_count or 0 }}</div>
+    <div class="tile-lbl">Redeemed</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-val" id="tileXP">{{ current_user.xp or 0 }}</div>
+    <div class="tile-lbl">Current XP</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-stars"></i></div>
+    <div class="tile-val" id="tileAffordable">—</div>
+    <div class="tile-lbl">Affordable Now</div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar-card">
+  <div class="toolbar-search">
+    <i class="bi bi-search"></i>
+    <input type="text" id="searchInput" placeholder="Search rewards...">
+  </div>
+  <div class="filter-group">
+    <button class="fpill active" data-filter="all">All</button>
+    <button class="fpill" data-filter="affordable">Affordable</button>
+    <button class="fpill" data-filter="redeemed">Redeemed</button>
+    <button class="fpill" data-filter="available">Available</button>
+  </div>
+  <select class="sort-select" id="sortSelect">
+    <option value="default">Default Order</option>
+    <option value="low">Lowest XP First</option>
+    <option value="high">Highest XP First</option>
+    <option value="name">Name A–Z</option>
+    <option value="affordable">Affordable First</option>
+  </select>
+  <div class="view-toggle">
+    <button class="vtbtn active" id="gridViewBtn" title="Grid"><i class="bi bi-grid-fill"></i></button>
+    <button class="vtbtn" id="listViewBtn" title="List"><i class="bi bi-list-ul"></i></button>
+  </div>
+  <div class="record-count"><span id="visibleCount">{{ rewards|length }}</span> rewards</div>
+</div>
+
+<!-- REWARD DATA (passed to JS) -->
+<script id="rewardData" type="application/json">
+{
+  "userXP": {{ current_user.xp or 0 }},
+  "userLevel": {{ current_user.level or 1 }},
+  "userName": {{ current_user.name | tojson }},
+  "redeemedIds": {{ redeemed_ids | tojson if redeemed_ids else '[]' }},
+  "rewards": [
+    {% for reward in rewards %}
+    {
+      "id": {{ reward.id }},
+      "name": {{ reward.name | tojson }},
+      "description": {{ (reward.description or 'Exclusive reward for ReEarth volunteers.') | tojson }},
+      "cost": {{ reward.cost or 0 }},
+      "category": {{ (reward.category or 'General') | tojson }},
+      "stock": {{ reward.stock if reward.stock is defined and reward.stock is not none else 'null' }},
+      "icon": {{ (reward.icon or '🎁') | tojson }},
+      "is_new": {{ 'true' if reward.is_new is defined and reward.is_new else 'false' }},
+      "color": {{ (['#f0fdf4','#eff6ff','#fffbeb','#f5f3ff','#fff1f2'][loop.index0 % 5]) | tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "history": [
+    {% for item in redemption_history or [] %}
+    {
+      "name": {{ item.reward.name | tojson }},
+      "date": {{ item.redeemed_at.strftime('%d %b %Y, %I:%M %p') | tojson }},
+      "cost": {{ item.reward.cost or 0 }},
+      "icon": {{ (item.reward.icon or '🎁') | tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+
+<!-- CONTENT AREA -->
+<div id="contentArea">
+
+  <!-- GRID VIEW -->
+  <div id="gridView">
+    <div class="reward-grid" id="rewardGrid"></div>
+    <div class="empty-state" id="gridEmpty" style="display:none;">
+      <div class="empty-icon"><i class="bi bi-gift"></i></div>
+      <h3>No rewards found</h3>
+      <p>Try adjusting your search or filter.</p>
+    </div>
+  </div>
+
+  <!-- LIST VIEW (hidden) -->
+  <div id="listView" style="display:none;">
+    <div class="reward-table-card">
+      <table class="reward-table">
+        <thead>
+          <tr>
+            <th>Reward</th>
+            <th>Category</th>
+            <th>XP Cost</th>
+            <th>Stock</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="rewardTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="listEmpty" style="display:none;border:none;border-radius:0;">
+        <div class="empty-icon"><i class="bi bi-gift"></i></div>
+        <h3>No rewards found</h3>
+        <p>Try adjusting your search or filter.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM GRID: XP Spend Chart + Redemption History -->
+<div class="bottom-grid">
+
+  <div class="chart-panel">
+    <div class="chart-panel-title"><i class="bi bi-bar-chart-fill"></i> XP Spending Overview</div>
+    <div class="chart-body"><canvas id="xpSpendChart"></canvas></div>
+  </div>
+
+  <div class="history-card">
+    <div class="history-title"><i class="bi bi-clock-history"></i> Redemption History</div>
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="rs-modal">
+    <div class="rs-modal-top">
+      <button class="rs-modal-close" id="modalClose"><i class="bi bi-x-lg"></i></button>
+      <div class="rs-modal-icon-wrap" id="modalIcon">🎁</div>
+      <div class="rs-modal-reward-name" id="modalName">Reward Name</div>
+      <div class="rs-modal-reward-cat" id="modalCat">Category</div>
+    </div>
+    <div class="rs-modal-body">
+      <div class="rs-modal-cost-row">
+        <div class="rs-modal-cost-lbl">Redemption Cost</div>
+        <div class="rs-modal-cost-val" id="modalCost">0 XP</div>
+      </div>
+      <div class="rs-modal-balance-row">
+        <span>Your current XP</span>
+        <span id="modalBalBefore" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#374151;">—</span>
+      </div>
+      <div class="rs-modal-balance-row after">
+        <span>XP after redemption</span>
+        <span id="modalBalAfter" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#16a34a;">—</span>
+      </div>
+      <div class="rs-modal-desc" id="modalDesc">—</div>
+      <div class="rs-modal-actions">
+        <button class="rs-modal-btn rsb-cancel" id="modalCancelBtn"><i class="bi bi-x"></i> Cancel</button>
+        <button class="rs-modal-btn rsb-confirm" id="modalConfirmBtn"><i class="bi bi-check-circle-fill"></i> Confirm
+          Redeem</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="rs-toast" id="rsToast">
+  <i class="bi bi-check-circle-fill" id="toastIcon"></i>
+  <span id="toastMsg">Redeemed successfully!</span>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    /* ── Load data ────────────────────────────────────────── */
+    const RAW = JSON.parse(document.getElementById('rewardData').textContent);
+    let USER_XP = RAW.userXP;
+    let REDEEMED = new Set(RAW.redeemedIds.map(Number));
+    let ALL = RAW.rewards;
+    const HISTORY = RAW.history;
+
+    let activeFilter = 'all';
+    let activeSearch = '';
+    let activeSort = 'default';
+    let isGridView = true;
+    let pendingReward = null;
+
+    const RARITY_COLORS = {
+      'Physical': '#22c55e',
+      'Digital': '#3b82f6',
+      'Voucher': '#f59e0b',
+      'Service': '#a855f7',
+      'General': '#10b981',
+      'default': '#16a34a'
+    };
+
+    /* ── Affordable count tile ─────────────────────────── */
+    function updateAffordableTile() {
+      const n = ALL.filter(r => r.cost <= USER_XP && !REDEEMED.has(r.id) && (r.stock === null || r.stock > 0)).length;
+      document.getElementById('tileAffordable').textContent = n;
+    }
+    updateAffordableTile();
+
+    /* ── Filter + search + sort ────────────────────────── */
+    function getFiltered() {
+      let data = [...ALL];
+
+      if (activeSearch) {
+        const q = activeSearch.toLowerCase();
+        data = data.filter(r =>
+          r.name.toLowerCase().includes(q) ||
+          (r.description || '').toLowerCase().includes(q) ||
+          (r.category || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (activeFilter === 'affordable') data = data.filter(r => r.cost <= USER_XP && !REDEEMED.has(r.id));
+      if (activeFilter === 'redeemed') data = data.filter(r => REDEEMED.has(r.id));
+      if (activeFilter === 'available') data = data.filter(r => !REDEEMED.has(r.id) && (r.stock === null || r.stock > 0));
+
+      const ord = {
+        low: (a, b) => a.cost - b.cost,
+        high: (a, b) => b.cost - a.cost,
+        name: (a, b) => a.name.localeCompare(b.name),
+        affordable: (a, b) => {
+          const aA = a.cost <= USER_XP ? 0 : 1;
+          const bA = b.cost <= USER_XP ? 0 : 1;
+          return aA - bA || a.cost - b.cost;
+        },
+      };
+      if (ord[activeSort]) data.sort(ord[activeSort]);
+
+      return data;
+    }
+
+    /* ── Render grid ───────────────────────────────────── */
+    function renderGrid(data) {
+      const grid = document.getElementById('rewardGrid');
+      const empty = document.getElementById('gridEmpty');
+      grid.innerHTML = '';
+
+      if (data.length === 0) { empty.style.display = ''; return; }
+      empty.style.display = 'none';
+
+      data.forEach((r, i) => {
+        const redeemed = REDEEMED.has(r.id);
+        const soldOut = r.stock !== null && r.stock <= 0;
+        const canRedeem = !redeemed && !soldOut && r.cost <= USER_XP;
+        const rColor = RARITY_COLORS[r.category] || RARITY_COLORS.default;
+
+        let btnHTML, cardExtra = '';
+        if (redeemed) {
+          btnHTML = `<button class="redeem-btn already-redeemed" disabled><i class="bi bi-check2-circle" style="animation:checkPop .4s ease;"></i> Redeemed</button>`;
+          cardExtra = 'redeemed-card';
+        } else if (soldOut) {
+          btnHTML = `<button class="redeem-btn sold-out-btn" disabled><i class="bi bi-x-circle"></i> Sold Out</button>`;
+          cardExtra = 'sold-out';
+        } else if (canRedeem) {
+          btnHTML = `<button class="redeem-btn can-redeem" onclick="openConfirm(${r.id})"><i class="bi bi-lightning-charge-fill"></i> Redeem for ${r.cost} XP</button>`;
+        } else {
+          btnHTML = `<button class="redeem-btn no-xp" disabled><i class="bi bi-lock-fill"></i> Need ${r.cost - USER_XP} more XP</button>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = `reward-card ${cardExtra}`;
+        card.dataset.id = r.id;
+        card.style.animationDelay = (i * .04) + 's';
+        card.style.animation = 'fadeUp .4s ease both';
+        card.innerHTML = `
+        <div class="reward-card-top" style="background:${r.color};">
+          <div class="reward-rarity-strip" style="background:${rColor};"></div>
+          <div class="reward-card-icon">${r.icon}</div>
+          ${soldOut ? '<span class="reward-sold-badge">Sold Out</span>' : ''}
+          ${r.is_new ? '<span class="reward-new-badge">New</span>' : ''}
+        </div>
+        <div class="reward-card-body">
+          <div class="reward-category-tag" style="color:${rColor};">${escHtml(r.category)}</div>
+          <div class="reward-name">${escHtml(r.name)}</div>
+          <div class="reward-desc">${escHtml(r.description)}</div>
+          <div class="reward-meta">
+            <span class="reward-meta-chip rmc-xp"><i class="bi bi-lightning-charge-fill"></i> ${r.cost} XP</span>
+            ${r.stock !== null ? `<span class="reward-meta-chip rmc-stock"><i class="bi bi-box-seam"></i> ${r.stock} left</span>` : ''}
+            <span class="reward-xp-cost">${r.cost} XP</span>
+          </div>
+          ${btnHTML}
+        </div>`;
+        grid.appendChild(card);
+      });
+    }
+
+    /* ── Render table ──────────────────────────────────── */
+    function renderTable(data) {
+      const tbody = document.getElementById('rewardTableBody');
+      const empty = document.getElementById('listEmpty');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) { empty.style.display = ''; return; }
+      empty.style.display = 'none';
+
+      data.forEach(r => {
+        const redeemed = REDEEMED.has(r.id);
+        const soldOut = r.stock !== null && r.stock <= 0;
+        const canRedeem = !redeemed && !soldOut && r.cost <= USER_XP;
+        const rColor = RARITY_COLORS[r.category] || RARITY_COLORS.default;
+
+        let btnHTML;
+        if (redeemed) btnHTML = `<button class="td-btn done" disabled><i class="bi bi-check2"></i> Redeemed</button>`;
+        else if (soldOut) btnHTML = `<button class="td-btn no"   disabled>Sold Out</button>`;
+        else if (canRedeem) btnHTML = `<button class="td-btn can" onclick="openConfirm(${r.id})"><i class="bi bi-lightning-charge-fill"></i> Redeem</button>`;
+        else btnHTML = `<button class="td-btn no"   disabled>+${r.cost - USER_XP} XP needed</button>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+        <td>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="td-reward-icon" style="background:${r.color};">${r.icon}</div>
+            <div>
+              <div class="td-name">${escHtml(r.name)}</div>
+              <div class="td-desc">${escHtml(r.description.slice(0, 60))}${r.description.length > 60 ? '…' : ''}</div>
+            </div>
+          </div>
+        </td>
+        <td><span style="font-size:.72rem;font-weight:700;color:${rColor};background:${r.color};padding:3px 10px;border-radius:99px;">${escHtml(r.category)}</span></td>
+        <td class="td-xp">${r.cost} XP</td>
+        <td style="font-size:.78rem;color:#6b7280;">${r.stock !== null ? r.stock + ' left' : '∞'}</td>
+        <td>
+          ${redeemed ? '<span style="font-size:.72rem;background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:99px;font-weight:700;">Redeemed</span>'
+            : '<span style="font-size:.72rem;background:#f3f4f6;color:#6b7280;padding:3px 10px;border-radius:99px;font-weight:700;">Available</span>'}
+        </td>
+        <td>${btnHTML}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function render() {
+      const data = getFiltered();
+      document.getElementById('visibleCount').textContent = data.length;
+      if (isGridView) renderGrid(data);
+      else renderTable(data);
+    }
+    render();
+
+    /* ── History list ──────────────────────────────────── */
+    function renderHistory() {
+      const list = document.getElementById('historyList');
+      if (!HISTORY || HISTORY.length === 0) {
+        list.innerHTML = '<div class="history-empty"><i class="bi bi-inbox" style="font-size:1.8rem;opacity:.25;display:block;margin-bottom:8px;"></i>No redemptions yet</div>';
+        return;
+      }
+      list.innerHTML = HISTORY.slice(0, 8).map(h => `
+      <div class="history-item">
+        <div class="hist-icon">${h.icon}</div>
+        <div>
+          <div class="hist-name">${escHtml(h.name)}</div>
+          <div class="hist-date">${escHtml(h.date)}</div>
+        </div>
+        <div class="hist-xp">-${h.cost} XP</div>
+      </div>`).join('');
+    }
+    renderHistory();
+
+    /* ── XP Spend Chart ────────────────────────────────── */
+    (function () {
+      const el = document.getElementById('xpSpendChart');
+      if (!el) return;
+
+      /* Build category spend from all rewards + history */
+      const catSpend = {};
+      HISTORY.forEach(h => {
+        const reward = ALL.find(r => r.name === h.name);
+        const cat = reward ? reward.category : 'General';
+        catSpend[cat] = (catSpend[cat] || 0) + h.cost;
+      });
+
+      const hasData = Object.keys(catSpend).length > 0;
+      const labels = hasData ? Object.keys(catSpend) : ['No redemptions yet'];
+      const values = hasData ? Object.values(catSpend) : [0];
+      const colors = labels.map(l => RARITY_COLORS[l] || RARITY_COLORS.default);
+
+      new Chart(el.getContext('2d'), {
+        type: hasData ? 'bar' : 'bar',
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors,
+            borderRadius: 8,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#111827', titleColor: '#9ca3af', bodyColor: '#fff',
+              padding: 10, cornerRadius: 10,
+              titleFont: { family: 'Sora', size: 11 },
+              bodyFont: { family: 'JetBrains Mono', size: 13 },
+              callbacks: { label: c => ` ${c.parsed.y} XP spent` }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { family: 'Sora', size: 10 } }, border: { display: false } },
+            y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 10 }, callback: v => v + ' XP' }, border: { display: false }, beginAtZero: true }
+          }
+        }
+      });
+    })();
+
+    /* ── Confirm modal ─────────────────────────────────── */
+    window.openConfirm = function (rewardId) {
+      const r = ALL.find(x => x.id === rewardId);
+      if (!r) return;
+      pendingReward = r;
+
+      document.getElementById('modalIcon').textContent = r.icon;
+      document.getElementById('modalName').textContent = r.name;
+      document.getElementById('modalCat').textContent = r.category;
+      document.getElementById('modalCost').textContent = r.cost + ' XP';
+      document.getElementById('modalDesc').textContent = r.description;
+      document.getElementById('modalBalBefore').textContent = USER_XP + ' XP';
+      document.getElementById('modalBalAfter').textContent = (USER_XP - r.cost) + ' XP';
+
+      document.getElementById('confirmOverlay').classList.add('open');
+    };
+
+    function closeModal() {
+      document.getElementById('confirmOverlay').classList.remove('open');
+      pendingReward = null;
+    }
+
+    document.getElementById('modalClose').onclick = closeModal;
+    document.getElementById('modalCancelBtn').onclick = closeModal;
+    document.getElementById('confirmOverlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('confirmOverlay')) closeModal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    document.getElementById('modalConfirmBtn').addEventListener('click', function () {
+      if (!pendingReward) return;
+      doRedeem(pendingReward.id);
+      closeModal();
+    });
+
+    /* ── Redeem action ─────────────────────────────────── */
+    function doRedeem(rewardId) {
+      const r = ALL.find(x => x.id === rewardId);
+      if (!r) return;
+
+      fetch(`/redeem/${rewardId}`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrf(), 'Content-Type': 'application/json' }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            REDEEMED.add(rewardId);
+            USER_XP = data.new_xp !== undefined ? data.new_xp : Math.max(0, USER_XP - r.cost);
+
+            /* Update tiles */
+            document.getElementById('bannerXP').textContent = USER_XP;
+            document.getElementById('tileXP').textContent = USER_XP;
+            document.getElementById('tileRedeemed').textContent = REDEEMED.size;
+            updateAffordableTile();
+
+            render();
+
+            /* Add to history top */
+            HISTORY.unshift({ name: r.name, date: 'Just now', cost: r.cost, icon: r.icon });
+            renderHistory();
+
+            showToast(`🎉 ${r.name} redeemed! -${r.cost} XP`, false);
+            spawnConfetti();
+          } else {
+            showToast(data.message || 'Redemption failed. Try again.', true);
+          }
+        })
+        .catch(() => showToast('Network error — please try again.', true));
+    }
+
+    /* ── Toast ─────────────────────────────────────────── */
+    let toastTimer;
+    function showToast(msg, isError = false) {
+      const el = document.getElementById('rsToast');
+      const icon = document.getElementById('toastIcon');
+      document.getElementById('toastMsg').textContent = msg;
+      el.className = 'rs-toast' + (isError ? ' error' : '');
+      icon.className = isError ? 'bi bi-x-circle-fill' : 'bi bi-check-circle-fill';
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+    }
+
+    /* ── Confetti ──────────────────────────────────────── */
+    function spawnConfetti() {
+      const colors = ['#22c55e', '#4ade80', '#16a34a', '#10b981', '#f59e0b', '#3b82f6'];
+      for (let i = 0; i < 18; i++) {
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.className = 'confetti-piece';
+          el.style.left = Math.random() * 100 + 'vw';
+          el.style.top = '15vh';
+          el.style.background = colors[Math.floor(Math.random() * colors.length)];
+          el.style.animationDuration = (.6 + Math.random() * .8) + 's';
+          el.style.animationDelay = (Math.random() * .4) + 's';
+          document.body.appendChild(el);
+          setTimeout(() => el.remove(), 1800);
+        }, i * 30);
+      }
+    }
+
+    /* ── Toolbar listeners ──────────────────────────────── */
+    document.getElementById('searchInput').addEventListener('input', function () {
+      activeSearch = this.value;
+      render();
+    });
+
+    document.querySelectorAll('.fpill').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        activeFilter = this.dataset.filter;
+        render();
+      });
+    });
+
+    document.getElementById('sortSelect').addEventListener('change', function () {
+      activeSort = this.value;
+      render();
+    });
+
+    document.getElementById('gridViewBtn').addEventListener('click', function () {
+      isGridView = true;
+      this.classList.add('active');
+      document.getElementById('listViewBtn').classList.remove('active');
+      document.getElementById('gridView').style.display = '';
+      document.getElementById('listView').style.display = 'none';
+      render();
+    });
+    document.getElementById('listViewBtn').addEventListener('click', function () {
+      isGridView = false;
+      this.classList.add('active');
+      document.getElementById('gridViewBtn').classList.remove('active');
+      document.getElementById('gridView').style.display = 'none';
+      document.getElementById('listView').style.display = '';
+      render();
+    });
+
+    /* ── Socket.IO live XP update ──────────────────────── */
+    if (typeof io !== 'undefined') {
+      const socket = io();
+      socket.on('user_full_update', data => {
+        if (data.xp !== undefined) {
+          USER_XP = data.xp;
+          document.getElementById('bannerXP').textContent = USER_XP;
+          document.getElementById('tileXP').textContent = USER_XP;
+          updateAffordableTile();
+          render();
+        }
+      });
+    }
+
+    /* ── Helpers ───────────────────────────────────────── */
+    function escHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function getCsrf() {
+      const m = document.cookie.match(/csrf_token=([^;]+)/);
+      return m ? m[1] : '';
+    }
+
+  });
+</script>
+{% endblock %}

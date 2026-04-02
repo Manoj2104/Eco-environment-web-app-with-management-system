@@ -1,0 +1,13 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h3>📸 Upload Your Selfie</h3>
+  <form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <input type="file" name="selfie" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Upload</button>
+  </form>
+</div>
+{% endblock %}

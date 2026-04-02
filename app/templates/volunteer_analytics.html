@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}Volunteer Analytics{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-primary"><i class="bi bi-bar-chart-line me-2"></i>Volunteer Analytics</h3>
+    <div>
+      <button class="btn btn-outline-dark me-2" onclick="toggleDarkMode()"><i class="bi bi-moon-stars-fill"></i></button>
+      <button class="btn btn-outline-success me-2"><i class="bi bi-filetype-csv me-1"></i>CSV</button>
+      <button class="btn btn-outline-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</button>
+    </div>
+  </div>
+
+  <!-- Live Stats Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-4"><div class="card p-4 shadow-sm"><h6>Live Volunteers</h6><h3 id="live-volunteers">--</h3></div></div>
+    <div class="col-md-4"><div class="card p-4 shadow-sm"><h6>Ongoing Events</h6><h3 id="live-events">--</h3></div></div>
+    <div class="col-md-4"><div class="card p-4 shadow-sm"><h6>Avg Hours</h6><h3 id="live-hours">--</h3></div></div>
+  </div>
+
+  <!-- Calendar Heatmap -->
+  <div class="card shadow-sm p-4 rounded-4 mb-5">
+    <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-calendar3-week me-2"></i>Volunteer Activity Calendar</h6>
+    <div id="cal-heatmap"></div>
+  </div>
+
+  <!-- XP Dashboard -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card p-4 shadow-sm text-center">
+        <h6 class="text-muted">XP Points</h6>
+        <h3 class="fw-bold text-success">{{ xp }}</h3>
+        <div class="progress mt-2 rounded-pill">
+          <div class="progress-bar bg-info" role="progressbar" style="width: {{ percent_to_next }}%">
+            {{ xp }} / {{ next_level }} XP
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Insight -->
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4">
+        <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-robot me-2"></i>AI Impact Summary</h6>
+        <blockquote class="blockquote mb-0">
+          <p>"Your volunteers contributed <strong>650+ hours</strong> this month in <strong>12 events</strong>. Repeat participation is at <strong>61%</strong>, and health projects rose by <strong>24%</strong>."</p>
+        </blockquote>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reward Store -->
+  <h5 class="mt-5 mb-3 fw-semibold text-secondary"><i class="bi bi-gift me-2"></i>Reward Store</h5>
+  <div class="row g-4">
+    {% for reward in rewards %}
+    <div class="col-md-3">
+      <div class="card shadow-sm text-center p-3">
+        <img src="{{ reward.image }}" class="img-fluid rounded mb-2" alt="">
+        <h6>{{ reward.title }}</h6>
+        <button class="btn btn-sm btn-primary">Redeem - {{ reward.xp }} XP</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Certificate Preview Modal -->
+  <div class="modal fade" id="certModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-body p-0">
+          <iframe id="certFrame" class="w-100" style="height: 500px; border: none;"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="card shadow-sm mt-5 rounded-4 border-0">
+    <div class="card-header bg-white border-0 pb-0">
+      <h6 class="fw-bold text-secondary">Top Volunteers</h6>
+    </div>
+    <div class="card-body">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Events</th>
+            <th>Hours</th>
+            <th>Impact</th>
+            <th>Certificate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in top_volunteers %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><i class="bi bi-person-circle me-1"></i> {{ user.name }}</td>
+            <td>{{ user.events }}</td>
+            <td>{{ user.hours }}</td>
+            <td>
+              <span class="badge bg-warning text-dark">
+                <i class="bi bi-star-fill me-1"></i>{{ user.score }}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#certModal" onclick="loadCertPreview('{{ user.name }}')">Preview</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.0.0-beta.9/dist/cal-heatmap.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cal-heatmap@4.0.0-beta.9/cal-heatmap.css" />
+
+<script>
+  const socket = io();
+  socket.on('live_stats', data => {
+    document.getElementById('live-volunteers').textContent = data.active_volunteers;
+    document.getElementById('live-events').textContent = data.ongoing_events;
+    document.getElementById('live-hours').textContent = data.avg_hours + ' hrs';
+  });
+
+  const cal = new CalHeatmap();
+  cal.paint({
+    itemSelector: "#cal-heatmap",
+    domain: "month",
+    subDomain: "day",
+    data: {
+      source: "/api/volunteer-activity-calendar",
+      type: "json",
+      x: "date",
+      y: "count"
+    },
+    range: 4,
+    legend: [2, 5, 10, 20]
+  });
+
+  function loadCertPreview(name) {
+    document.getElementById('certFrame').src = `/preview-certificate?name=${encodeURIComponent(name)}`;
+  }
+
+  function toggleDarkMode() {
+    document.body.classList.toggle('bg-dark');
+    document.body.classList.toggle('text-light');
+  }
+</script>
+{% endblock %}

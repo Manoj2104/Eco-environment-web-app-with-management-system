@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+{% block title %}Volunteers — ReEarth{% endblock %}
+{% block page_title %}Volunteers{% endblock %}
+{% block page_subtitle %}Track all volunteers in your events{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════
+   PAGE
+══════════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── STAT TILES ──────────────────────────────── */
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+  animation: fadeUp .38s ease both;
+}
+.tile {
+  background: #fff; border: 1px solid #e4ece6;
+  border-radius: 16px; padding: 18px 18px 16px;
+  position: relative; transition: box-shadow .22s, transform .22s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.04);
+}
+.tile::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 16px 16px 0 0;
+}
+.tile.t-green::before { background: #22c55e; }
+.tile.t-blue::before  { background: #3b82f6; }
+.tile.t-amber::before { background: #f59e0b; }
+.tile.t-teal::before  { background: #10b981; }
+.tile:hover { box-shadow: 0 6px 24px rgba(22,163,74,.13); transform: translateY(-2px); }
+.tile:nth-child(1) { animation: fadeUp .38s .04s ease both; }
+.tile:nth-child(2) { animation: fadeUp .38s .08s ease both; }
+.tile:nth-child(3) { animation: fadeUp .38s .12s ease both; }
+.tile:nth-child(4) { animation: fadeUp .38s .16s ease both; }
+.tile-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; margin-bottom: 12px;
+}
+.tile.t-green .tile-icon { background: #dcfce7; color: #16a34a; }
+.tile.t-blue  .tile-icon { background: #eff6ff; color: #3b82f6; }
+.tile.t-amber .tile-icon { background: #fffbeb; color: #f59e0b; }
+.tile.t-teal  .tile-icon { background: rgba(16,185,129,.1); color: #10b981; }
+.tile-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.5rem; font-weight: 800; color: #111827;
+  letter-spacing: -.03em; line-height: 1; margin-bottom: 4px;
+}
+.tile-lbl { font-size: .72rem; color: #9ca3af; font-weight: 500; font-family: 'Sora', sans-serif; }
+
+/* ── TABLE CARD ──────────────────────────────── */
+.table-card {
+  background: #fff; border: 1px solid #e4ece6;
+  border-radius: 20px; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.04);
+  animation: fadeUp .38s .18s ease both;
+}
+.table-card-head {
+  padding: 16px 22px; display: flex; align-items: center;
+  gap: 10px; border-bottom: 1px solid #f3f4f6; flex-wrap: wrap;
+}
+.table-card-title {
+  font-size: .95rem; font-weight: 700; color: #111827;
+  margin-right: 4px; font-family: 'Sora', sans-serif;
+  display: flex; align-items: center; gap: 7px;
+}
+.table-card-title i { color: #16a34a; }
+.vol-count {
+  background: #dcfce7; color: #15803d; font-size: .7rem;
+  font-weight: 700; padding: 2px 9px; border-radius: 99px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.th-spacer { flex: 1; min-width: 8px; }
+
+/* Search */
+.search-box {
+  position: relative; display: flex; align-items: center;
+}
+.search-box i {
+  position: absolute; left: 12px; color: #9ca3af; font-size: .85rem;
+}
+.search-box input {
+  padding: 8px 14px 8px 34px;
+  border: 1.5px solid #e5e7eb; border-radius: 99px;
+  font-family: 'Sora', sans-serif; font-size: .8rem;
+  color: #374151; background: #f9fafb; outline: none;
+  transition: all .2s; width: 220px;
+}
+.search-box input:focus {
+  border-color: #4ade80; background: #fff;
+  box-shadow: 0 0 0 3px rgba(74,222,128,.12); width: 260px;
+}
+.search-box input::placeholder { color: #9ca3af; }
+
+/* Table */
+.vol-table { width: 100%; border-collapse: collapse; }
+.vol-table thead th {
+  padding: 11px 20px; font-size: .7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em; color: #9ca3af;
+  background: #f9fafb; border-bottom: 1px solid #f3f4f6;
+  white-space: nowrap; font-family: 'Sora', sans-serif;
+}
+.vol-table tbody tr {
+  border-bottom: 1px solid #f9fafb; transition: background .15s;
+}
+.vol-table tbody tr:last-child { border-bottom: none; }
+.vol-table tbody tr:hover { background: #f0fdf4; }
+.vol-table tbody td {
+  padding: 13px 20px; font-size: .82rem;
+  color: #374151; vertical-align: middle;
+}
+.td-rank {
+  color: #9ca3af; font-family: 'JetBrains Mono', monospace;
+  font-size: .76rem; font-weight: 600;
+}
+.td-user { display: flex; align-items: center; gap: 10px; }
+.td-ava {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a, #10b981);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: .76rem; font-weight: 700; flex-shrink: 0;
+  overflow: hidden;
+}
+.td-ava img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.td-name { font-size: .83rem; font-weight: 600; color: #111827; font-family: 'Sora', sans-serif; }
+.td-sub  { font-size: .7rem; color: #9ca3af; margin-top: 1px; }
+.td-email { color: #6b7280; font-size: .8rem; }
+.td-loc { font-size: .78rem; color: #374151; font-family: 'JetBrains Mono', monospace; }
+.td-loc .no-loc { color: #9ca3af; font-family: 'Sora', sans-serif; font-size: .78rem; }
+.xp-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #fffbeb; color: #b45309;
+  font-size: .74rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 99px;
+  border: 1px solid #fde68a;
+  font-family: 'JetBrains Mono', monospace;
+}
+.xp-pill i { font-size: .72rem; color: #f59e0b; }
+.status-pill {
+  font-size: .72rem; font-weight: 700;
+  padding: 4px 11px; border-radius: 99px;
+  display: inline-block; font-family: 'Sora', sans-serif;
+}
+.sp-top  { background: #dcfce7; color: #15803d; }
+.sp-active { background: #eff6ff; color: #2563eb; }
+.sp-new  { background: #f3f4f6; color: #6b7280; }
+
+/* Action */
+.act-wrap { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.act-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border-radius: 99px;
+  font-size: .76rem; font-weight: 700; cursor: pointer;
+  text-decoration: none; border: 1.5px solid transparent;
+  font-family: 'Sora', sans-serif; transition: all .2s;
+  white-space: nowrap;
+}
+.act-btn.primary {
+  background: linear-gradient(135deg, #16a34a, #10b981);
+  color: #fff; border-color: transparent;
+  box-shadow: 0 4px 12px rgba(22,163,74,.22);
+}
+.act-btn.primary:hover { box-shadow: 0 6px 20px rgba(22,163,74,.35); transform: translateY(-1px); color: #fff; }
+.act-btn.ghost {
+  background: #fff; color: #374151; border-color: #e4ece6;
+}
+.act-btn.ghost:hover { border-color: #bbf7d0; color: #16a34a; background: #f0fdf4; }
+
+/* Empty state */
+.empty-state {
+  padding: 56px 24px; text-align: center; color: #9ca3af;
+}
+.empty-state .empty-icon { font-size: 3rem; opacity: .25; margin-bottom: 12px; }
+.empty-state p { font-size: .9rem; font-family: 'Sora', sans-serif; }
+
+/* Responsive */
+@media (max-width: 1100px) { .stat-tiles { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 700px)  { .stat-tiles { grid-template-columns: repeat(2,1fr); } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── STAT TILES ─────────────────────────────── -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-people-fill"></i></div>
+    <div class="tile-val">{{ volunteers | length }}</div>
+    <div class="tile-lbl">Total Volunteers</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-val">
+      {{ volunteers | sum(attribute='xp') if volunteers else 0 }}
+    </div>
+    <div class="tile-lbl">Combined XP</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-geo-alt-fill"></i></div>
+    <div class="tile-val">
+      {{ volunteers | selectattr('latitude') | list | length }}
+    </div>
+    <div class="tile-lbl">Location Shared</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-award-fill"></i></div>
+    <div class="tile-val">
+      {{ volunteers | selectattr('user_badges') | list | length }}
+    </div>
+    <div class="tile-lbl">Badge Earners</div>
+  </div>
+</div>
+
+<!-- ── TABLE CARD ─────────────────────────────── -->
+<div class="table-card">
+  <div class="table-card-head">
+    <div class="table-card-title">
+      <i class="bi bi-people-fill"></i>
+      Volunteers in Your Events
+      {% if volunteers %}
+      <span class="vol-count">{{ volunteers | length }}</span>
+      {% endif %}
+    </div>
+    <div class="th-spacer"></div>
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" id="searchInput" placeholder="Search by name or email…">
+    </div>
+  </div>
+
+  {% if volunteers %}
+  <table class="vol-table" id="volunteerTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Volunteer</th>
+        <th>Email</th>
+        <th>Location</th>
+        <th>XP</th>
+        <th>Status</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in volunteers %}
+      <tr>
+        <td class="td-rank">{{ "%02d" % loop.index }}</td>
+
+        <td>
+          <div class="td-user">
+            <div class="td-ava">
+              <img src="https://ui-avatars.com/api/?name={{ v.name }}&background=16a34a&color=fff&size=72"
+                   alt="{{ v.name }}"
+                   onerror="this.style.display='none'">
+            </div>
+            <div>
+              <div class="td-name">{{ v.name }}</div>
+              <div class="td-sub">{{ v.role | capitalize }}</div>
+            </div>
+          </div>
+        </td>
+
+        <td class="td-email">{{ v.email }}</td>
+
+        <td>
+          {% if v.latitude and v.longitude %}
+          <span class="td-loc">
+            📍 {{ "%.3f"|format(v.latitude) }}, {{ "%.3f"|format(v.longitude) }}
+          </span>
+          {% else %}
+          <span class="td-loc"><span class="no-loc">Not shared</span></span>
+          {% endif %}
+        </td>
+
+        <td>
+          <span class="xp-pill">
+            <i class="bi bi-lightning-charge-fill"></i>
+            {{ v.xp or 0 }} XP
+          </span>
+        </td>
+
+        <td>
+          {% if v.user_badges and v.user_badges | length > 3 %}
+          <span class="status-pill sp-top">Top Contributor</span>
+          {% elif v.user_badges and v.user_badges | length > 0 %}
+          <span class="status-pill sp-active">Active</span>
+          {% else %}
+          <span class="status-pill sp-new">New</span>
+          {% endif %}
+        </td>
+
+        <td>
+          <div class="act-wrap">
+            <a href="{{ url_for('dashboard.view_volunteer_profile', user_id=v.id) }}"
+               class="act-btn primary">
+              <i class="bi bi-person-lines-fill"></i> View Profile
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">👥</div>
+    <p>No volunteers found in your events yet.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.getElementById('searchInput').addEventListener('input', function () {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#volunteerTable tbody tr').forEach(row => {
+    const name  = row.cells[1]?.innerText.toLowerCase() || '';
+    const email = row.cells[2]?.innerText.toLowerCase() || '';
+    row.style.display = (name.includes(q) || email.includes(q)) ? '' : 'none';
+  });
+});
+</script>
+{% endblock %}

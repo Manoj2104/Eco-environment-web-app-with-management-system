@@ -1,0 +1,2242 @@
+{% extends 'base.html' %}
+{% block title %}Duplicate Event — ReEarth{% endblock %}
+{% block page_title %}Duplicate Event{% endblock %}
+{% block page_subtitle %}Events{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes pulse-green {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .4);
+    }
+
+    50% {
+      box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
+  }
+
+  @keyframes popIn {
+    from {
+      opacity: 0;
+      transform: scale(.88) translateY(12px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes checkBounce {
+    0% {
+      transform: scale(0) rotate(-20deg);
+    }
+
+    70% {
+      transform: scale(1.25) rotate(5deg);
+    }
+
+    100% {
+      transform: scale(1) rotate(0);
+    }
+  }
+
+  @keyframes slideRight {
+    from {
+      width: 0;
+    }
+
+    to {
+      width: 100%;
+    }
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .04s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .08s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .12s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .16s;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── MAIN GRID ── */
+  .dup-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    animation: fadeUp .4s .2s ease both;
+  }
+
+  /* ── CARDS ── */
+  .dup-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 12px rgba(0, 0, 0, .05);
+  }
+
+  .dup-card-head {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dup-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    flex-shrink: 0;
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .dup-card-title {
+    font-size: .92rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .dup-card-sub {
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .dup-card-body {
+    padding: 22px;
+  }
+
+  /* ── STEP INDICATOR ── */
+  .step-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 24px;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .74rem;
+    font-weight: 600;
+    font-family: 'Sora', sans-serif;
+    color: #9ca3af;
+    position: relative;
+  }
+
+  .step.active {
+    color: #16a34a;
+  }
+
+  .step.done {
+    color: #22c55e;
+  }
+
+  .step-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .72rem;
+    font-weight: 800;
+    background: #f3f4f6;
+    color: #9ca3af;
+    transition: all .25s;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .step.active .step-num {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .step.done .step-num {
+    background: #16a34a;
+    color: #fff;
+    animation: checkBounce .35s ease;
+  }
+
+  .step-connector {
+    flex: 1;
+    height: 2px;
+    background: #f3f4f6;
+    margin: 0 6px;
+    border-radius: 99px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .step-connector.done::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #22c55e;
+    border-radius: 99px;
+    animation: slideRight .4s ease both;
+  }
+
+  /* ── EVENT SELECT ── */
+  .event-search-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .event-search-wrap i.si {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .85rem;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .event-search-input {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 11px;
+    font-family: 'Sora', sans-serif;
+    font-size: .83rem;
+    color: #111827;
+    outline: none;
+    background: #f9fafb;
+    transition: all .18s;
+  }
+
+  .event-search-input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, .12);
+  }
+
+  .event-search-input::placeholder {
+    color: #9ca3af;
+  }
+
+  /* ── EVENT LIST ── */
+  .event-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 340px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #e4ece6 transparent;
+    padding-right: 2px;
+  }
+
+  .event-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .event-list::-webkit-scrollbar-thumb {
+    background: #e4ece6;
+    border-radius: 99px;
+  }
+
+  .event-item {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all .3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    min-height: 84px;
+    margin-bottom: 4px;
+  }
+
+  .event-item:hover {
+    border-color: #16a34a;
+    background: #fafcfb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, .08);
+  }
+
+  .event-item.selected {
+    border-color: #16a34a;
+    background: #f0fdf4;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .12);
+  }
+
+  .event-item.selected::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 4px;
+    background: #16a34a;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .event-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 1.4rem;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .03);
+    border: 1px solid #f1f5f9;
+  }
+
+  .event-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+
+  .event-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .event-item-title {
+    font-size: .88rem;
+    font-weight: 800;
+    color: #1e293b;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .event-item-meta {
+    font-size: .7rem;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .event-item-meta i {
+    font-size: .68rem;
+  }
+
+  .event-category-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: .58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-top: 5px;
+    background: #dcfce7;
+    color: #15803d;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .event-select-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #e4ece6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .65rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: all .2s;
+    background: #fff;
+  }
+
+  .event-item.selected .event-select-check {
+    background: #16a34a;
+    border-color: #16a34a;
+  }
+
+  .event-empty {
+    text-align: center;
+    padding: 32px 20px;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+  }
+
+  .event-empty i {
+    font-size: 2rem;
+    opacity: .25;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  /* ── FORM SECTION ── */
+  .dup-section-label {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .dup-section-label i {
+    color: #16a34a;
+    font-size: .85rem;
+  }
+
+  .dup-field {
+    margin-bottom: 14px;
+  }
+
+  .dup-label {
+    font-size: .74rem;
+    font-weight: 700;
+    color: #374151;
+    display: block;
+    margin-bottom: 5px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .dup-label .req {
+    color: #ef4444;
+    margin-left: 2px;
+  }
+
+  .dup-input,
+  .dup-select,
+  .dup-textarea {
+    width: 100%;
+    padding: 9px 14px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .83rem;
+    color: #111827;
+    outline: none;
+    background: #fff;
+    transition: all .18s;
+    appearance: none;
+  }
+
+  .dup-input:focus,
+  .dup-select:focus,
+  .dup-textarea:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, .12);
+  }
+
+  .dup-input::placeholder,
+  .dup-textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  .dup-input-icon {
+    position: relative;
+  }
+
+  .dup-input-icon .icon-l {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .85rem;
+    pointer-events: none;
+  }
+
+  .dup-input-icon .dup-input {
+    padding-left: 36px;
+  }
+
+  .dup-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 34px;
+    cursor: pointer;
+  }
+
+  .dup-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .dup-textarea {
+    resize: vertical;
+    min-height: 72px;
+  }
+
+  /* Repeat options */
+  .repeat-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .repeat-pill {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .repeat-pill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .repeat-pill:hover:not(.active) {
+    border-color: #4ade80;
+    color: #16a34a;
+  }
+
+  /* Multi-copy controls */
+  .copy-counter {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    overflow: hidden;
+    width: fit-content;
+  }
+
+  .copy-counter-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #f9fafb;
+    color: #374151;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .copy-counter-btn:hover {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .copy-counter-val {
+    width: 44px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .88rem;
+    font-weight: 800;
+    color: #111827;
+    border: none;
+    background: #fff;
+    border-left: 1px solid #e4ece6;
+    border-right: 1px solid #e4ece6;
+    outline: none;
+    padding: 8px 0;
+  }
+
+  /* Change fields toggle */
+  .change-fields {
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .change-fields.open {
+    display: block;
+    animation: fadeUp .25s ease;
+  }
+
+  /* Copy field override checkboxes */
+  .override-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .override-check {
+    width: 16px;
+    height: 16px;
+    accent-color: #16a34a;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .override-label {
+    font-size: .74rem;
+    font-weight: 600;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    flex-shrink: 0;
+    width: 80px;
+  }
+
+  .override-input {
+    flex: 1;
+    padding: 7px 12px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 8px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #111827;
+    outline: none;
+    background: #fff;
+    transition: all .18s;
+    opacity: .4;
+    pointer-events: none;
+  }
+
+  .override-input.enabled {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .override-input.enabled:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  /* ── PREVIEW PANEL ── */
+  .preview-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Preview card */
+  .preview-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 12px rgba(0, 0, 0, .05);
+    overflow: hidden;
+    transition: box-shadow .22s;
+  }
+
+  .preview-card:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .1);
+  }
+
+  .preview-thumb {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .preview-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+
+  .preview-card:hover .preview-thumb img {
+    transform: scale(1.04);
+  }
+
+  .preview-thumb-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+  }
+
+  .preview-thumb-placeholder i {
+    font-size: 2.5rem;
+    opacity: .3;
+  }
+
+  .preview-status-ribbon {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(22, 163, 74, .9);
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    backdrop-filter: blur(4px);
+  }
+
+  .preview-body {
+    padding: 18px 20px;
+  }
+
+  .preview-title {
+    font-size: .95rem;
+    font-weight: 800;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 10px;
+    line-height: 1.35;
+  }
+
+  .preview-meta-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .preview-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .74rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .preview-meta i {
+    color: #16a34a;
+    width: 14px;
+    flex-shrink: 0;
+    font-size: .82rem;
+  }
+
+  .preview-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .preview-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: .64rem;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .pc-green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .pc-blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .pc-amber {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .preview-divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 12px 0;
+  }
+
+  .preview-copy-count {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .78rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .pcc-label {
+    color: #6b7280;
+  }
+
+  .pcc-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    color: #16a34a;
+    font-size: .88rem;
+  }
+
+  /* Copy History panel */
+  .history-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 12px rgba(0, 0, 0, .05);
+  }
+
+  .history-head {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .history-title {
+    font-size: .84rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .history-title i {
+    color: #16a34a;
+  }
+
+  .history-clear-btn {
+    font-size: .72rem;
+    font-weight: 600;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: color .18s;
+  }
+
+  .history-clear-btn:hover {
+    color: #ef4444;
+  }
+
+  .history-list {
+    padding: 10px 12px;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #e4ece6 transparent;
+  }
+
+  .history-item {
+    display: flex;
+    padding: 12px 18px;
+    border-bottom: 1px solid #f3f4f6;
+    align-items: center;
+    gap: 12px;
+    transition: background .2s;
+  }
+
+  .history-item:hover {
+    background: #fafcfb;
+  }
+
+  .history-item:last-child {
+    border-bottom: none;
+  }
+
+  .history-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .hd-green {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, .15);
+  }
+
+  .hd-blue {
+    background: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+  }
+
+  .hd-amber {
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, .15);
+  }
+
+  .history-item-title {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .history-item-time {
+    font-size: .68rem;
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .history-item-del {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .2s;
+    opacity: 0;
+  }
+
+  .history-item:hover .history-item-del {
+    opacity: 1;
+  }
+
+  .history-item-del:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  .history-empty {
+    padding: 20px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: .78rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* ── SUBMIT BAR ── */
+  .submit-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 300px;
+    right: 32px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    z-index: 100;
+    transition: all .4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @media (max-width: 991px) {
+    .submit-bar {
+      left: 24px;
+    }
+  }
+
+  .filter-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .72rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    user-select: none;
+    margin-top: 4px;
+    padding: 2px 4px;
+    transition: color .2s;
+  }
+
+  .filter-toggle-wrap:hover {
+    color: #16a34a;
+  }
+
+  .filter-toggle-input {
+    width: 14px;
+    height: 14px;
+    accent-color: #16a34a;
+    cursor: pointer;
+  }
+
+  .submit-info {
+    font-size: .78rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .submit-info i {
+    color: #16a34a;
+  }
+
+  .submit-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn-cancel {
+    height: 38px;
+    padding: 0 18px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+  }
+
+  .btn-cancel:hover {
+    border-color: #9ca3af;
+    color: #374151;
+  }
+
+  .btn-preview-link {
+    height: 38px;
+    padding: 0 18px;
+    border-radius: 99px;
+    border: 1.5px solid #bbf7d0;
+    background: #f0fdf4;
+    color: #16a34a;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .18s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-preview-link:hover {
+    background: #dcfce7;
+  }
+
+  .btn-duplicate {
+    height: 38px;
+    padding: 0 24px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .84rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .btn-duplicate:hover:not(:disabled) {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .btn-duplicate:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* ── PROGRESS LOADER ── */
+  .dup-loader {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    background: #f0fdf4;
+    border-radius: 12px;
+    margin-top: 16px;
+  }
+
+  .dup-loader.show {
+    display: flex;
+  }
+
+  .loader-spinner {
+    width: 22px;
+    height: 22px;
+    border: 2.5px solid #dcfce7;
+    border-top-color: #16a34a;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .loader-text {
+    font-size: .82rem;
+    color: #16a34a;
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+  }
+
+  /* ── SUCCESS CARD ── */
+  .success-panel {
+    display: none;
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 36px 28px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 12px rgba(0, 0, 0, .05);
+  }
+
+  .success-panel.show {
+    display: block;
+    animation: popIn .4s ease;
+  }
+
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    color: #fff;
+    font-size: 1.8rem;
+    box-shadow: 0 8px 28px rgba(22, 163, 74, .3);
+    animation: checkBounce .5s ease .1s both;
+  }
+
+  .success-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 6px;
+  }
+
+  .success-sub {
+    font-size: .8rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 20px;
+  }
+
+  .success-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .success-btn {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 99px;
+    border: none;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .2s;
+  }
+
+  .sb-primary {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+  }
+
+  .sb-primary:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .sb-outline {
+    background: #fff;
+    border: 1.5px solid #e4ece6 !important;
+    color: #374151;
+    text-decoration: none;
+  }
+
+  .sb-outline:hover {
+    border-color: #9ca3af !important;
+  }
+
+  /* ── TOAST ── */
+  .dup-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #111827;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .dup-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .dup-toast i {
+    color: #4ade80;
+  }
+
+  .dup-toast.error i {
+    color: #f87171;
+  }
+
+  /* ── XP SHIMMER BAR ── */
+  .xp-fill-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .xp-fill-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .45), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2.2s infinite;
+  }
+
+  @media (max-width: 1100px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 960px) {
+    .dup-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .page-content {
+      padding: 16px;
+    }
+
+    .dup-grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-files"></i></div>
+    <div class="tile-val" id="tileTotal">{{ upcoming_events|length }}</div>
+    <div class="tile-lbl">Available Events</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-calendar-event-fill"></i></div>
+    <div class="tile-val" id="tileDupeCount">0</div>
+    <div class="tile-lbl">Duplicated Today</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="tile-val" id="tileSelected">—</div>
+    <div class="tile-lbl">Selected Event</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-copy"></i></div>
+    <div class="tile-val" id="tileCopies">1</div>
+    <div class="tile-lbl">Copies to Create</div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="dup-layout" id="mainLayout">
+
+  <!-- ── LEFT: Form ── -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+
+    <!-- Step bar -->
+    <div class="dup-card">
+      <div class="dup-card-body" style="padding:18px 22px;">
+        <div class="step-bar">
+          <div class="step active" id="step1">
+            <div class="step-num" id="step1Num">1</div>
+            <span>Choose Event</span>
+          </div>
+          <div class="step-connector" id="conn1"></div>
+          <div class="step active" id="step2">
+            <div class="step-num" id="step2Num">2</div>
+            <span>Configure Copy</span>
+          </div>
+          <div class="step-connector" id="conn2"></div>
+          <div class="step" id="step3">
+            <div class="step-num" id="step3Num">3</div>
+            <span>Duplicate</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: Choose Event -->
+    <div class="dup-card" id="selectCard">
+      <div class="dup-card-head">
+        <div class="dup-card-icon"><i class="bi bi-calendar3"></i></div>
+        <div>
+          <div class="dup-card-title">Select Source Event</div>
+          <div class="dup-card-sub">Choose the event you want to duplicate</div>
+        </div>
+      </div>
+      <div class="dup-card-body">
+
+        <!-- Search -->
+        <div class="event-search-wrap">
+          <i class="bi bi-search si"></i>
+          <input type="text" class="event-search-input" id="eventSearch" placeholder="Search your events...">
+        </div>
+
+        <!-- Sort + Filter row -->
+        <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+          <select class="dup-select" id="categoryFilter"
+            style="flex:1; min-width:120px; font-size:.76rem; padding:7px 30px 7px 10px;">
+            <option value="">All Categories</option>
+            <option value="Cleanup">Cleanup</option>
+            <option value="Plantation">Plantation</option>
+            <option value="Awareness">Awareness</option>
+            <option value="Survey">Survey</option>
+            <option value="Campaign">Campaign</option>
+          </select>
+          <select class="dup-select" id="eventSort"
+            style="flex:1; min-width:120px; font-size:.76rem; padding:7px 30px 7px 10px;">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </div>
+
+        <!-- Utility Filters -->
+        <div style="margin-bottom:14px; padding-left:2px;">
+          <label class="filter-toggle-wrap">
+            <input type="checkbox" class="filter-toggle-input" id="hideCopies" onchange="applyListFilter()">
+            <span>Hide duplicated events (copies)</span>
+          </label>
+        </div>
+
+        <!-- List -->
+        <div class="event-list" id="eventList">
+          {% if upcoming_events %}
+          {% for event in upcoming_events %}
+          <div class="event-item" data-id="{{ event.id }}" data-title="{{ event.title }}"
+            data-date="{{ event.date.strftime('%Y-%m-%d') }}"
+            data-date-display="{{ event.date.strftime('%d %b %Y, %I:%M %p') }}"
+            data-location="{{ event.location or '' }}" data-category="{{ event.category or 'General' }}"
+            data-desc="{{ (event.description or '')[:120] }}" data-xp="{{ event.xp_score or 0 }}"
+            data-thumbnail="{{ event.thumbnail or '' }}" onclick="selectEvent(this)">
+            <div class="event-thumb">
+              {% if event.thumbnail %}
+              <img src="{{ url_for('static', filename='uploads/' ~ event.thumbnail) }}" alt="{{ event.title }}"
+                onerror="this.parentElement.innerHTML='<i class=\'bi bi-calendar-event\'></i>'">
+              {% else %}
+              <i class="bi bi-calendar-event"></i>
+              {% endif %}
+            </div>
+            <div class="event-info">
+              <div class="event-item-title">{{ event.title }}</div>
+              <div class="event-item-meta">
+                <i class="bi bi-calendar3"></i>
+                {{ event.date.strftime('%d %b %Y') }}
+                <i class="bi bi-geo-alt-fill"></i>
+                {{ event.location or 'No location' }}
+              </div>
+              <span class="event-category-chip">{{ event.category or 'General' }}</span>
+            </div>
+            <div class="event-select-check"><i class="bi bi-check"></i></div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="event-empty">
+            <i class="bi bi-calendar-x"></i>
+            No upcoming events found. Create one first!
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Step 2: Configure Copy -->
+    <div class="dup-card" id="configCard">
+      <div class="dup-card-head">
+        <div class="dup-card-icon"><i class="bi bi-sliders"></i></div>
+        <div>
+          <div class="dup-card-title">Configure Copy</div>
+          <div class="dup-card-sub">Customise details for the new event copy</div>
+        </div>
+      </div>
+      <div class="dup-card-body">
+
+        <div class="dup-section-label">
+          <i class="bi bi-arrow-repeat"></i> Repeat Options
+        </div>
+
+        <!-- Repeat mode -->
+        <div class="dup-field">
+          <label class="dup-label">Schedule Pattern</label>
+          <div class="repeat-pills" id="repeatPills">
+            <button class="repeat-pill active" data-val="none">One-Time</button>
+            <button class="repeat-pill" data-val="daily">Daily</button>
+            <button class="repeat-pill" data-val="weekly">Weekly</button>
+            <button class="repeat-pill" data-val="monthly">Monthly</button>
+            <button class="repeat-pill" data-val="custom">Custom</button>
+          </div>
+        </div>
+
+        <!-- Copies count -->
+        <div class="dup-field">
+          <label class="dup-label">Number of Copies</label>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="copy-counter">
+              <button class="copy-counter-btn" id="decBtn" onclick="changeCopies(-1)"><i
+                  class="bi bi-dash"></i></button>
+              <input type="number" class="copy-counter-val" id="copiesInput" value="1" min="1" max="20" readonly>
+              <button class="copy-counter-btn" id="incBtn" onclick="changeCopies(1)"><i class="bi bi-plus"></i></button>
+            </div>
+            <div style="font-size:.72rem; color:#9ca3af; font-family:'Sora',sans-serif; line-height:1.5;">
+              Up to <strong style="color:#374151;">20 copies</strong> at once.<br>
+              Each copy offset by the schedule pattern.
+            </div>
+          </div>
+        </div>
+
+        <div class="dup-section-label" style="margin-top:20px;">
+          <i class="bi bi-pencil-square"></i> Field Overrides
+        </div>
+        <p style="font-size:.72rem; color:#9ca3af; font-family:'Sora',sans-serif; margin-bottom:12px; margin-top:-6px;">
+          Enable checkboxes to override specific fields for all copies.
+        </p>
+
+        <!-- Override rows -->
+        <div class="override-row">
+          <input type="checkbox" class="override-check" id="chkTitle" onchange="toggleOverride(this,'titleOverride')">
+          <label class="override-label" for="chkTitle">Title</label>
+          <input type="text" class="override-input" id="titleOverride" placeholder="New title for copies...">
+        </div>
+        <div class="override-row">
+          <input type="checkbox" class="override-check" id="chkDate" onchange="toggleOverride(this,'dateOverride')">
+          <label class="override-label" for="chkDate">Date</label>
+          <input type="datetime-local" class="override-input" id="dateOverride">
+        </div>
+        <div class="override-row">
+          <input type="checkbox" class="override-check" id="chkLocation"
+            onchange="toggleOverride(this,'locationOverride')">
+          <label class="override-label" for="chkLocation">Location</label>
+          <input type="text" class="override-input" id="locationOverride" placeholder="New location...">
+        </div>
+        <div class="override-row">
+          <input type="checkbox" class="override-check" id="chkPasscode"
+            onchange="toggleOverride(this,'passcodeOverride')">
+          <label class="override-label" for="chkPasscode">Passcode</label>
+          <input type="text" class="override-input" id="passcodeOverride" placeholder="New passcode...">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Loader -->
+    <div class="dup-loader" id="dupLoader">
+      <div class="loader-spinner"></div>
+      <span class="loader-text" id="loaderText">Duplicating event...</span>
+    </div>
+
+    <!-- Success panel -->
+    <div class="success-panel" id="successPanel">
+      <div class="success-icon"><i class="bi bi-check2-circle"></i></div>
+      <div class="success-title" id="successTitle">Event Duplicated!</div>
+      <div class="success-sub" id="successSub">Your new event has been created successfully.</div>
+      <div class="success-actions">
+        <button class="success-btn sb-primary" onclick="duplicateAnother()">
+          <i class="bi bi-plus-circle"></i> Duplicate Another
+        </button>
+        <a href="{{ url_for('events.manage_events') }}" class="success-btn sb-outline">
+          <i class="bi bi-folder2-open"></i> Manage Events
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT: Preview + History ── -->
+  <div class="preview-panel">
+
+    <!-- Preview Card -->
+    <div class="preview-card" id="previewCard">
+      <div class="preview-thumb" id="previewThumb">
+        <div class="preview-thumb-placeholder" id="thumbPlaceholder">
+          <i class="bi bi-image"></i>
+          <span>Select an event to preview</span>
+        </div>
+        <img id="previewImg" src="" alt="" style="display:none;">
+        <div class="preview-status-ribbon" id="previewRibbon" style="display:none;">COPY</div>
+      </div>
+      <div class="preview-body">
+        <div class="preview-title" id="previewTitle" style="color:#9ca3af; font-weight:400; font-size:.82rem;">
+          No event selected yet
+        </div>
+        <div class="preview-meta-list" id="previewMeta" style="display:none;">
+          <div class="preview-meta"><i class="bi bi-calendar3"></i><span id="previewDate">—</span></div>
+          <div class="preview-meta"><i class="bi bi-geo-alt-fill"></i><span id="previewLocation">—</span></div>
+          <div class="preview-meta"><i class="bi bi-tag-fill"></i><span id="previewCategory">—</span></div>
+        </div>
+        <div class="preview-chips" id="previewChips" style="display:none;">
+          <span class="preview-chip pc-green"><i class="bi bi-lightning-charge-fill"></i> <span id="previewXp">0</span>
+            XP</span>
+          <span class="preview-chip pc-blue"><i class="bi bi-copy"></i> <span id="previewCopyCount">1</span> cop<span
+              id="previewCopyWord">y</span></span>
+          <span class="preview-chip pc-amber"><i class="bi bi-arrow-repeat"></i> <span
+              id="previewRepeat">One-Time</span></span>
+        </div>
+        <div id="previewDescWrap" style="display:none;">
+          <div class="preview-divider"></div>
+          <div id="previewDesc"
+            style="font-size:.74rem; color:#6b7280; line-height:1.6; font-family:'Sora',sans-serif;"></div>
+        </div>
+        <div class="preview-divider"></div>
+        <div class="preview-copy-count">
+          <span class="pcc-label">Selected event ID</span>
+          <span class="pcc-val" id="previewId">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Copy link -->
+    <div class="dup-card" id="copyLinkCard" style="display:none;">
+      <div class="dup-card-body" style="padding:16px 20px;">
+        <div class="dup-section-label" style="margin-bottom:10px;">
+          <i class="bi bi-link-45deg"></i> Original Event Link
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="text" class="dup-input" id="eventLinkInput" readonly
+            style="font-size:.72rem; color:#6b7280; flex:1;">
+          <button class="btn-preview-link" style="flex-shrink:0;" onclick="copyEventLink()">
+            <i class="bi bi-clipboard"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="history-card">
+      <div class="history-head">
+        <div class="history-title"><i class="bi bi-clock-history"></i> Recent Duplicates</div>
+        <button class="history-clear-btn" onclick="clearHistory()">Clear all</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty" id="historyEmpty">No duplications yet this session</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SUBMIT BAR -->
+<div class="submit-bar" id="submitBar">
+  <div class="submit-info">
+    <i class="bi bi-info-circle-fill"></i>
+    <span id="submitInfoText">Select an event above to begin duplicating.</span>
+  </div>
+  <div class="submit-actions">
+    <a href="{{ url_for('events.manage_events') }}" class="btn-cancel">
+      <i class="bi bi-x"></i> Cancel
+    </a>
+    <button class="btn-preview-link" id="previewLinkBtn" onclick="openOriginal()" style="display:none;">
+      <i class="bi bi-eye"></i> Preview Original
+    </button>
+    <button class="btn-duplicate" id="dupBtn" disabled onclick="doDuplicate()">
+      <i class="bi bi-copy"></i> Duplicate Event
+    </button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="dup-toast" id="dupToast">
+  <i class="bi bi-check-circle-fill"></i>
+  <span id="dupToastMsg">Done!</span>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    /* ─── State ─────────────────────────────────────────────── */
+    let selectedEvent = null;
+    let copies = 1;
+    let repeatMode = 'none';
+    let historyItems = JSON.parse(sessionStorage.getItem('dupHistory') || '[]');
+    let dupeCountToday = parseInt(sessionStorage.getItem('dupeCount') || '0');
+
+    /* ─── Init ──────────────────────────────────────────────── */
+    updateHistoryUI();
+    document.getElementById('tileDupeCount').textContent = dupeCountToday;
+
+    /* ─── Event Selection ───────────────────────────────────── */
+    window.selectEvent = function (el) {
+      document.querySelectorAll('.event-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+
+      selectedEvent = {
+        id: el.dataset.id,
+        title: el.dataset.title,
+        date: el.dataset.date,
+        dateFmt: el.dataset.dateDisplay,
+        location: el.dataset.location,
+        category: el.dataset.category,
+        desc: el.dataset.desc,
+        xp: el.dataset.xp,
+        thumb: el.dataset.thumbnail,
+      };
+
+      updatePreview();
+      updateSubmitBar();
+
+      /* Update tile */
+      const shortTitle = selectedEvent.title.length > 10
+        ? selectedEvent.title.slice(0, 10) + '…'
+        : selectedEvent.title;
+      document.getElementById('tileSelected').textContent = shortTitle;
+      document.getElementById('dupBtn').disabled = false;
+      document.getElementById('previewLinkBtn').style.display = '';
+      document.getElementById('copyLinkCard').style.display = '';
+
+      const base = window.location.origin;
+      document.getElementById('eventLinkInput').value = `${base}/view-event/${selectedEvent.id}`;
+
+      /* Advance step indicator */
+      setStep(2);
+    };
+
+    /* ─── Preview ───────────────────────────────────────────── */
+    function updatePreview() {
+      if (!selectedEvent) return;
+
+      document.getElementById('previewTitle').textContent = selectedEvent.title;
+      document.getElementById('previewTitle').style.cssText = 'font-size:.95rem; font-weight:800; color:#111827;';
+      document.getElementById('previewDate').textContent = selectedEvent.dateFmt;
+      document.getElementById('previewLocation').textContent = selectedEvent.location || '—';
+      document.getElementById('previewCategory').textContent = selectedEvent.category;
+      document.getElementById('previewXp').textContent = selectedEvent.xp;
+      document.getElementById('previewId').textContent = '#' + selectedEvent.id;
+      document.getElementById('previewMeta').style.display = '';
+      document.getElementById('previewChips').style.display = '';
+      document.getElementById('previewRibbon').style.display = '';
+
+      if (selectedEvent.desc) {
+        document.getElementById('previewDescWrap').style.display = '';
+        document.getElementById('previewDesc').textContent = selectedEvent.desc + (selectedEvent.desc.length >= 120 ? '…' : '');
+      } else {
+        document.getElementById('previewDescWrap').style.display = 'none';
+      }
+
+      /* Thumbnail */
+      const img = document.getElementById('previewImg');
+      const ph = document.getElementById('thumbPlaceholder');
+      if (selectedEvent.thumb) {
+        img.src = `/static/uploads/${selectedEvent.thumb}`;
+        img.style.display = '';
+        ph.style.display = 'none';
+      } else {
+        img.style.display = 'none';
+        ph.style.display = '';
+      }
+
+      updatePreviewCopyChip();
+    }
+
+    function updatePreviewCopyChip() {
+      document.getElementById('previewCopyCount').textContent = copies;
+      document.getElementById('previewCopyWord').textContent = copies === 1 ? 'y' : 'ies';
+      document.getElementById('previewRepeat').textContent = repeatMode === 'none' ? 'One-Time' : capitalize(repeatMode);
+      document.getElementById('tileCopies').textContent = copies;
+    }
+
+    /* ─── Submit bar text ───────────────────────────────────── */
+    function updateSubmitBar() {
+      if (!selectedEvent) return;
+      document.getElementById('submitInfoText').innerHTML =
+        `Duplicating <strong style="color:#111827">${escHtml(selectedEvent.title)}</strong> &times; ${copies} cop${copies === 1 ? 'y' : 'ies'}.`;
+    }
+
+    /* ─── Copies counter ────────────────────────────────────── */
+    window.changeCopies = function (delta) {
+      copies = Math.min(20, Math.max(1, copies + delta));
+      document.getElementById('copiesInput').value = copies;
+      document.getElementById('tileCopies').textContent = copies;
+      updatePreviewCopyChip();
+      updateSubmitBar();
+    };
+
+    /* ─── Repeat pills ──────────────────────────────────────── */
+    document.querySelectorAll('.repeat-pill').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.repeat-pill').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        repeatMode = this.dataset.val;
+        updatePreviewCopyChip();
+        updateSubmitBar();
+      });
+    });
+
+    /* ─── Override checkboxes ───────────────────────────────── */
+    window.toggleOverride = function (chk, inputId) {
+      const inp = document.getElementById(inputId);
+      if (chk.checked) {
+        inp.classList.add('enabled');
+      } else {
+        inp.classList.remove('enabled');
+        inp.value = '';
+      }
+    };
+
+    /* ─── Search + Sort + Filter ────────────────────────────── */
+    const allItems = [...document.querySelectorAll('.event-item')];
+
+    function applyListFilter() {
+      const q = document.getElementById('eventSearch').value.toLowerCase();
+      const cat = document.getElementById('categoryFilter').value;
+      const srt = document.getElementById('eventSort').value;
+      const hideCopies = document.getElementById('hideCopies').checked;
+
+      let items = [...allItems];
+
+      /* Filter */
+      items.forEach(item => {
+        const titleRaw = item.dataset.title;
+        const matchQ = titleRaw.toLowerCase().includes(q);
+        const matchCat = !cat || item.dataset.category === cat;
+        const isCopy = titleRaw.includes('(Copy');
+        const matchHide = !hideCopies || !isCopy;
+
+        item.style.display = (matchQ && matchCat && matchHide) ? '' : 'none';
+      });
+
+      /* Sort */
+      const visible = items.filter(i => i.style.display !== 'none');
+      if (srt === 'newest') {
+        visible.sort((a, b) => b.dataset.date.localeCompare(a.dataset.date));
+      } else if (srt === 'oldest') {
+        visible.sort((a, b) => a.dataset.date.localeCompare(b.dataset.date));
+      } else {
+        visible.sort((a, b) => a.dataset.title.localeCompare(b.dataset.title));
+      }
+      const list = document.getElementById('eventList');
+      visible.forEach(i => list.appendChild(i));
+    }
+
+    document.getElementById('eventSearch').addEventListener('input', applyListFilter);
+    document.getElementById('categoryFilter').addEventListener('change', applyListFilter);
+    document.getElementById('eventSort').addEventListener('change', applyListFilter);
+
+    /* ─── Duplicate action ──────────────────────────────────── */
+    window.doDuplicate = function () {
+      if (!selectedEvent) return;
+
+      const titleOvr = document.getElementById('chkTitle').checked ? document.getElementById('titleOverride').value : null;
+      const dateOvr = document.getElementById('chkDate').checked ? document.getElementById('dateOverride').value : null;
+      const locationOvr = document.getElementById('chkLocation').checked ? document.getElementById('locationOverride').value : null;
+      const passcodeOvr = document.getElementById('chkPasscode').checked ? document.getElementById('passcodeOverride').value : null;
+
+      /* UI: show loader */
+      document.getElementById('dupBtn').disabled = true;
+      document.getElementById('dupLoader').classList.add('show');
+      document.getElementById('submitBar').style.opacity = '.5';
+      document.getElementById('submitBar').style.pointerEvents = 'none';
+
+      let completed = 0;
+      const total = copies;
+      const errors = [];
+
+      function doOne(i) {
+        if (i >= total) {
+          finishDuplicate(total - errors.length, errors);
+          return;
+        }
+
+        /* Calculate offset date */
+        let offsetDate = selectedEvent.date;
+        if (dateOvr) {
+          offsetDate = dateOvr.replace('T', ' ').slice(0, 16);
+        } else if (repeatMode !== 'none' && i > 0) {
+          const base = new Date(selectedEvent.date);
+          if (repeatMode === 'daily') base.setDate(base.getDate() + i);
+          if (repeatMode === 'weekly') base.setDate(base.getDate() + i * 7);
+          if (repeatMode === 'monthly') base.setMonth(base.getMonth() + i);
+          offsetDate = base.toISOString().slice(0, 10);
+        }
+
+        document.getElementById('loaderText').textContent =
+          `Creating copy ${i + 1} of ${total}...`;
+
+        fetch(`/api/duplicate-event/${selectedEvent.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: titleOvr || (copies > 1 ? `${selectedEvent.title} (Copy ${i + 1})` : `${selectedEvent.title} (Copy)`),
+            date: offsetDate,
+            location: locationOvr || selectedEvent.location,
+            passcode: passcodeOvr || undefined
+          })
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.new_id || data.message) {
+              completed++;
+              addHistory(data.new_id, titleOvr || (copies > 1 ? `${selectedEvent.title} (Copy ${i + 1})` : `${selectedEvent.title} (Copy)`), offsetDate, selectedEvent.category);
+            } else {
+              errors.push(data.error || 'Unknown error');
+            }
+            doOne(i + 1);
+          })
+          .catch(err => {
+            errors.push(err.message);
+            doOne(i + 1);
+          });
+      }
+
+      doOne(0);
+    };
+
+    function finishDuplicate(successCount, errors) {
+      const loader = document.getElementById('dupLoader');
+      const sBar = document.getElementById('submitBar');
+      const mLayout = document.getElementById('mainLayout');
+
+      if (loader) loader.classList.remove('show');
+      if (sBar) {
+        sBar.style.opacity = '';
+        sBar.style.pointerEvents = '';
+      }
+
+      if (successCount > 0) {
+        /* Update session counts */
+        dupeCountToday += successCount;
+        sessionStorage.setItem('dupeCount', dupeCountToday);
+        const tile = document.getElementById('tileDupeCount');
+        if (tile) tile.textContent = dupeCountToday;
+
+        /* Show success */
+        if (mLayout) mLayout.style.display = 'none';
+        if (sBar) sBar.style.display = 'none';
+        const sp = document.getElementById('successPanel');
+        if (sp) {
+          sp.style.display = '';
+          sp.classList.add('show');
+        }
+        
+        const st = document.getElementById('successTitle');
+        if (st) st.textContent = successCount === 1 ? 'Event Duplicated!' : `${successCount} Events Created!`;
+        
+        const ss = document.getElementById('successSub');
+        if (ss) ss.textContent = `${successCount} cop${successCount === 1 ? 'y' : 'ies'} of "${selectedEvent ? selectedEvent.title : 'Event'}" ha${successCount === 1 ? 's' : 've'} been created.`;
+
+        setStep(3, true);
+        showToast(`✓ ${successCount} event${successCount > 1 ? 's' : ''} duplicated successfully`);
+      } else {
+        const dBtn = document.getElementById('dupBtn');
+        if (dBtn) dBtn.disabled = false;
+        showToast(`Duplication failed: ${errors[0] || 'Unknown error'}`, true);
+      }
+
+      if (errors.length > 0 && successCount > 0) {
+        showToast(`${errors.length} cop${errors.length > 1 ? 'ies' : 'y'} failed`, true);
+      }
+    }
+
+    /* ─── Duplicate Another ─────────────────────────────────── */
+    window.duplicateAnother = function () {
+      const ml = document.getElementById('mainLayout');
+      const sb = document.getElementById('submitBar');
+      if (ml) ml.style.display = '';
+      if (sb) sb.style.display = '';
+      const sp = document.getElementById('successPanel');
+      if (sp) {
+        sp.classList.remove('show');
+        sp.style.display = 'none';
+      }
+      document.querySelectorAll('.event-item').forEach(i => i.classList.remove('selected'));
+      selectedEvent = null;
+      copies = 1;
+      const ci = document.getElementById('copiesInput');
+      if (ci) ci.value = 1;
+      const tc = document.getElementById('tileCopies');
+      if (tc) tc.textContent = 1;
+      const ts = document.getElementById('tileSelected');
+      if (ts) ts.textContent = '—';
+      const db = document.getElementById('dupBtn');
+      if (db) db.disabled = true;
+      const plb = document.getElementById('previewLinkBtn');
+      if (plb) plb.style.display = 'none';
+      const clc = document.getElementById('copyLinkCard');
+      if (clc) clc.style.display = 'none';
+      const pt = document.getElementById('previewTitle');
+      if (pt) {
+        pt.textContent = 'No event selected yet';
+        pt.style.cssText = 'font-size:.82rem; font-weight:400; color:#9ca3af;';
+      }
+      const pm = document.getElementById('previewMeta');
+      if (pm) pm.style.display = 'none';
+      const pc = document.getElementById('previewChips');
+      if (pc) pc.style.display = 'none';
+      const pr = document.getElementById('previewRibbon');
+      if (pr) pr.style.display = 'none';
+      const pi = document.getElementById('previewImg');
+      if (pi) pi.style.display = 'none';
+      const tph = document.getElementById('thumbPlaceholder');
+      if (tph) tph.style.display = '';
+      const sit = document.getElementById('submitInfoText');
+      if (sit) sit.textContent = 'Select an event above to begin duplicating.';
+      setStep(1);
+    };
+
+    /* ─── Copy event link ───────────────────────────────────── */
+    window.copyEventLink = function () {
+      const val = document.getElementById('eventLinkInput').value;
+      navigator.clipboard.writeText(val).then(() => {
+        showToast('Link copied to clipboard!');
+      }).catch(() => {
+        showToast('Could not copy link', true);
+      });
+    };
+
+    window.openOriginal = function () {
+      if (selectedEvent) window.open(`/view-event/${selectedEvent.id}`, '_blank');
+    };
+
+    /* ─── Step indicator ─────────────────────────────────────── */
+    function setStep(step, done = false) {
+      /* Reset */
+      [1, 2, 3].forEach(s => {
+        const el = document.getElementById(`step${s}`);
+        el.classList.remove('active', 'done');
+        document.getElementById(`step${s}Num`).innerHTML = s;
+      });
+      const c1 = document.getElementById('conn1');
+      const c2 = document.getElementById('conn2');
+      c1.classList.remove('done'); c2.classList.remove('done');
+
+      if (step >= 1) document.getElementById('step1').classList.add(step > 1 ? 'done' : 'active');
+      if (step >= 2) document.getElementById('step2').classList.add(step > 2 ? 'done' : 'active');
+      if (step >= 3) document.getElementById('step3').classList.add(done ? 'done' : 'active');
+      if (step > 1) { c1.classList.add('done'); document.getElementById('step1Num').innerHTML = '<i class="bi bi-check"></i>'; }
+      if (step > 2) { c2.classList.add('done'); document.getElementById('step2Num').innerHTML = '<i class="bi bi-check"></i>'; }
+      if (done) document.getElementById('step3Num').innerHTML = '<i class="bi bi-check"></i>';
+    }
+
+    /* ─── History ────────────────────────────────────────────── */
+    function addHistory(id, title, date, category) {
+      historyItems.unshift({ 
+        id, 
+        title, 
+        date, 
+        category, 
+        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) 
+      });
+      if (historyItems.length > 20) historyItems.pop();
+      sessionStorage.setItem('dupHistory', JSON.stringify(historyItems));
+      updateHistoryUI();
+    }
+
+    window.deleteCopy = function(id, btn) {
+      if (!confirm('Are you sure you want to delete this specific copy?')) return;
+      
+      const row = btn.closest('.history-item');
+      row.style.opacity = '.4';
+      row.style.pointerEvents = 'none';
+
+      fetch(`/api/delete-event/${id}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            historyItems = historyItems.filter(item => item.id != id);
+            sessionStorage.setItem('dupHistory', JSON.stringify(historyItems));
+            updateHistoryUI();
+            showToast('✓ Event deleted successfully');
+          } else {
+            row.style.opacity = '';
+            row.style.pointerEvents = '';
+            showToast('Failed to delete: ' + (data.error || 'Unknown'), true);
+          }
+        })
+        .catch(err => {
+          row.style.opacity = '';
+          row.style.pointerEvents = '';
+          showToast('Error: ' + err.message, true);
+        });
+    };
+
+    window.clearHistory = function () {
+      historyItems = [];
+      sessionStorage.removeItem('dupHistory');
+      updateHistoryUI();
+    };
+
+    function updateHistoryUI() {
+      const list = document.getElementById('historyList');
+      const empty = document.getElementById('historyEmpty');
+      if (!list) return;
+
+      /* Safely remove old items without touching historyEmpty */
+      Array.from(list.children).forEach(child => {
+        if (!child.classList.contains('history-empty')) {
+          list.removeChild(child);
+        }
+      });
+
+      if (historyItems.length === 0) {
+        if (empty) empty.style.display = '';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+
+      const colors = ['hd-green', 'hd-blue', 'hd-amber'];
+      historyItems.slice(0, 10).forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+        <span class="history-dot ${colors[i % 3]}"></span>
+        <div class="history-item-title" title="${item.title}">${escHtml(item.title)}</div>
+        <div class="history-item-time">${item.time}</div>
+        <button class="history-item-del" onclick="deleteCopy('${item.id}', this)" title="Delete this copy">
+          <i class="bi bi-trash3"></i>
+        </button>`;
+        list.appendChild(div);
+      });
+    }
+
+    /* ─── Toast ─────────────────────────────────────────────── */
+    let toastTimer;
+    function showToast(msg, isError = false) {
+      const el = document.getElementById('dupToast');
+      const ic = el.querySelector('i');
+      document.getElementById('dupToastMsg').textContent = msg;
+      ic.className = isError ? 'bi bi-exclamation-circle-fill' : 'bi bi-check-circle-fill';
+      el.className = `dup-toast show${isError ? ' error' : ''}`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    /* ─── Helpers ────────────────────────────────────────────── */
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  });
+</script>
+{% endblock %}

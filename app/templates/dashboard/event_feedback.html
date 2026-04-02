@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="text-center mb-4">
+    <h2 class="text-primary">📝 Event Feedback</h2>
+    <p class="text-muted">Tell us how your EcoNova event experience was!</p>
+    <hr class="w-25 mx-auto border-primary opacity-50">
+  </div>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+          {{ message }}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <form method="post" enctype="multipart/form-data" class="card shadow-lg border-primary p-4 mx-auto" style="max-width: 650px;">
+    <!-- Event name dropdown (if you have a list of events from backend) -->
+    <div class="mb-3">
+      <label class="form-label">🌿 Select Event</label>
+      <select name="event_name" class="form-select" required>
+        <option value="">Choose your event</option>
+        {% for event in events %}
+          <option value="{{ event.name }}">{{ event.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Rating -->
+    <div class="mb-3">
+      <label class="form-label">⭐ Overall Rating</label>
+      <select name="rating" class="form-select" required>
+        <option value="">Select rating</option>
+        <option value="5">🌟🌟🌟🌟🌟 - Excellent</option>
+        <option value="4">🌟🌟🌟🌟 - Good</option>
+        <option value="3">🌟🌟🌟 - Average</option>
+        <option value="2">🌟🌟 - Poor</option>
+        <option value="1">🌟 - Bad</option>
+      </select>
+    </div>
+
+    <!-- Mood -->
+    <div class="mb-3">
+      <label class="form-label">😃 How did you feel during the event?</label>
+      <div class="d-flex gap-3">
+        <div><input type="radio" name="mood" value="happy" required> 😊</div>
+        <div><input type="radio" name="mood" value="neutral"> 😐</div>
+        <div><input type="radio" name="mood" value="sad"> 😞</div>
+      </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="mb-3">
+      <label class="form-label">💬 Comments / Suggestions</label>
+      <textarea name="comments" rows="4" class="form-control" placeholder="What did you enjoy or suggest for improvement?" required></textarea>
+    </div>
+
+    <!-- Would volunteer again -->
+    <div class="mb-3">
+      <label class="form-label">🔁 Would you volunteer again?</label>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="volunteer_again" value="yes" required>
+        <label class="form-check-label">Yes, definitely</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="volunteer_again" value="no">
+        <label class="form-check-label">Maybe not</label>
+      </div>
+    </div>
+
+    <!-- Upload Image -->
+    <div class="mb-3">
+      <label class="form-label">📸 Upload Image (optional)</label>
+      <input type="file" name="image" class="form-control">
+    </div>
+
+    <!-- Submit anonymously -->
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" name="anonymous" id="anonymous">
+      <label class="form-check-label" for="anonymous">
+        Submit anonymously
+      </label>
+    </div>
+
+    <!-- Terms checkbox -->
+    <div class="form-check mb-4">
+      <input class="form-check-input" type="checkbox" name="agree" required>
+      <label class="form-check-label">
+        I agree to EcoNova's community guidelines.
+      </label>
+    </div>
+
+    <!-- Submit -->
+    <div class="text-center">
+      <button type="submit" class="btn btn-primary px-4">📨 Submit Feedback</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

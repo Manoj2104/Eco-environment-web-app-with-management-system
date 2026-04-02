@@ -1,0 +1,2179 @@
+{% extends 'base.html' %}
+{% block page_title %}Set Weekly Goal{% endblock %}
+{% block page_subtitle %}Assign goals & tasks to volunteers{% endblock %}
+
+{% block extra_css %}
+<link
+  href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap"
+  rel="stylesheet">
+<style>
+  :root {
+    --g50: #f0fdf4;
+    --g100: #dcfce7;
+    --g200: #bbf7d0;
+    --g300: #86efac;
+    --g400: #4ade80;
+    --g500: #22c55e;
+    --g600: #16a34a;
+    --g700: #15803d;
+    --g800: #166534;
+    --accent: #10b981;
+    --accent2: #059669;
+    --white: #ffffff;
+    --gray50: #f8fafc;
+    --gray100: #f1f5f9;
+    --gray200: #e2e8f0;
+    --gray300: #cbd5e1;
+    --gray400: #94a3b8;
+    --gray500: #64748b;
+    --gray600: #475569;
+    --gray700: #334155;
+    --gray800: #1e293b;
+    --gray900: #0f172a;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --blue: #3b82f6;
+    --purple: #8b5cf6;
+    --font: 'Plus Jakarta Sans', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+    --shadow: 0 4px 24px rgba(0, 0, 0, .07);
+    --shadow-green: 0 8px 32px rgba(16, 185, 129, .18);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0
+  }
+
+  body {
+    font-family: var(--font);
+    background: #f0f4f0;
+    color: var(--gray800)
+  }
+
+  /* ── LAYOUT ── */
+  .swg-wrap {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto
+  }
+
+  /* ── HERO HEADER ── */
+  .hero-header {
+    background: linear-gradient(135deg, #0d4a2e 0%, #16a34a 50%, #10b981 100%);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    color: #fff;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='0.04'%3E%3Ccircle cx='40' cy='40' r='30'/%3E%3Ccircle cx='10' cy='10' r='8'/%3E%3Ccircle cx='70' cy='70' r='8'/%3E%3C/g%3E%3C/svg%3E") repeat;
+  }
+
+  .hero-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px
+  }
+
+  .hero-left h1 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: -.03em;
+    margin-bottom: 6px
+  }
+
+  .hero-left p {
+    font-size: .9rem;
+    opacity: .8;
+    max-width: 420px;
+    line-height: 1.6
+  }
+
+  .hero-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px
+  }
+
+  .hbadge {
+    background: rgba(255, 255, 255, .15);
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 99px;
+    padding: 5px 14px;
+    font-size: .76rem;
+    font-weight: 700
+  }
+
+  .hero-stats-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap
+  }
+
+  .h-stat {
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 14px;
+    padding: 14px 20px;
+    text-align: center;
+    min-width: 90px
+  }
+
+  .h-stat-val {
+    font-size: 1.6rem;
+    font-weight: 900;
+    font-family: var(--mono);
+    display: block
+  }
+
+  .h-stat-lbl {
+    font-size: .7rem;
+    opacity: .75;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-top: 2px
+  }
+
+  /* ── FLASH ── */
+  .flash-wrap {
+    margin-bottom: 18px
+  }
+
+  .flash-item {
+    border-radius: var(--radius-sm);
+    padding: 13px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .88rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    animation: fadeUp .4s ease
+  }
+
+  .flash-success {
+    background: var(--g50);
+    border: 1.5px solid var(--g200);
+    color: var(--g700)
+  }
+
+  .flash-error {
+    background: #fef2f2;
+    border: 1.5px solid #fecaca;
+    color: #991b1b
+  }
+
+  .flash-item .fc {
+    margin-left: auto;
+    cursor: pointer;
+    opacity: .6;
+    font-size: 1.1rem
+  }
+
+  .flash-item .fc:hover {
+    opacity: 1
+  }
+
+  /* ── GRID LAYOUTS ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+    align-items: start
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, .04)
+  }
+
+  .card-head {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--gray100);
+    display: flex;
+    align-items: center;
+    gap: 10px
+  }
+
+  .card-head h2 {
+    font-size: .95rem;
+    font-weight: 800;
+    color: var(--gray800);
+    margin: 0;
+    flex: 1
+  }
+
+  .card-head-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--g50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0
+  }
+
+  .card-body {
+    padding: 22px
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px
+  }
+
+  .stat-tile {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    border-top: 3px solid var(--accent);
+    box-shadow: var(--shadow);
+    transition: transform .2s, box-shadow .2s;
+    cursor: default
+  }
+
+  .stat-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-green)
+  }
+
+  .stat-tile.blue {
+    border-color: var(--blue)
+  }
+
+  .stat-tile.orange {
+    border-color: var(--warning)
+  }
+
+  .stat-tile.red {
+    border-color: var(--danger)
+  }
+
+  .stat-tile.purple {
+    border-color: var(--purple)
+  }
+
+  .st-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 12px
+  }
+
+  .stat-tile.blue .st-icon {
+    background: #eff6ff
+  }
+
+  .stat-tile.orange .st-icon {
+    background: #fffbeb
+  }
+
+  .stat-tile.red .st-icon {
+    background: #fef2f2
+  }
+
+  .stat-tile.purple .st-icon {
+    background: #f5f3ff
+  }
+
+  .stat-tile:not(.blue):not(.orange):not(.red):not(.purple) .st-icon {
+    background: var(--g50)
+  }
+
+  .st-val {
+    font-size: 1.85rem;
+    font-weight: 900;
+    color: var(--gray900);
+    line-height: 1;
+    font-family: var(--mono)
+  }
+
+  .st-lbl {
+    font-size: .72rem;
+    color: var(--gray500);
+    margin-top: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em
+  }
+
+  .st-sub {
+    font-size: .72rem;
+    color: var(--g600);
+    margin-top: 5px;
+    font-weight: 600
+  }
+
+  /* ── FORM ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px
+  }
+
+  .form-group.full {
+    grid-column: 1/-1
+  }
+
+  .form-label {
+    font-size: .76rem;
+    font-weight: 800;
+    color: var(--gray700);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    display: flex;
+    align-items: center;
+    gap: 5px
+  }
+
+  .form-control,
+  .form-select,
+  .form-textarea {
+    border: 1.5px solid var(--gray200);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-family: var(--font);
+    font-size: .88rem;
+    color: var(--gray800);
+    background: var(--gray50);
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+    width: 100%;
+  }
+
+  .form-control:focus,
+  .form-select:focus,
+  .form-textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, .12);
+    background: #fff
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 88px
+  }
+
+  .char-counter {
+    font-size: .72rem;
+    color: var(--gray400);
+    text-align: right;
+    margin-top: 2px
+  }
+
+  .char-counter.warn {
+    color: var(--warning)
+  }
+
+  /* Priority pills */
+  .priority-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap
+  }
+
+  .priority-pill input[type=radio] {
+    display: none
+  }
+
+  .priority-pill label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 2px solid var(--gray200);
+    border-radius: 99px;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s
+  }
+
+  .priority-pill.low input:checked+label {
+    background: var(--g500);
+    border-color: var(--g500);
+    color: #fff
+  }
+
+  .priority-pill.mid input:checked+label {
+    background: var(--warning);
+    border-color: var(--warning);
+    color: #fff
+  }
+
+  .priority-pill.high input:checked+label {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff
+  }
+
+  /* Tag chips */
+  .tag-chip-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    border: 1.5px solid var(--gray200);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    background: var(--gray50);
+    min-height: 44px;
+    transition: all .2s;
+    cursor: text
+  }
+
+  .tag-chip-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, .12);
+    background: #fff
+  }
+
+  .tag-chip {
+    background: var(--g100);
+    color: var(--g700);
+    border-radius: 99px;
+    padding: 3px 10px 3px 12px;
+    font-size: .75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px
+  }
+
+  .tag-chip .rm {
+    cursor: pointer;
+    opacity: .6;
+    line-height: 1
+  }
+
+  .tag-chip .rm:hover {
+    opacity: 1
+  }
+
+  .tag-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font);
+    font-size: .86rem;
+    min-width: 100px;
+    flex: 1
+  }
+
+  /* Quote preview */
+  .quote-preview {
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    background: var(--g50);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-style: italic;
+    color: var(--gray600);
+    font-size: .88rem;
+    margin-top: 6px;
+    display: none
+  }
+
+  .quote-preview.visible {
+    display: block
+  }
+
+  /* ── TASK BUILDER ── */
+  .task-builder {
+    border: 1.5px dashed var(--gray300);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    background: var(--gray50)
+  }
+
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px
+  }
+
+  .task-item {
+    background: #fff;
+    border: 1.5px solid var(--gray200);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeUp .3s ease;
+    transition: border-color .2s
+  }
+
+  .task-item:hover {
+    border-color: var(--g300)
+  }
+
+  .task-drag {
+    color: var(--gray300);
+    cursor: grab;
+    font-size: 1.1rem;
+    flex-shrink: 0
+  }
+
+  .task-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--g100);
+    color: var(--g700);
+    font-size: .7rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0
+  }
+
+  .task-info {
+    flex: 1;
+    min-width: 0
+  }
+
+  .task-title-text {
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--gray800)
+  }
+
+  .task-desc-text {
+    font-size: .72rem;
+    color: var(--gray500);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+  }
+
+  .task-xp-badge {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #fffbeb;
+    color: #92400e;
+    flex-shrink: 0
+  }
+
+  .task-remove {
+    background: none;
+    border: none;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: .9rem;
+    opacity: .6;
+    transition: opacity .2s;
+    flex-shrink: 0;
+    padding: 4px
+  }
+
+  .task-remove:hover {
+    opacity: 1
+  }
+
+  .add-task-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap
+  }
+
+  .add-task-input {
+    flex: 1;
+    min-width: 140px
+  }
+
+  .task-xp-input {
+    width: 80px
+  }
+
+  .btn-add-task {
+    background: var(--g100);
+    color: var(--g700);
+    border: 1.5px solid var(--g200);
+    border-radius: var(--radius-xs);
+    padding: 9px 14px;
+    font-family: var(--font);
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .2s
+  }
+
+  .btn-add-task:hover {
+    background: var(--g600);
+    color: #fff;
+    border-color: var(--g600)
+  }
+
+  .task-template-btns {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px
+  }
+
+  .tpl-btn {
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 99px;
+    border: 1.5px solid var(--gray200);
+    background: #fff;
+    color: var(--gray600);
+    cursor: pointer;
+    transition: all .2s
+  }
+
+  .tpl-btn:hover {
+    border-color: var(--g400);
+    color: var(--g700);
+    background: var(--g50)
+  }
+
+  /* ── VOLUNTEER PREVIEW ── */
+  .vol-preview {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 10px 0 6px;
+    flex-wrap: wrap
+  }
+
+  .vol-av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--g200);
+    color: var(--g700);
+    font-size: .68rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    margin-left: -8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+    transition: transform .15s;
+    cursor: default
+  }
+
+  .vol-av:first-child {
+    margin-left: 0
+  }
+
+  .vol-av:hover {
+    transform: scale(1.15);
+    z-index: 2
+  }
+
+  .vol-av.more {
+    background: var(--gray200);
+    color: var(--gray600)
+  }
+
+  .vol-info-text {
+    font-size: .78rem;
+    color: var(--gray500);
+    font-weight: 600;
+    margin-top: 6px
+  }
+
+  /* ── SUBMIT BTN ── */
+  .btn-submit {
+    background: linear-gradient(135deg, var(--g700), var(--accent));
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 14px 28px;
+    font-family: var(--font);
+    font-size: .95rem;
+    font-weight: 800;
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all .2s;
+    box-shadow: var(--shadow-green);
+    margin-top: 20px
+  }
+
+  .btn-submit:hover {
+    opacity: .9;
+    transform: translateY(-1px)
+  }
+
+  .btn-submit:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+    transform: none
+  }
+
+  .tip-bar {
+    padding: 12px 22px;
+    background: var(--g50);
+    border-top: 1px solid var(--gray100);
+    font-size: .8rem;
+    color: var(--g700);
+    text-align: center;
+    font-weight: 600
+  }
+
+  /* ── CHART ── */
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 220px
+  }
+
+  .chart-wrap canvas {
+    width: 100% !important;
+    height: 100% !important
+  }
+
+  .prio-dist {
+    display: flex;
+    flex-direction: column;
+    gap: 13px
+  }
+
+  .prio-bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px
+  }
+
+  .prio-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: .8rem;
+    font-weight: 700
+  }
+
+  .prio-bar-track {
+    height: 8px;
+    background: var(--gray100);
+    border-radius: 99px;
+    overflow: hidden
+  }
+
+  .prio-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .8s cubic-bezier(.4, 0, .2, 1)
+  }
+
+  .prio-bar-fill.low {
+    background: var(--g500)
+  }
+
+  .prio-bar-fill.mid {
+    background: var(--warning)
+  }
+
+  .prio-bar-fill.high {
+    background: var(--danger)
+  }
+
+  /* ── GOAL TABLE ── */
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px
+  }
+
+  .search-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 180px
+  }
+
+  .search-input-wrap i {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray400);
+    font-size: .85rem
+  }
+
+  .search-input-wrap input {
+    width: 100%;
+    padding: 9px 12px 9px 32px;
+    border: 1.5px solid var(--gray200);
+    border-radius: var(--radius-xs);
+    font-family: var(--font);
+    font-size: .83rem;
+    background: var(--gray50);
+    outline: none;
+    transition: all .18s;
+    box-sizing: border-box
+  }
+
+  .search-input-wrap input:focus {
+    border-color: var(--accent);
+    background: #fff
+  }
+
+  .filter-select {
+    border: 1.5px solid var(--gray200);
+    border-radius: var(--radius-xs);
+    padding: 8px 12px;
+    font-family: var(--font);
+    font-size: .82rem;
+    background: var(--gray50);
+    color: var(--gray700);
+    outline: none;
+    cursor: pointer
+  }
+
+  .filter-select:focus {
+    border-color: var(--accent)
+  }
+
+  .goal-table {
+    width: 100%;
+    border-collapse: collapse
+  }
+
+  .goal-table th {
+    padding: 10px 14px;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--gray500);
+    border-bottom: 2px solid var(--gray100);
+    text-align: left;
+    background: var(--gray50);
+    white-space: nowrap
+  }
+
+  .goal-table td {
+    padding: 12px 14px;
+    font-size: .85rem;
+    color: var(--gray700);
+    border-bottom: 1px solid var(--gray100);
+    vertical-align: middle
+  }
+
+  .goal-table tr:hover td {
+    background: var(--g50)
+  }
+
+  .goal-title-cell {
+    font-weight: 700;
+    color: var(--gray900)
+  }
+
+  .goal-desc-cell {
+    font-size: .75rem;
+    color: var(--gray500);
+    margin-top: 2px
+  }
+
+  .goal-tasks-pill {
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 99px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    margin-top: 3px;
+    display: inline-block
+  }
+
+  .badge-prio {
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: .7rem;
+    font-weight: 700
+  }
+
+  .badge-prio.Low {
+    background: var(--g100);
+    color: var(--g700)
+  }
+
+  .badge-prio.Medium {
+    background: #fffbeb;
+    color: #92400e
+  }
+
+  .badge-prio.High {
+    background: #fef2f2;
+    color: #991b1b
+  }
+
+  .badge-status {
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: .7rem;
+    font-weight: 700
+  }
+
+  .badge-status.active {
+    background: var(--g100);
+    color: var(--g700)
+  }
+
+  .badge-status.expired {
+    background: var(--gray100);
+    color: var(--gray500)
+  }
+
+  .badge-status.upcoming {
+    background: #eff6ff;
+    color: #1d4ed8
+  }
+
+  .badge-status.completed {
+    background: #f5f3ff;
+    color: #6d28d9
+  }
+
+  .btn-del {
+    background: none;
+    border: 1.5px solid var(--gray200);
+    border-radius: 8px;
+    padding: 5px 9px;
+    cursor: pointer;
+    color: var(--danger);
+    font-size: .78rem;
+    transition: all .2s
+  }
+
+  .btn-del:hover {
+    background: #fef2f2;
+    border-color: var(--danger)
+  }
+
+  .btn-view-tasks {
+    background: none;
+    border: 1.5px solid var(--blue);
+    border-radius: 8px;
+    padding: 4px 9px;
+    cursor: pointer;
+    color: var(--blue);
+    font-size: .75rem;
+    transition: all .2s;
+    margin-right: 4px;
+    font-weight: 600
+  }
+
+  .btn-view-tasks:hover {
+    background: #eff6ff
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gray400)
+  }
+
+  .empty-state .ei {
+    font-size: 2.5rem;
+    margin-bottom: 10px
+  }
+
+  /* ── TAB PILLS ── */
+  .tab-pills {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap
+  }
+
+  .tab-pill {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: .78rem;
+    font-weight: 700;
+    border: 1.5px solid var(--gray200);
+    cursor: pointer;
+    transition: all .2s;
+    background: #fff;
+    color: var(--gray600)
+  }
+
+  .tab-pill.active {
+    background: var(--g600);
+    border-color: var(--g600);
+    color: #fff
+  }
+
+  /* ── PAGINATION ── */
+  .pagination {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 12px
+  }
+
+  .page-btn {
+    padding: 5px 11px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray200);
+    background: #fff;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--gray700);
+    transition: all .2s
+  }
+
+  .page-btn:hover {
+    border-color: var(--accent);
+    color: var(--g700)
+  }
+
+  .page-btn.active {
+    background: var(--g600);
+    border-color: var(--g600);
+    color: #fff
+  }
+
+  .page-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .5);
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px
+  }
+
+  .modal-overlay.open {
+    display: flex
+  }
+
+  .modal-box {
+    background: #fff;
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 520px;
+    overflow: hidden;
+    animation: popIn .25s cubic-bezier(.34, 1.56, .64, 1) both;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .15)
+  }
+
+  .modal-head {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--gray100);
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+  }
+
+  .modal-head h3 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--gray900);
+    margin: 0
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--gray400);
+    padding: 4px;
+    line-height: 1
+  }
+
+  .modal-close:hover {
+    color: var(--gray700)
+  }
+
+  .modal-body-inner {
+    padding: 20px 22px;
+    max-height: 65vh;
+    overflow-y: auto
+  }
+
+  .task-view-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--gray100);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px
+  }
+
+  .tvi-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--g100);
+    color: var(--g700);
+    font-size: .75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0
+  }
+
+  .tvi-body {
+    flex: 1
+  }
+
+  .tvi-title {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--gray900)
+  }
+
+  .tvi-desc {
+    font-size: .75rem;
+    color: var(--gray500);
+    margin-top: 2px;
+    line-height: 1.5
+  }
+
+  .tvi-xp {
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #fffbeb;
+    color: #92400e;
+    margin-top: 4px;
+    display: inline-block
+  }
+
+  .tvi-status {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    flex-shrink: 0
+  }
+
+  .tvi-status.done {
+    background: var(--g100);
+    color: var(--g700)
+  }
+
+  .tvi-status.pending {
+    background: var(--gray100);
+    color: var(--gray500)
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px)
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0)
+    }
+  }
+
+  @keyframes popIn {
+    0% {
+      transform: scale(.85);
+      opacity: 0
+    }
+
+    70% {
+      transform: scale(1.03)
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 1
+    }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:1100px) {
+    .main-grid {
+      grid-template-columns: 1fr
+    }
+
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr)
+    }
+
+    .two-col {
+      grid-template-columns: 1fr
+    }
+  }
+
+  @media(max-width:640px) {
+    .form-grid {
+      grid-template-columns: 1fr
+    }
+
+    .three-col {
+      grid-template-columns: 1fr
+    }
+
+    .stat-tiles {
+      grid-template-columns: 1fr 1fr
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="swg-wrap">
+
+  <!-- FLASH -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-wrap">
+    {% for category, message in messages %}
+    <div class="flash-item flash-{{ category }}">
+      <i class="bi bi-{% if category=='success' %}check-circle-fill{% else %}exclamation-triangle-fill{% endif %}"
+        style="font-size:1.1rem"></i>
+      {{ message }}
+      <span class="fc" onclick="this.parentElement.remove()">×</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <!-- HERO -->
+  <div class="hero-header">
+    <div class="hero-content">
+      <div class="hero-left">
+        <h1>🎯 Set Weekly Goal</h1>
+        <p>Assign measurable goals and custom tasks to all volunteers. Completed tasks auto-mark the goal done.</p>
+        <div class="hero-badges">
+          <span class="hbadge">📅 {{ current_week_range }}</span>
+          <span class="hbadge">🙋 {{ total_volunteers }} Volunteers</span>
+          <span class="hbadge" id="heroTaskCount">🔧 0 Tasks Ready</span>
+        </div>
+      </div>
+      <div class="hero-stats-row">
+        <div class="h-stat">
+          <span class="h-stat-val">{{ goals|length if goals else 0 }}</span>
+          <div class="h-stat-lbl">Total Goals</div>
+        </div>
+        <div class="h-stat">
+          <span class="h-stat-val">{{ goals|selectattr('deadline','gt',today)|list|length if goals else 0 }}</span>
+          <div class="h-stat-lbl">Active</div>
+        </div>
+        <div class="h-stat">
+          <span class="h-stat-val">{{ total_volunteers }}</span>
+          <div class="h-stat-lbl">Volunteers</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAT TILES -->
+  <div class="stat-tiles">
+    <div class="stat-tile">
+      <div class="st-icon">🎯</div>
+      <div class="st-val" id="st-total">{{ goals|length if goals else 0 }}</div>
+      <div class="st-lbl">Total Goals</div>
+      <div class="st-sub">All time</div>
+    </div>
+    <div class="stat-tile blue">
+      <div class="st-icon">✅</div>
+      <div class="st-val" id="st-active">{{ goals|selectattr('deadline','gt',today)|list|length if goals else 0 }}</div>
+      <div class="st-lbl">Active Goals</div>
+      <div class="st-sub">Running now</div>
+    </div>
+    <div class="stat-tile orange">
+      <div class="st-icon">⚡</div>
+      <div class="st-val" id="st-high">{{ goals|selectattr('priority','eq','High')|list|length if goals else 0 }}</div>
+      <div class="st-lbl">High Priority</div>
+      <div class="st-sub">Needs focus</div>
+    </div>
+    <div class="stat-tile red">
+      <div class="st-icon">🙋</div>
+      <div class="st-val">{{ total_volunteers }}</div>
+      <div class="st-lbl">Volunteers</div>
+      <div class="st-sub">Will receive goal</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">📈</div>
+        <h2>Goal Activity (Last 8 Weeks)</h2>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">🔥</div>
+        <h2>Priority Distribution</h2>
+      </div>
+      <div class="card-body">
+        <div class="prio-dist">
+          <div class="prio-bar-item">
+            <div class="prio-bar-label"><span>🟢 Low</span><span id="plo-pct">—</span></div>
+            <div class="prio-bar-track">
+              <div class="prio-bar-fill low" id="plo-bar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="prio-bar-item">
+            <div class="prio-bar-label"><span>🟡 Medium</span><span id="pmi-pct">—</span></div>
+            <div class="prio-bar-track">
+              <div class="prio-bar-fill mid" id="pmi-bar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="prio-bar-item">
+            <div class="prio-bar-label"><span>🔴 High</span><span id="phi-pct">—</span></div>
+            <div class="prio-bar-track">
+              <div class="prio-bar-fill high" id="phi-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--gray100);margin-top:16px;padding-top:14px">
+          <div
+            style="font-size:.72rem;color:var(--gray500);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">
+            Tag Cloud</div>
+          <div id="tagCloud" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN: FORM + VOLUNTEER PREVIEW -->
+  <div class="main-grid">
+
+    <!-- CREATE FORM -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-icon">✏️</div>
+        <h2>Create New Goal</h2>
+        <span style="font-size:.74rem;color:var(--gray400);margin-left:auto">* required</span>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('dashboard.set_weekly_goal') }}" id="goalForm">
+
+          <div class="form-grid">
+            <div class="form-group full">
+              <label class="form-label">🎯 Goal Title *</label>
+              <input type="text" name="title" class="form-control" id="titleInput"
+                placeholder="E.g. Community Cleanup Drive" required maxlength="120">
+              <div class="char-counter" id="titleCount">0 / 120</div>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label">📝 Description</label>
+              <textarea name="description" class="form-textarea" id="descInput" rows="3"
+                placeholder="Add details, success criteria, etc." maxlength="500"></textarea>
+              <div class="char-counter" id="descCount">0 / 500</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">⏳ Deadline *</label>
+              <input type="date" name="deadline" class="form-control" id="deadlineInput" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">🔥 Priority</label>
+              <div class="priority-group">
+                <div class="priority-pill low">
+                  <input type="radio" name="priority" id="pLow" value="Low" checked>
+                  <label for="pLow">🟢 Low</label>
+                </div>
+                <div class="priority-pill mid">
+                  <input type="radio" name="priority" id="pMid" value="Medium">
+                  <label for="pMid">🟡 Medium</label>
+                </div>
+                <div class="priority-pill high">
+                  <input type="radio" name="priority" id="pHigh" value="High">
+                  <label for="pHigh">🔴 High</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label">🏷️ Tags</label>
+              <div class="tag-chip-wrap" id="tagWrap" onclick="document.getElementById('tagRealInput').focus()">
+                <input type="text" class="tag-input" id="tagRealInput" placeholder="Type tag and press Enter or comma…">
+              </div>
+              <input type="hidden" name="tags" id="tagsHidden">
+              <div style="font-size:.72rem;color:var(--gray400);margin-top:3px">Press <kbd
+                  style="background:var(--gray100);padding:1px 5px;border-radius:4px">Enter</kbd> or <kbd
+                  style="background:var(--gray100);padding:1px 5px;border-radius:4px">,</kbd> to add a tag</div>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label">💡 Motivational Quote</label>
+              <input type="text" name="quote" class="form-control" id="quoteInput"
+                placeholder="e.g. Small acts make a big difference." maxlength="200">
+              <div class="quote-preview" id="quotePreview"></div>
+            </div>
+          </div>
+
+          <!-- TASK BUILDER -->
+          <div style="margin-top:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div
+                style="font-size:.76rem;font-weight:800;color:var(--gray700);text-transform:uppercase;letter-spacing:.05em">
+                🔧 Assign Tasks (Optional)</div>
+              <span id="taskCountBadge"
+                style="font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--g100);color:var(--g700)">0
+                Tasks</span>
+            </div>
+            <div style="font-size:.76rem;color:var(--gray500);margin-bottom:10px;line-height:1.6">
+              Add tasks to this goal. When a volunteer <strong>completes all assigned tasks</strong>, their goal will be
+              <strong>automatically marked as completed</strong>. ✅
+            </div>
+
+            <!-- Template loader -->
+            <div style="margin-bottom:10px">
+              <div style="font-size:.72rem;font-weight:700;color:var(--gray500);margin-bottom:6px">⚡ Quick Load
+                Templates:</div>
+              <div class="task-template-btns">
+                <button type="button" class="tpl-btn" data-tpl="Cleanup">🧹 Cleanup</button>
+                <button type="button" class="tpl-btn" data-tpl="Tree Plantation">🌳 Tree Plantation</button>
+                <button type="button" class="tpl-btn" data-tpl="Awareness">📢 Awareness</button>
+                <button type="button" class="tpl-btn" data-tpl="Waste Management">♻️ Waste Mgmt</button>
+                <button type="button" class="tpl-btn" data-tpl="custom"
+                  style="color:var(--purple);border-color:var(--purple)">✨ Custom</button>
+              </div>
+            </div>
+
+            <div class="task-builder">
+              <div class="task-list" id="taskList"></div>
+              <div class="add-task-row">
+                <input type="text" class="form-control add-task-input" id="newTaskTitle" placeholder="Task title...">
+                <input type="number" class="form-control task-xp-input" id="newTaskXP" placeholder="XP" min="1"
+                  max="100" value="10">
+                <button type="button" class="btn-add-task" onclick="addTask()">+ Add Task</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- hidden tasks data -->
+          <input type="hidden" name="tasks_data" id="tasksData">
+
+          <!-- Volunteer Preview -->
+          <div style="margin-top:20px">
+            <div class="form-label" style="margin-bottom:8px">🙋 Will be assigned to</div>
+            <div class="vol-preview" id="volPreview">
+              {% for v in volunteers[:10] if volunteers %}
+              <div class="vol-av" title="{{ v.name }}">{{ v.name[:2]|upper }}</div>
+              {% endfor %}
+              {% if volunteers and volunteers|length > 10 %}
+              <div class="vol-av more" title="{{ volunteers|length - 10 }} more">+{{ volunteers|length - 10 }}</div>
+              {% endif %}
+            </div>
+            <div class="vol-info-text"><i class="bi bi-info-circle me-1"></i>This goal + all tasks will be broadcast to
+              all <strong>{{ total_volunteers }}</strong> active volunteers.</div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <i class="bi bi-send-check-fill"></i>
+            <span>Assign Goal to All Volunteers</span>
+          </button>
+
+        </form>
+      </div>
+      <div class="tip-bar">
+        🌱 Tip: Goals with tasks auto-complete when a volunteer finishes all tasks — no manual tracking needed!
+      </div>
+    </div>
+
+    <!-- SIDE PANEL -->
+    <div>
+      <!-- Quick Stats Card -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-head">
+          <div class="card-head-icon">📊</div>
+          <h2>This Week's Progress</h2>
+        </div>
+        <div class="card-body" style="padding:16px 22px">
+          <div style="height:200px;position:relative"><canvas id="weekChart"></canvas></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+            <div style="background:var(--g50);border-radius:10px;padding:10px 14px;text-align:center">
+              <div style="font-size:1.4rem;font-weight:900;font-family:var(--mono);color:var(--g700)" id="sw-done">0
+              </div>
+              <div style="font-size:.7rem;color:var(--gray500);font-weight:600">Completed</div>
+            </div>
+            <div style="background:#fffbeb;border-radius:10px;padding:10px 14px;text-align:center">
+              <div style="font-size:1.4rem;font-weight:900;font-family:var(--mono);color:#92400e" id="sw-pending">0
+              </div>
+              <div style="font-size:.7rem;color:var(--gray500);font-weight:600">Pending</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Volunteer Status -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-head-icon">👥</div>
+          <h2>Volunteer Completion Rate</h2>
+        </div>
+        <div class="card-body" style="padding:16px 22px">
+          <div style="height:180px;position:relative"><canvas id="volChart"></canvas></div>
+          <div style="text-align:center;margin-top:10px">
+            <div style="font-size:.78rem;color:var(--gray500)">Overall Task Completion</div>
+            <div style="font-size:1.6rem;font-weight:900;color:var(--g700);font-family:var(--mono)" id="overallRate">—
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOAL HISTORY TABLE -->
+  <div class="card" style="margin-bottom:30px">
+    <div class="card-head" style="flex-wrap:wrap;gap:10px">
+      <div class="card-head-icon">📋</div>
+      <h2>Goal History</h2>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="tab-pills" id="historyTabs">
+          <div class="tab-pill active" data-filter="all">All</div>
+          <div class="tab-pill" data-filter="active">Active</div>
+          <div class="tab-pill" data-filter="expired">Expired</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <i class="bi bi-search"></i>
+          <input type="text" id="goalSearch" placeholder="Search goals by title, tag, priority…">
+        </div>
+        <select class="filter-select" id="priorityFilter">
+          <option value="">All Priorities</option>
+          <option value="High">🔴 High</option>
+          <option value="Medium">🟡 Medium</option>
+          <option value="Low">🟢 Low</option>
+        </select>
+        <select class="filter-select" id="sortSelect">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="deadline">By Deadline</option>
+          <option value="priority">By Priority</option>
+        </select>
+        <span id="resultCount" style="font-size:.78rem;color:var(--gray500);white-space:nowrap;font-weight:600"></span>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="goal-table" id="goalTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Goal</th>
+              <th>Priority</th>
+              <th>Tags</th>
+              <th>Deadline</th>
+              <th>Status</th>
+              <th>Completion</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="goalTableBody">
+            {% if goals %}
+            {% for g in goals %}
+            <tr class="goal-row" data-title="{{ g.title|lower }}"
+              data-desc="{{ g.description|lower if g.description else '' }}"
+              data-tags="{{ g.tags|lower if g.tags else '' }}" data-priority="{{ g.priority if g.priority else 'Low' }}"
+              data-deadline="{{ g.deadline.strftime('%Y-%m-%d') if g.deadline else '' }}"
+              data-created="{{ g.created_at.strftime('%Y-%m-%d') if g.created_at else '' }}">
+              <td style="color:var(--gray400);font-size:.76rem;font-family:var(--mono)">#{{ loop.index }}</td>
+              <td>
+                <div class="goal-title-cell">{{ g.title }}</div>
+                {% if g.description %}<div class="goal-desc-cell">{{ g.description[:70] }}{% if g.description|length >
+                  70 %}…{% endif %}</div>{% endif %}
+                {% if g.quote %}<div style="font-size:.72rem;font-style:italic;color:var(--g600);margin-top:2px">"{{
+                  g.quote[:50] }}{% if g.quote|length > 50 %}…{% endif %}"</div>{% endif %}
+                <div class="goal-tasks-pill">🔧 Loading tasks…</div>
+              </td>
+              <td><span class="badge-prio {{ g.priority if g.priority else 'Low' }}">{% if g.priority=='High' %}🔴{%
+                  elif g.priority=='Medium' %}🟡{% else %}🟢{% endif %} {{ g.priority if g.priority else 'Low' }}</span>
+              </td>
+              <td>
+                {% if g.tags %}
+                {% for tag in g.tags.split(',')[:3] %}
+                <span
+                  style="background:var(--g100);color:var(--g700);border-radius:99px;padding:2px 8px;font-size:.68rem;font-weight:700;margin-right:2px">{{
+                  tag.strip() }}</span>
+                {% endfor %}
+                {% endif %}
+              </td>
+              <td style="font-family:var(--mono);font-size:.78rem">
+                {% if g.deadline %}
+                {{ g.deadline.strftime('%d %b %Y') }}
+                {% set days_left = (g.deadline - today).days %}
+                {% if days_left >= 0 %}<div style="font-size:.68rem;color:var(--g600);margin-top:2px">{{ days_left }}d
+                  left</div>
+                {% else %}<div style="font-size:.68rem;color:var(--danger);margin-top:2px">{{ -days_left }}d ago</div>{%
+                endif %}
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                {% if g.deadline %}
+                {% set dl = (g.deadline - today).days %}
+                {% if dl < 0 %}<span class="badge-status expired">Expired</span>
+                  {% elif dl <= 2 %}<span class="badge-status" style="background:#fffbeb;color:#92400e">⚠️ Due
+                    Soon</span>
+                    {% else %}<span class="badge-status active">Active</span>{% endif %}
+                    {% else %}<span class="badge-status active">Active</span>{% endif %}
+              </td>
+              <td>
+                <div style="font-size:.75rem;color:var(--gray500)">Loading…</div>
+              </td>
+              <td>
+                <button type="button" class="btn-view-tasks"
+                  onclick="viewGoalTasks({{ g.id }}, '{{ g.title|replace("'","") }}' )"><i class="bi bi-list-task"></i>
+                  Tasks</button>
+                <form method="POST" action="{{ url_for('dashboard.delete_goal', goal_id=g.id) }}" style="display:inline"
+                  onsubmit="return confirm('Delete this goal and all assigned tasks?')">
+                  <button type="submit" class="btn-del" title="Delete"><i class="bi bi-trash3"></i></button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr id="emptyRow">
+              <td colspan="8">
+                <div class="empty-state">
+                  <div class="ei">🎯</div>
+                  <p>No goals set yet. Create your first one above!</p>
+                </div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="paginationWrap"></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-bottom:30px">
+    <a href="{{ url_for('dashboard.volunteer_weekly_goals') }}"
+      style="color:var(--g600);font-weight:700;font-size:.88rem;text-decoration:none">
+      <i class="bi bi-arrow-left me-1"></i>Back to All Weekly Goals
+    </a>
+  </div>
+
+</div><!-- end wrap -->
+
+<!-- TASK VIEW MODAL -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="taskModalTitle">Goal Tasks</h3>
+      <button class="modal-close" onclick="closeTaskModal()">×</button>
+    </div>
+    <div class="modal-body-inner" id="taskModalBody">
+      <div style="text-align:center;padding:30px;color:var(--gray400)">Loading tasks…</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+
+    /* ── 1. CHAR COUNTERS ── */
+    const charCounter = (inp, ct, max) => {
+      const el = document.getElementById(inp), c = document.getElementById(ct);
+      if (!el || !c) return;
+      el.addEventListener('input', () => {
+        const l = el.value.length;
+        c.textContent = `${l} / ${max}`;
+        c.className = 'char-counter' + (l > max * .88 ? ' warn' : '');
+      });
+    };
+    charCounter('titleInput', 'titleCount', 120);
+    charCounter('descInput', 'descCount', 500);
+
+    /* ── 2. DEADLINE DEFAULT ── */
+    const dl = document.getElementById('deadlineInput');
+    if (dl && !dl.value) {
+      const d = new Date();
+      d.setDate(d.getDate() + (7 - d.getDay()));
+      dl.value = d.toISOString().slice(0, 10);
+    }
+
+    /* ── 3. QUOTE PREVIEW ── */
+    document.getElementById('quoteInput').addEventListener('input', function () {
+      const v = this.value.trim();
+      const p = document.getElementById('quotePreview');
+      p.textContent = v ? `"${v}"` : '';
+      p.classList.toggle('visible', v.length > 0);
+    });
+
+    /* ── 4. TAG CHIPS ── */
+    const tagWrap = document.getElementById('tagWrap');
+    const tagInput = document.getElementById('tagRealInput');
+    const tagsHidden = document.getElementById('tagsHidden');
+    let tags = [];
+    const renderTags = () => {
+      tagWrap.querySelectorAll('.tag-chip').forEach(c => c.remove());
+      tags.forEach((tag, i) => {
+        const chip = document.createElement('div');
+        chip.className = 'tag-chip';
+        chip.innerHTML = `${tag} <span class="rm" data-i="${i}">×</span>`;
+        tagWrap.insertBefore(chip, tagInput);
+      });
+      tagsHidden.value = tags.join(',');
+      updateTagCloud();
+    };
+    const addTag = v => {
+      const t = v.trim().replace(/,/g, '').toLowerCase();
+      if (t && !tags.includes(t) && tags.length < 8) { tags.push(t); renderTags(); }
+    };
+    tagInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagInput.value); tagInput.value = ''; }
+      else if (e.key === 'Backspace' && !tagInput.value && tags.length) { tags.pop(); renderTags(); }
+    });
+    tagInput.addEventListener('blur', () => { if (tagInput.value.trim()) { addTag(tagInput.value); tagInput.value = ''; } });
+    tagWrap.addEventListener('click', e => {
+      const r = e.target.closest('.rm');
+      if (r) { tags.splice(+r.dataset.i, 1); renderTags(); }
+    });
+
+    /* ── 5. TASK BUILDER ── */
+    const TEMPLATES = {
+      'Cleanup': [
+        { title: 'Survey the Area', desc: 'Walk around and note major waste zones.', xp: 10 },
+        { title: 'Collect Plastic Waste', desc: 'Collect all plastic in your assigned zone.', xp: 15 },
+        { title: 'Segregate Waste', desc: 'Sort waste into plastic, paper, and organic bins.', xp: 15 },
+        { title: 'Document Before State', desc: 'Upload a photo showing the area before cleanup.', xp: 10 },
+        { title: 'Clean Assigned Zone', desc: 'Fully clean your zone and upload proof.', xp: 20 },
+        { title: 'Document After State', desc: 'Upload a photo of the cleaned area.', xp: 15 },
+      ],
+      'Tree Plantation': [
+        { title: 'Site Survey', desc: 'Identify suitable spots for planting trees.', xp: 10 },
+        { title: 'Collect Saplings', desc: 'Collect your assigned saplings.', xp: 10 },
+        { title: 'Dig Planting Holes', desc: 'Dig holes as per guidelines and upload photo.', xp: 15 },
+        { title: 'Plant the Sapling', desc: 'Plant the sapling correctly and upload photo.', xp: 20 },
+        { title: 'Water the Plants', desc: 'Water all planted saplings and capture proof.', xp: 15 },
+        { title: 'Label the Tree', desc: 'Place a name tag on your planted tree.', xp: 10 },
+      ],
+      'Awareness': [
+        { title: 'Set Up Stall', desc: 'Set up your awareness stall and upload a photo.', xp: 10 },
+        { title: 'Distribute Pamphlets', desc: 'Distribute eco awareness pamphlets.', xp: 15 },
+        { title: 'Engage 5 People', desc: 'Talk to at least 5 people about the cause.', xp: 20 },
+        { title: 'Collect Pledges', desc: 'Get at least 3 people to sign the eco pledge.', xp: 20 },
+        { title: 'Social Media Post', desc: 'Post about the event on social media.', xp: 15 },
+      ],
+      'Waste Management': [
+        { title: 'Map Waste Points', desc: 'Identify all waste collection points.', xp: 10 },
+        { title: 'Setup Bins', desc: 'Place segregation bins at assigned spots.', xp: 15 },
+        { title: 'Monitor Collection', desc: 'Monitor bins and ensure correct waste segregation.', xp: 15 },
+        { title: 'Compost Organic Waste', desc: 'Transfer organic waste to composting area.', xp: 20 },
+        { title: 'Record Waste Volume', desc: 'Estimate and log the volume of waste collected.', xp: 15 },
+      ],
+    };
+
+    let taskList = [];
+    const taskListEl = document.getElementById('taskList');
+    const taskCountBadge = document.getElementById('taskCountBadge');
+    const heroTaskCount = document.getElementById('heroTaskCount');
+
+    const serializeTasks = () => {
+      document.getElementById('tasksData').value = JSON.stringify(taskList);
+      const n = taskList.length;
+      taskCountBadge.textContent = `${n} Task${n !== 1 ? 's' : ''}`;
+      heroTaskCount.textContent = `🔧 ${n} Task${n !== 1 ? 's' : ''} Ready`;
+    };
+
+    const renderTaskList = () => {
+      taskListEl.innerHTML = '';
+      taskList.forEach((task, i) => {
+        const div = document.createElement('div');
+        div.className = 'task-item';
+        div.draggable = true;
+        div.dataset.index = i;
+        div.innerHTML = `
+        <span class="task-drag">⠿</span>
+        <div class="task-num">${i + 1}</div>
+        <div class="task-info">
+          <div class="task-title-text">${task.title}</div>
+          ${task.desc ? `<div class="task-desc-text">${task.desc}</div>` : ''}
+        </div>
+        <span class="task-xp-badge">⭐ +${task.xp} XP</span>
+        <button type="button" class="task-remove" data-i="${i}" title="Remove">×</button>`;
+        taskListEl.appendChild(div);
+      });
+      taskListEl.querySelectorAll('.task-remove').forEach(btn => {
+        btn.addEventListener('click', () => { taskList.splice(+btn.dataset.i, 1); renderTaskList(); serializeTasks(); });
+      });
+
+      // Drag reorder
+      let dragging = null;
+      taskListEl.querySelectorAll('.task-item').forEach(item => {
+        item.addEventListener('dragstart', () => { dragging = item; item.style.opacity = '.4'; });
+        item.addEventListener('dragend', () => { dragging.style.opacity = '1'; dragging = null; });
+        item.addEventListener('dragover', e => { e.preventDefault(); if (dragging && dragging !== item) { const idx = +item.dataset.index; const dragIdx = +dragging.dataset.index; const moved = taskList.splice(dragIdx, 1)[0]; taskList.splice(idx, 0, moved); renderTaskList(); serializeTasks(); } });
+      });
+      serializeTasks();
+    };
+
+    window.addTask = () => {
+      const t = document.getElementById('newTaskTitle').value.trim();
+      const xp = parseInt(document.getElementById('newTaskXP').value) || 10;
+      if (!t) { document.getElementById('newTaskTitle').focus(); return; }
+      taskList.push({ title: t, desc: '', xp });
+      document.getElementById('newTaskTitle').value = '';
+      document.getElementById('newTaskXP').value = 10;
+      renderTaskList();
+    };
+
+    document.getElementById('newTaskTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); window.addTask(); } });
+
+    // Template buttons
+    document.querySelectorAll('.tpl-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tpl = btn.dataset.tpl;
+        if (tpl === 'custom') {
+          document.getElementById('newTaskTitle').focus();
+          return;
+        }
+        if (TEMPLATES[tpl]) {
+          if (taskList.length > 0 && !confirm(`Replace current ${taskList.length} tasks with ${tpl} template?`)) return;
+          taskList = TEMPLATES[tpl].map(t => ({ ...t }));
+          renderTaskList();
+        }
+      });
+    });
+
+    renderTaskList();
+
+    /* ── 6. FORM SUBMIT ── */
+    document.getElementById('goalForm').addEventListener('submit', () => {
+      serializeTasks();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Assigning…`;
+    });
+
+    /* ── 7. GOAL TABLE SEARCH/FILTER/SORT ── */
+    const rows = Array.from(document.querySelectorAll('.goal-row'));
+    const searchEl = document.getElementById('goalSearch');
+    const prioEl = document.getElementById('priorityFilter');
+    const sortEl = document.getElementById('sortSelect');
+    const tabs = document.querySelectorAll('.tab-pill');
+    const resultCt = document.getElementById('resultCount');
+    const emptyRow = document.getElementById('emptyRow');
+    const pgWrap = document.getElementById('paginationWrap');
+    const PAGE = 7;
+    let curPage = 1, activeTab = 'all';
+
+    const getStatus = row => {
+      const dl = row.dataset.deadline;
+      if (!dl) return 'active';
+      const diff = Math.floor((new Date(dl) - new Date()) / 86400000);
+      if (diff < 0) return 'expired';
+      return 'active';
+    };
+
+    const filterSort = () => {
+      const q = (searchEl?.value || '').toLowerCase();
+      const prio = prioEl?.value || '';
+      const sort = sortEl?.value || 'newest';
+      let visible = rows.filter(r => {
+        const ms = !q || r.dataset.title.includes(q) || r.dataset.desc.includes(q) || r.dataset.tags.includes(q) || r.dataset.priority.toLowerCase().includes(q);
+        const mp = !prio || r.dataset.priority === prio;
+        const mt = activeTab === 'all' || getStatus(r) === activeTab;
+        return ms && mp && mt;
+      });
+      visible.sort((a, b) => {
+        if (sort === 'oldest') return (a.dataset.created || '').localeCompare(b.dataset.created || '');
+        if (sort === 'deadline') return (a.dataset.deadline || '').localeCompare(b.dataset.deadline || '');
+        if (sort === 'priority') {
+          const po = { High: 0, Medium: 1, Low: 2 };
+          return (po[a.dataset.priority] ?? 3) - (po[b.dataset.priority] ?? 3);
+        }
+        return (b.dataset.created || '').localeCompare(a.dataset.created || '');
+      });
+      const total = visible.length, pages = Math.max(1, Math.ceil(total / PAGE));
+      curPage = Math.min(curPage, pages);
+      const start = (curPage - 1) * PAGE;
+      const shown = visible.slice(start, start + PAGE);
+      rows.forEach(r => r.style.display = 'none');
+      shown.forEach(r => r.style.display = '');
+      if (emptyRow) emptyRow.style.display = total === 0 ? '' : 'none';
+      if (resultCt) resultCt.textContent = `${total} goal${total !== 1 ? 's' : ''}`;
+      // Pagination
+      if (pgWrap) {
+        pgWrap.innerHTML = '';
+        if (pages > 1) {
+          const mkBtn = (txt, act, disabled) => {
+            const b = document.createElement('button');
+            b.className = 'page-btn' + (act ? ' active' : '');
+            b.textContent = txt; b.disabled = !!disabled;
+            return b;
+          };
+          const prev = mkBtn('← Prev', false, curPage === 1);
+          prev.onclick = () => { curPage--; filterSort(); };
+          pgWrap.appendChild(prev);
+          for (let i = 1; i <= pages; i++) {
+            const pb = mkBtn(i, i === curPage);
+            pb.onclick = () => { curPage = i; filterSort(); };
+            pgWrap.appendChild(pb);
+          }
+          const next = mkBtn('Next →', false, curPage === pages);
+          next.onclick = () => { curPage++; filterSort(); };
+          pgWrap.appendChild(next);
+        }
+      }
+      updatePrioDist(visible);
+    };
+
+    searchEl?.addEventListener('input', () => { curPage = 1; filterSort(); });
+    prioEl?.addEventListener('change', () => { curPage = 1; filterSort(); });
+    sortEl?.addEventListener('change', () => { curPage = 1; filterSort(); });
+    tabs.forEach(t => t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      activeTab = t.dataset.filter;
+      curPage = 1; filterSort();
+    }));
+    filterSort();
+
+    /* ── 8. PRIO DISTRIBUTION ── */
+    function updatePrioDist(vis) {
+      const low = vis.filter(r => r.dataset.priority === 'Low').length;
+      const mid = vis.filter(r => r.dataset.priority === 'Medium').length;
+      const high = vis.filter(r => r.dataset.priority === 'High').length;
+      const total = vis.length || 1;
+      document.getElementById('plo-pct').textContent = Math.round(low / total * 100) + '%';
+      document.getElementById('pmi-pct').textContent = Math.round(mid / total * 100) + '%';
+      document.getElementById('phi-pct').textContent = Math.round(high / total * 100) + '%';
+      document.getElementById('plo-bar').style.width = (low / total * 100) + '%';
+      document.getElementById('pmi-bar').style.width = (mid / total * 100) + '%';
+      document.getElementById('phi-bar').style.width = (high / total * 100) + '%';
+    }
+
+    /* ── 9. TAG CLOUD ── */
+    function updateTagCloud() {
+      const cloud = document.getElementById('tagCloud');
+      if (!cloud) return;
+      const tc = {};
+      rows.forEach(r => {
+        if (r.dataset.tags) r.dataset.tags.split(',').forEach(t => { const v = t.trim(); if (v) tc[v] = (tc[v] || 0) + 1; });
+      });
+      tags.forEach(t => { tc[t] = (tc[t] || 0) + 1; });
+      cloud.innerHTML = '';
+      Object.entries(tc).sort((a, b) => b[1] - a[1]).slice(0, 10).forEach(([tag, cnt]) => {
+        const c = document.createElement('span');
+        c.style.cssText = 'background:var(--g100);color:var(--g700);border-radius:99px;padding:3px 10px;font-size:.72rem;font-weight:700;cursor:pointer';
+        c.textContent = `${tag} (${cnt})`;
+        c.onclick = () => { if (searchEl) { searchEl.value = tag; curPage = 1; filterSort(); } };
+        cloud.appendChild(c);
+      });
+      if (!Object.keys(tc).length) cloud.innerHTML = '<span style="font-size:.76rem;color:var(--gray400)">No tags yet</span>';
+    }
+    updateTagCloud();
+
+    /* ── 10. CHARTS ── */
+    // Activity chart
+    const actCtx = document.getElementById('activityChart');
+    if (actCtx) {
+      const weekLabels = [], weekCounts = [];
+      const now2 = new Date();
+      for (let w = 7; w >= 0; w--) {
+        const ws = new Date(now2); ws.setDate(now2.getDate() - w * 7);
+        const we = new Date(ws); we.setDate(ws.getDate() + 6);
+        weekLabels.push(`Wk ${8 - w}`);
+        const count = rows.filter(r => {
+          if (!r.dataset.created) return false;
+          const d = new Date(r.dataset.created);
+          return d >= ws && d <= we;
+        }).length;
+        weekCounts.push(count);
+      }
+      new Chart(actCtx, {
+        type: 'line',
+        data: { labels: weekLabels, datasets: [{ label: 'Goals Created', data: weekCounts, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.08)', borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: '#10b981', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.4, fill: true }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', callbacks: { label: ctx => ` ${ctx.parsed.y} goal${ctx.parsed.y !== 1 ? 's' : ''}` } } }, scales: { x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#94a3b8' } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 }, color: '#94a3b8' }, grid: { color: '#f1f5f9' } } } }
+      });
+    }
+
+    // Week donut chart
+    const wCtx = document.getElementById('weekChart');
+    const totalG = {{ goals| length if goals else 0
+  }};
+  const activeG = {{ goals| selectattr('deadline', 'gt', today) | list | length if goals else 0 }};
+  const expiredG = Math.max(0, totalG - activeG);
+  if (wCtx) {
+    const has = totalG > 0;
+    new Chart(wCtx, {
+      type: 'doughnut',
+      data: { labels: ['Active', 'Expired'], datasets: [{ data: has ? [activeG, expiredG] : [1, 1], backgroundColor: has ? ['#16a34a', '#e2e8f0'] : ['#e2e8f0', '#f1f5f9'], borderWidth: 3, borderColor: '#fff' }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10 } } } }
+    });
+    document.getElementById('sw-done').textContent = activeG;
+    document.getElementById('sw-pending').textContent = expiredG;
+  }
+
+  // Volunteer completion bar chart
+  const vcCtx = document.getElementById('volChart');
+  if (vcCtx) {
+    new Chart(vcCtx, {
+      type: 'bar',
+      data: { labels: ['Completed', 'In Progress', 'Not Started'], datasets: [{ data: [0, 0, {{ total_volunteers }}], backgroundColor: ['#16a34a', '#f59e0b', '#e2e8f0'], borderRadius: 6, borderSkipped: false }]
+    },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: true } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#94a3b8' } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 }, color: '#94a3b8' }, grid: { color: '#f1f5f9' } } } }
+    });
+  document.getElementById('overallRate').textContent = '0%';
+  }
+
+  /* ── 11. LOAD TASK COUNTS FOR TABLE ROWS ── */
+  // Fetch tasks for each goal and update table
+  const goalRows = document.querySelectorAll('.goal-row');
+  const goalIds = Array.from(goalRows).map(r => {
+    const form = r.querySelector('form');
+    if (!form) return null;
+    const match = form.action.match(/\/delete-goal\/(\d+)/);
+    return match ? match[1] : null;
+  }).filter(Boolean);
+
+  // We'll lazy load task info via a simple fetch if API endpoint exists
+  // For now show placeholder based on what we know
+  goalRows.forEach(r => {
+    const taskPill = r.querySelector('.goal-tasks-pill');
+    const compCell = r.querySelector('td:nth-child(7)');
+    if (taskPill) taskPill.textContent = '🔧 Tasks assigned via API';
+    if (compCell) compCell.innerHTML = '<div style="font-size:.75rem;color:var(--gray500)">See Tasks →</div>';
+  });
+
+  /* ── 12. TASK MODAL ── */
+  window.viewGoalTasks = (goalId, goalTitle) => {
+    document.getElementById('taskModalTitle').textContent = `Tasks: ${goalTitle}`;
+    document.getElementById('taskModal').classList.add('open');
+    const body = document.getElementById('taskModalBody');
+    body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray400)"><div class="spinner" style="border:3px solid #e2e8f0;border-top-color:#16a34a;border-radius:50%;width:30px;height:30px;animation:spin .8s linear infinite;margin:0 auto 10px"></div>Loading tasks…</div>';
+
+    fetch(`/my_goal_tasks/${goalId}`)
+      .then(r => r.json())
+      .then(res => {
+        const tasks = res.tasks || [];
+        if (!tasks.length) {
+          body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray400)">No tasks assigned to this goal.</div>';
+          return;
+        }
+        body.innerHTML = tasks.map((t, i) => `
+          <div class="task-view-item">
+            <div class="tvi-num">${i + 1}</div>
+            <div class="tvi-body">
+               <div class="tvi-title">${t.title || 'Task'}</div>
+               ${t.description ? `<div class="tvi-desc">${t.description}</div>` : ''}
+              <span class="tvi-xp">⭐ +${t.xp_reward || 10} XP</span>
+            </div>
+            <span class="tvi-status ${t.status === 'completed' ? 'done' : 'pending'}">${t.status === 'completed' ? '✓ Done' : 'Pending'}</span>
+          </div>`).join('');
+      })
+      .catch((e) => {
+        console.error(e);
+        body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray400)">Could not load tasks.</div>';
+      });
+  };
+
+  window.closeTaskModal = () => document.getElementById('taskModal').classList.remove('open');
+  document.getElementById('taskModal').addEventListener('click', e => { if (e.target === e.currentTarget) window.closeTaskModal(); });
+
+  /* ── 13. COUNT UP ANIMATION ── */
+  const countUp = (id, target, dur = 600) => {
+    const el = document.getElementById(id);
+    if (!el || isNaN(target)) return;
+    const start = Date.now();
+    const step = () => {
+      const p = Math.min(1, (Date.now() - start) / dur);
+      el.textContent = Math.round(p * target);
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  countUp('st-total', {{ goals| length if goals else 0 }});
+  countUp('st-active', {{ goals| selectattr('deadline', 'gt', today) | list | length if goals else 0 }});
+  countUp('st-high', {{ goals| selectattr('priority', 'eq', 'High') | list | length if goals else 0 }});
+
+});
+</script>
+<style>
+  @keyframes spin {
+    to {
+      transform: rotate(360deg)
+    }
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,1604 @@
+{% extends 'base.html' %}
+{% block title %}Leaderboard — ReEarth{% endblock %}
+{% block page_title %}Leaderboard{% endblock %}
+{% block page_subtitle %}Rankings{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ══════════════════════════════════════════════
+   PAGE
+══════════════════════════════════════════════ */
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .4);
+    }
+
+    70% {
+      box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
+
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+  }
+
+  @keyframes crown-bounce {
+
+    0%,
+    100% {
+      transform: translateY(0) rotate(-5deg);
+    }
+
+    50% {
+      transform: translateY(-4px) rotate(5deg);
+    }
+  }
+
+  @keyframes rank-pop {
+    0% {
+      opacity: 0;
+      transform: scale(.6);
+    }
+
+    70% {
+      transform: scale(1.1);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* ══════════════════════════════════════════════
+   STAT TILES
+══════════════════════════════════════════════ */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .05s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .10s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .15s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .20s;
+  }
+
+  .tile:nth-child(5) {
+    animation-delay: .25s;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-red::before {
+    background: #ef4444;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-red .tile-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  .tile-sub {
+    font-size: .68rem;
+    color: #16a34a;
+    font-weight: 600;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  /* ══════════════════════════════════════════════
+   MAIN LAYOUT
+══════════════════════════════════════════════ */
+  .lb-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    animation: fadeUp .4s .2s ease both;
+  }
+
+  /* ══════════════════════════════════════════════
+   PODIUM (TOP 3)
+══════════════════════════════════════════════ */
+  .podium-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 28px 24px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .podium-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #16a34a, #4ade80, #10b981);
+  }
+
+  .podium-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .podium-bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34, 197, 94, .06) 0%, transparent 70%);
+  }
+
+  .podium-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .podium-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .podium-title i {
+    color: #f59e0b;
+  }
+
+  .rt-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .rt-dot {
+    width: 6px;
+    height: 6px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: pulse-ring 1.5s infinite;
+  }
+
+  /* Podium row */
+  .podium-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .podium-person {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+
+  .podium-person.first {
+    order: 2;
+  }
+
+  .podium-person.second {
+    order: 1;
+  }
+
+  .podium-person.third {
+    order: 3;
+  }
+
+  .podium-crown {
+    font-size: 1.4rem;
+    animation: crown-bounce 2s ease-in-out infinite;
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .podium-person.second .podium-crown,
+  .podium-person.third .podium-crown {
+    font-size: 1.1rem;
+    animation: none;
+    opacity: .7;
+  }
+
+  .podium-avatar {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    position: relative;
+    flex-shrink: 0;
+    transition: transform .2s;
+  }
+
+  .podium-person:hover .podium-avatar {
+    transform: scale(1.06);
+  }
+
+  .podium-person.first .podium-avatar {
+    width: 76px;
+    height: 76px;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    box-shadow: 0 8px 28px rgba(22, 163, 74, .35), 0 0 0 4px #dcfce7;
+  }
+
+  .podium-person.second .podium-avatar {
+    width: 62px;
+    height: 62px;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #6b7280, #9ca3af);
+    box-shadow: 0 6px 20px rgba(107, 114, 128, .3), 0 0 0 3px #f3f4f6;
+  }
+
+  .podium-person.third .podium-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 1rem;
+    background: linear-gradient(135deg, #b45309, #f59e0b);
+    box-shadow: 0 5px 16px rgba(180, 83, 9, .3), 0 0 0 3px #fffbeb;
+  }
+
+  .podium-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .podium-avatar-ring {
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+  }
+
+  .podium-person.first .podium-avatar-ring {
+    border-color: #22c55e;
+    animation: pulse-ring 2s infinite;
+  }
+
+  .podium-person.second .podium-avatar-ring {
+    border-color: #9ca3af;
+  }
+
+  .podium-person.third .podium-avatar-ring {
+    border-color: #f59e0b;
+  }
+
+  .podium-name {
+    font-size: .8rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    text-align: center;
+    max-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .podium-xp {
+    font-size: .72rem;
+    font-weight: 800;
+    color: #16a34a;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .podium-person.second .podium-xp {
+    color: #6b7280;
+  }
+
+  .podium-person.third .podium-xp {
+    color: #b45309;
+  }
+
+  /* Podium bar */
+  .podium-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin-top: 8px;
+  }
+
+  .podium-bar {
+    width: 70px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .65rem;
+    font-weight: 800;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    transition: height .6s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .podium-person.first .podium-bar {
+    height: 60px;
+    background: linear-gradient(180deg, #16a34a, #4ade80);
+  }
+
+  .podium-person.second .podium-bar {
+    height: 44px;
+    background: linear-gradient(180deg, #6b7280, #9ca3af);
+  }
+
+  .podium-person.third .podium-bar {
+    height: 34px;
+    background: linear-gradient(180deg, #b45309, #f59e0b);
+  }
+
+  /* ══════════════════════════════════════════════
+   MAIN TABLE CARD
+══════════════════════════════════════════════ */
+  .lb-table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+  }
+
+  /* Table head */
+  .lb-table-head {
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #f3f4f6;
+    flex-wrap: wrap;
+  }
+
+  .lb-table-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-right: 4px;
+  }
+
+  .tab-strip {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 5px 13px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .tab-btn:hover {
+    color: #16a34a;
+  }
+
+  .tab-btn.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .head-spacer {
+    flex: 1;
+    min-width: 8px;
+  }
+
+  .head-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .head-search-wrap i {
+    position: absolute;
+    left: 10px;
+    color: #9ca3af;
+    font-size: .82rem;
+  }
+
+  .head-search-wrap input {
+    height: 34px;
+    padding: 0 12px 0 30px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #111827;
+    background: #f9fafb;
+    outline: none;
+    width: 180px;
+    transition: all .18s;
+  }
+
+  .head-search-wrap input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+    width: 210px;
+  }
+
+  .head-search-wrap input::placeholder {
+    color: #9ca3af;
+  }
+
+  /* Table */
+  .lb-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .lb-table thead th {
+    padding: 10px 18px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    white-space: nowrap;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    user-select: none;
+    transition: color .15s;
+  }
+
+  .lb-table thead th:hover {
+    color: #16a34a;
+  }
+
+  .lb-table thead th.sorted {
+    color: #16a34a;
+  }
+
+  .lb-table thead th .sort-arrow {
+    margin-left: 4px;
+    opacity: .5;
+    font-size: .65rem;
+  }
+
+  .lb-table thead th.sorted .sort-arrow {
+    opacity: 1;
+  }
+
+  .lb-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+  }
+
+  .lb-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .lb-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .lb-table tbody tr.current-user-row {
+    background: #f0fdf4;
+  }
+
+  .lb-table tbody tr.current-user-row td {
+    font-weight: 600;
+  }
+
+  .lb-table tbody td {
+    padding: 12px 18px;
+    font-size: .82rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  /* Rank cell */
+  .td-rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: .8rem;
+    color: #9ca3af;
+    width: 40px;
+  }
+
+  .rank-medal {
+    font-size: 1.1rem;
+  }
+
+  .rank-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    font-size: .72rem;
+    font-weight: 800;
+    color: #374151;
+  }
+
+  .rank-change {
+    font-size: .62rem;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+    margin-left: 4px;
+  }
+
+  .rank-change.up {
+    color: #16a34a;
+  }
+
+  .rank-change.down {
+    color: #ef4444;
+  }
+
+  .rank-change.same {
+    color: #9ca3af;
+  }
+
+  /* User cell */
+  .td-user {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .td-ava {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  .td-ava img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+
+  .td-name {
+    font-size: .84rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .td-sub {
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .you-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 99px;
+    margin-left: 5px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* XP Cell */
+  .td-xp {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .82rem;
+    font-weight: 700;
+    color: #16a34a;
+  }
+
+  .xp-bar-mini {
+    height: 4px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 4px;
+    width: 80px;
+  }
+
+  .xp-bar-mini-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+    transition: width .6s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  /* Level badge */
+  .lv-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: .7rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .lv-pill.gold {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .lv-pill.silver {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  .lv-pill.green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .lv-pill.blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  /* Tier badge */
+  .tier-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: .7rem;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .tier-pill.gold {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .tier-pill.silver {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  .tier-pill.bronze {
+    background: #fff7ed;
+    color: #c2410c;
+  }
+
+  .tier-pill.rookie {
+    background: #f3f4f6;
+    color: #9ca3af;
+  }
+
+  /* Hours */
+  .td-hours {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  /* Events */
+  .td-events {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  /* Sparkline */
+  .sparkline-cell {
+    opacity: .75;
+  }
+
+  /* ══════════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════════ */
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Your rank card */
+  .your-rank-card {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    border-radius: 20px;
+    padding: 22px;
+    color: #fff;
+    box-shadow: 0 8px 32px rgba(22, 163, 74, .3);
+    animation: fadeUp .4s .25s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .your-rank-card::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .08);
+  }
+
+  .your-rank-card::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: -20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .06);
+  }
+
+  .yr-title {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    opacity: .8;
+    margin-bottom: 12px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .yr-rank {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 6px;
+  }
+
+  .yr-name {
+    font-size: .9rem;
+    font-weight: 600;
+    opacity: .9;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 16px;
+  }
+
+  .yr-bar-wrap {
+    height: 6px;
+    background: rgba(255, 255, 255, .25);
+    border-radius: 99px;
+    margin-bottom: 6px;
+  }
+
+  .yr-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #fff;
+    transition: width .8s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .yr-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: .68rem;
+    opacity: .85;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .yr-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .yr-stat {
+    background: rgba(255, 255, 255, .15);
+    border-radius: 12px;
+    padding: 10px;
+  }
+
+  .yr-stat-val {
+    font-size: .95rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .yr-stat-lbl {
+    font-size: .62rem;
+    opacity: .8;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* Top movers card */
+  .movers-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .3s ease both;
+  }
+
+  .movers-title {
+    font-size: .84rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .movers-title i {
+    color: #16a34a;
+  }
+
+  .mover-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f9fafb;
+  }
+
+  .mover-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .mover-ava {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .mover-ava img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .mover-name {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    flex: 1;
+  }
+
+  .mover-gain {
+    font-size: .74rem;
+    font-weight: 700;
+    color: #16a34a;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* XP distribution mini chart */
+  .dist-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .35s ease both;
+  }
+
+  .dist-title {
+    font-size: .84rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dist-title i {
+    color: #16a34a;
+  }
+
+  .dist-bar-wrap {
+    height: 140px;
+    position: relative;
+  }
+
+  .dist-bar-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Responsive */
+  @media (max-width:1200px) {
+    .stat-tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width:1000px) {
+    .lb-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width:700px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .podium-row {
+      gap: 8px;
+    }
+  }
+
+  @media (max-width:640px) {
+    .page-content {
+      padding: 16px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Compute stats ─────────────────────────────── #}
+{% set total_count = top_users|length %}
+{% set my_xp = current_user.xp or 0 %}
+{% set my_level = current_user.level or 1 %}
+{% set max_xp = (top_users[0].xp or 1) if top_users else 1 %}
+
+{# Find current user rank #}
+{% set my_rank = namespace(value=0) %}
+{% for u in top_users %}
+{% if u.id == current_user.id %}
+{% set my_rank.value = loop.index %}
+{% endif %}
+{% endfor %}
+
+{# Colors for avatars #}
+{% set COLORS = ['#22c55e','#3b82f6','#f59e0b','#7c3aed','#ef4444','#10b981','#f97316','#06b6d4','#a855f7','#ec4899'] %}
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-trophy-fill"></i></div>
+    <div class="tile-val">{{ my_rank.value if my_rank.value > 0 else '—' }}</div>
+    <div class="tile-lbl">Your Rank</div>
+    <div class="tile-sub"><i class="bi bi-arrow-up-short"></i> This week</div>
+  </div>
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-val">{{ my_xp }}</div>
+    <div class="tile-lbl">Your XP</div>
+    <div class="tile-sub"><i class="bi bi-graph-up-arrow"></i> Keep going!</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-people-fill"></i></div>
+    <div class="tile-val">{{ total_count }}</div>
+    <div class="tile-lbl">Total Volunteers</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-bar-chart-fill"></i></div>
+    <div class="tile-val">{{ (top_users | sum(attribute='xp') // total_count) if total_count else 0 }}</div>
+    <div class="tile-lbl">Avg XP</div>
+  </div>
+  <div class="tile t-red">
+    <div class="tile-icon"><i class="bi bi-fire"></i></div>
+    <div class="tile-val">{{ top_users[0].xp if top_users else 0 }}</div>
+    <div class="tile-lbl">Top XP</div>
+    <div class="tile-sub">{{ top_users[0].name.split()[0] if top_users else '—' }}</div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="lb-layout">
+
+  <!-- LEFT COLUMN -->
+  <div>
+
+    <!-- PODIUM TOP 3 -->
+    {% if top_users|length >= 3 %}
+    <div class="podium-card">
+      <div class="podium-bg">
+        <div class="podium-bg-circle" style="width:300px;height:300px;top:-100px;right:-80px;"></div>
+        <div class="podium-bg-circle" style="width:200px;height:200px;bottom:-60px;left:40px;"></div>
+      </div>
+
+      <div class="podium-header">
+        <div class="podium-title">
+          <i class="bi bi-trophy-fill"></i> Top Volunteers
+        </div>
+        <span class="rt-badge"><span class="rt-dot"></span> Live</span>
+      </div>
+
+      <div class="podium-row">
+        {# 2nd place #}
+        {% set u2 = top_users[1] %}
+        <div class="podium-person second">
+          <span class="podium-crown">🥈</span>
+          <div class="podium-avatar">
+            {% if u2.profile_pic %}
+            <img src="{{ url_for('static', filename='uploads/' ~ u2.profile_pic) }}" alt="">
+            {% else %}
+            {{ u2.name[0] }}{{ u2.name.split(' ')[1][0] if u2.name.split(' ')|length > 1 else '' }}
+            {% endif %}
+            <div class="podium-avatar-ring"></div>
+          </div>
+          <div class="podium-name">{{ u2.name.split()[0] }}</div>
+          <div class="podium-xp">{{ u2.xp }} XP</div>
+          <div class="podium-bar-wrap">
+            <div class="podium-bar">#2</div>
+          </div>
+        </div>
+
+        {# 1st place #}
+        {% set u1 = top_users[0] %}
+        <div class="podium-person first">
+          <span class="podium-crown">👑</span>
+          <div class="podium-avatar">
+            {% if u1.profile_pic %}
+            <img src="{{ url_for('static', filename='uploads/' ~ u1.profile_pic) }}" alt="">
+            {% else %}
+            {{ u1.name[0] }}{{ u1.name.split(' ')[1][0] if u1.name.split(' ')|length > 1 else '' }}
+            {% endif %}
+            <div class="podium-avatar-ring"></div>
+          </div>
+          <div class="podium-name">{{ u1.name.split()[0] }}</div>
+          <div class="podium-xp">{{ u1.xp }} XP</div>
+          <div class="podium-bar-wrap">
+            <div class="podium-bar">#1</div>
+          </div>
+        </div>
+
+        {# 3rd place #}
+        {% set u3 = top_users[2] %}
+        <div class="podium-person third">
+          <span class="podium-crown">🥉</span>
+          <div class="podium-avatar">
+            {% if u3.profile_pic %}
+            <img src="{{ url_for('static', filename='uploads/' ~ u3.profile_pic) }}" alt="">
+            {% else %}
+            {{ u3.name[0] }}{{ u3.name.split(' ')[1][0] if u3.name.split(' ')|length > 1 else '' }}
+            {% endif %}
+            <div class="podium-avatar-ring"></div>
+          </div>
+          <div class="podium-name">{{ u3.name.split()[0] }}</div>
+          <div class="podium-xp">{{ u3.xp }} XP</div>
+          <div class="podium-bar-wrap">
+            <div class="podium-bar">#3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- TABLE CARD -->
+    <div class="lb-table-card">
+      <div class="lb-table-head">
+        <span class="lb-table-title">All Rankings</span>
+        <div class="tab-strip">
+          <button class="tab-btn active" data-sort="xp">By XP</button>
+          <button class="tab-btn" data-sort="level">By Level</button>
+          <button class="tab-btn" data-sort="name">By Name</button>
+        </div>
+        <div class="head-spacer"></div>
+        <div class="head-search-wrap">
+          <i class="bi bi-search"></i>
+          <input type="text" id="lbSearch" placeholder="Search volunteer...">
+        </div>
+      </div>
+
+      <table class="lb-table" id="lbTable">
+        <thead>
+          <tr>
+            <th data-col="rank" class="sorted"># <span class="sort-arrow"><i class="bi bi-chevron-down"></i></span></th>
+            <th data-col="name">Volunteer</th>
+            <th data-col="xp">XP <span class="sort-arrow"><i class="bi bi-chevron-expand"></i></span></th>
+            <th data-col="level">Level</th>
+            <th data-col="tier">Tier</th>
+            <th>Trend</th>
+          </tr>
+        </thead>
+        <tbody id="lbTbody">
+          {% for user in top_users %}
+          {% set is_me = user.id == current_user.id %}
+          {% set xp = user.xp or 0 %}
+          {% set level = user.level or 1 %}
+          {% set pct = ((xp / max_xp) * 100)|int %}
+          {% set color = COLORS[loop.index0 % COLORS|length] %}
+
+          {% if xp >= 1000 %}{% set tier='gold' %}{% set tier_lbl='🏆 Gold' %}
+          {% elif xp >= 500 %}{% set tier='silver' %}{% set tier_lbl='🥈 Silver' %}
+          {% elif xp >= 250 %}{% set tier='bronze' %}{% set tier_lbl='🥉 Bronze' %}
+          {% else %}{% set tier='rookie' %}{% set tier_lbl='🌱 Rookie' %}{% endif %}
+
+          {% if level >= 8 %}{% set lv_cls='gold' %}
+          {% elif level >= 5 %}{% set lv_cls='silver' %}
+          {% elif level >= 3 %}{% set lv_cls='green' %}
+          {% else %}{% set lv_cls='blue' %}{% endif %}
+
+          <tr class="{{ 'current-user-row' if is_me else '' }}" data-xp="{{ xp }}" data-level="{{ level }}"
+            data-name="{{ user.name|lower }}" style="animation: fadeUp .3s {{ loop.index * 0.04 }}s ease both;">
+
+            <td class="td-rank">
+              {% if loop.index == 1 %}<span class="rank-medal">🥇</span>
+              {% elif loop.index == 2 %}<span class="rank-medal">🥈</span>
+              {% elif loop.index == 3 %}<span class="rank-medal">🥉</span>
+              {% else %}
+              <span class="rank-num">{{ loop.index }}</span>
+              {% endif %}
+            </td>
+
+            <td>
+              <div class="td-user">
+                <div class="td-ava" style="background:{{ color }};">
+                  {% if user.profile_pic %}
+                  <img src="{{ url_for('static', filename='uploads/' ~ user.profile_pic) }}" alt="">
+                  {% else %}
+                  {{ user.name[0] }}{{ user.name.split(' ')[1][0] if user.name.split(' ')|length > 1 else '' }}
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="td-name">
+                    {{ user.name }}
+                    {% if is_me %}<span class="you-badge">⚡ You</span>{% endif %}
+                  </div>
+                  <div class="td-sub">Volunteer · Lv {{ level }}</div>
+                </div>
+              </div>
+            </td>
+
+            <td class="td-xp">
+              {{ xp }}
+              <div class="xp-bar-mini">
+                <div class="xp-bar-mini-fill" style="width:{{ pct }}%;"></div>
+              </div>
+            </td>
+
+            <td>
+              <span class="lv-pill {{ lv_cls }}">Lv {{ level }}</span>
+            </td>
+
+            <td>
+              <span class="tier-pill {{ tier }}">{{ tier_lbl }}</span>
+            </td>
+
+            <td class="sparkline-cell" id="spark-{{ loop.index }}">
+              <!-- JS fills sparkline -->
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6"
+              style="text-align:center;padding:40px;color:#9ca3af;font-family:'Sora',sans-serif;font-size:.84rem;">
+              No leaderboard data yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /left col -->
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+
+    <!-- Your rank card -->
+    <div class="your-rank-card">
+      <div class="yr-title">⚡ Your Ranking</div>
+      <div class="yr-rank">#{{ my_rank.value if my_rank.value > 0 else '?' }}</div>
+      <div class="yr-name">{{ current_user.name }}</div>
+      {% set yr_pct = ((my_xp / max_xp) * 100)|int %}
+      <div class="yr-bar-wrap">
+        <div class="yr-bar-fill" style="width:{{ yr_pct }}%;"></div>
+      </div>
+      <div class="yr-meta">
+        <span>0 XP</span>
+        <span>{{ my_xp }} / {{ max_xp }} XP</span>
+      </div>
+      <div class="yr-stats">
+        <div class="yr-stat">
+          <div class="yr-stat-val">{{ my_xp }}</div>
+          <div class="yr-stat-lbl">Total XP</div>
+        </div>
+        <div class="yr-stat">
+          <div class="yr-stat-val">{{ my_level }}</div>
+          <div class="yr-stat-lbl">Level</div>
+        </div>
+        <div class="yr-stat">
+          <div class="yr-stat-val">{{ my_rank.value if my_rank.value > 0 else '—' }}</div>
+          <div class="yr-stat-lbl">Rank</div>
+        </div>
+        <div class="yr-stat">
+          <div class="yr-stat-val">{{ total_count }}</div>
+          <div class="yr-stat-lbl">Vs. Peers</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Movers (top 5 above current user or just top 5) -->
+    <div class="movers-card">
+      <div class="movers-title"><i class="bi bi-arrow-up-circle-fill"></i> Top 5</div>
+      {% for user in top_users[:5] %}
+      {% set color = COLORS[loop.index0 % COLORS|length] %}
+      <div class="mover-item">
+        <div class="mover-ava" style="background:{{ color }};">
+          {% if user.profile_pic %}
+          <img src="{{ url_for('static', filename='uploads/' ~ user.profile_pic) }}" alt="">
+          {% else %}
+          {{ user.name[0] }}{{ user.name.split(' ')[1][0] if user.name.split(' ')|length > 1 else '' }}
+          {% endif %}
+        </div>
+        <div class="mover-name">
+          {{ user.name.split()[0] }}
+          {% if user.id == current_user.id %}<span class="you-badge">You</span>{% endif %}
+        </div>
+        <div class="mover-gain">{{ user.xp or 0 }} XP</div>
+      </div>
+      {% else %}
+      <div style="color:#9ca3af;font-size:.8rem;text-align:center;padding:12px;">No data yet</div>
+      {% endfor %}
+    </div>
+
+    <!-- XP Distribution mini bar chart -->
+    <div class="dist-card">
+      <div class="dist-title"><i class="bi bi-bar-chart-fill"></i> XP Distribution</div>
+      <div class="dist-bar-wrap">
+        <canvas id="distChart"></canvas>
+      </div>
+    </div>
+
+  </div><!-- /right col -->
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  /* ── Data from Flask (injected safely) ────────── */
+  const LB_DATA = [
+    {% for user in top_users %}
+    {
+      id: {{ user.id | default(0) }},
+      name: {{ (user.name or 'Anonymous') | tojson }},
+      xp: {{ user.xp or 0 }},
+      level: {{ user.level or 1 }}
+    } {% if not loop.last %}, {% endif %}
+    {% endfor %}
+  ];
+  const MY_ID = {{ current_user.id | default(0) }};
+  const MAX_XP = {{ max_xp | default(1000) }};
+
+  /* ── Sparklines ───────────────────────────────── */
+  const SPARK_COLORS = [
+    '#22c55e', '#3b82f6', '#f59e0b', '#7c3aed',
+    '#ef4444', '#10b981', '#f97316', '#06b6d4', '#a855f7', '#ec4899'
+  ];
+
+  function makeSpark(xp, color) {
+    // Simulate a trend line based on xp value
+    const pts = [];
+    const steps = 7;
+    let cur = Math.max(0, xp - Math.floor(xp * .3));
+    for (let i = 0; i < steps; i++) {
+      pts.push(cur);
+      cur += Math.floor(Math.random() * (xp * .08)) - Math.floor(xp * .01);
+      cur = Math.max(0, cur);
+    }
+    pts.push(xp);
+
+    const w = 80, h = 28;
+    const max = Math.max(...pts), min = Math.min(...pts);
+    const range = max - min || 1;
+    const svgPts = pts.map((v, i) => {
+      const x = (i / (pts.length - 1)) * w;
+      const y = h - ((v - min) / range) * (h - 4) - 2;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <polyline points="${svgPts}" fill="none" stroke="${color}" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+  </svg>`;
+  }
+
+  document.querySelectorAll('[id^="spark-"]').forEach((cell, i) => {
+    const user = LB_DATA[i];
+    if (user) cell.innerHTML = makeSpark(user.xp, SPARK_COLORS[i % SPARK_COLORS.length]);
+  });
+
+  /* ── Sort tabs ────────────────────────────────── */
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      sortTable(this.getAttribute('data-sort'));
+    });
+  });
+
+  function sortTable(key) {
+    const tbody = document.getElementById('lbTbody');
+    const rows = [...tbody.querySelectorAll('tr[data-xp]')];
+    rows.sort((a, b) => {
+      if (key === 'name') return a.dataset.name.localeCompare(b.dataset.name);
+      if (key === 'level') return +b.dataset.level - +a.dataset.level;
+      return +b.dataset.xp - +a.dataset.xp;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+
+  /* ── Search ───────────────────────────────────── */
+  document.getElementById('lbSearch').addEventListener('input', function () {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#lbTbody tr[data-name]').forEach(row => {
+      row.style.display = row.dataset.name.includes(q) ? '' : 'none';
+    });
+  });
+
+  /* ── XP Distribution mini chart ───────────────── */
+  (function () {
+    const el = document.getElementById('distChart');
+    if (!el) return;
+
+    const xpRanges = ['0–99', '100–249', '250–499', '500–999', '1000+'];
+    const counts = [0, 0, 0, 0, 0];
+
+    LB_DATA.forEach(u => {
+      if (u.xp < 100) counts[0]++;
+      else if (u.xp < 250) counts[1]++;
+      else if (u.xp < 500) counts[2]++;
+      else if (u.xp < 1000) counts[3]++;
+      else counts[4]++;
+    });
+
+    new Chart(el.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: xpRanges,
+        datasets: [{
+          data: counts,
+          backgroundColor: ['#dcfce7', '#bbf7d0', '#4ade80', '#22c55e', '#16a34a'],
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#9ca3af', font: { family: 'Sora', size: 10 } },
+            border: { display: false }
+          },
+          y: {
+            grid: { color: 'rgba(0,0,0,.04)' },
+            ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 10 }, stepSize: 1 },
+            border: { display: false }, beginAtZero: true
+          }
+        }
+      }
+    });
+  })();
+
+  /* ── Socket.IO real-time leaderboard update ────── */
+  if (typeof socket !== 'undefined') {
+    socket.emit('request_leaderboard');
+
+    socket.on('update_leaderboard', (data) => {
+      if (!data || !data.length) return;
+
+      const tbody = document.getElementById('lbTbody');
+      if (!tbody) return;
+
+      // Keep existing rows, just update XP values
+      data.forEach((entry, i) => {
+        const row = tbody.querySelectorAll('tr[data-xp]')[i];
+        if (!row) return;
+        // Update XP cell text
+        const xpCell = row.querySelector('.td-xp');
+        if (xpCell) {
+          const bar = xpCell.querySelector('.xp-bar-mini-fill');
+          xpCell.childNodes[0].textContent = entry.xp + ' ';
+          if (bar) bar.style.width = Math.min(100, Math.round(entry.xp / MAX_XP * 100)) + '%';
+        }
+        row.dataset.xp = entry.xp;
+      });
+
+      // Update "Your Rank" card if current user is in data
+      const meEntry = data.find(u => u.name === {{ current_user.name | tojson }});
+    if (meEntry) {
+      const rankEl = document.querySelector('.yr-rank');
+      if (rankEl) {
+        const myIdx = data.indexOf(meEntry);
+        rankEl.textContent = '#' + (myIdx + 1);
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,479 @@
+{% extends 'base.html' %}
+{% block title %}{{ event.title }} — ReEarth{% endblock %}
+{% block page_title %}Event Details{% endblock %}
+{% block page_subtitle %}Activity Detail{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── HERO HEADER ─── */
+  .hero-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 32px;
+    padding: 40px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero-img-wrap {
+    width: 200px;
+    height: 200px;
+    border-radius: 28px;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .hero-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-info {
+    flex: 1;
+  }
+
+  .hero-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+
+  .h-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  .h-meta-item i {
+    color: #16a34a;
+    font-size: 1rem;
+  }
+
+  /* ─── LAYOUT ─── */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 30px;
+  }
+
+  .main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .glass-section {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title i { color: #16a34a; }
+
+  /* Tags */
+  .tag-pills {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .tag-pill {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .tp-cleanup { background: #dcfce7; color: #15803d; }
+  .tp-community { background: #dbeafe; color: #2563eb; }
+  .tp-xp { background: #fef3c7; color: #b45309; }
+
+  /* Sidebar */
+  .sidebar-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .action-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 28px;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+    position: sticky;
+    top: 24px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .countdown-box {
+    background: #f8fafc;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .cd-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #ef4444;
+    letter-spacing: 1px;
+  }
+
+  .cd-lbl {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  .btn-book {
+    width: 100%;
+    height: 54px;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 8px 25px rgba(22, 163, 74, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .btn-book:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(22, 163, 74, 0.4);
+  }
+
+  .btn-book.booked {
+    background: #dcfce7;
+    color: #15803d;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  .qr-wrap {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .qr-code {
+    width: 160px;
+    height: 160px;
+    margin: 0 auto 12px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+  }
+
+  .qr-code img { width: 100%; height: 100%; }
+
+  .passcode {
+    font-family: 'JetBrains Mono', monospace;
+    background: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.9rem;
+  }
+
+  /* Progress */
+  .xp-reward {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .xp-val { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #16a34a; font-size: 1.1rem; }
+
+  .xp-bar-bg {
+    height: 10px;
+    background: #ecfdf5;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #10b981);
+    border-radius: 99px;
+    width: 80%;
+  }
+
+  .tool-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn-tool {
+    flex: 1;
+    height: 42px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-tool:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #1e293b;
+  }
+
+  .map-frame {
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #e4ece6;
+  }
+
+  @media (max-width: 1024px) {
+    .detail-grid { grid-template-columns: 1fr; }
+    .hero-card { flex-direction: column; text-align: center; padding: 30px; }
+    .hero-meta { justify-content: center; }
+    .hero-img-wrap { width: 140px; height: 140px; }
+    .action-card { position: static; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-card">
+  <div class="hero-img-wrap">
+    {% if event.thumbnail %}
+      <img src="{{ url_for('static', filename='uploads/' ~ event.thumbnail) }}" alt="Event Image">
+    {% else %}
+      <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&q=80" alt="Fallback Image">
+    {% endif %}
+  </div>
+  <div class="hero-info">
+    <nav aria-label="breadcrumb" style="margin-bottom: 8px;">
+      <ol class="breadcrumb" style="margin:0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.home') }}" class="text-success text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('events.manage_events') }}" class="text-success text-decoration-none">Events</a></li>
+        <li class="breadcrumb-item active text-muted" aria-current="page">View Event</li>
+      </ol>
+    </nav>
+    <h1 class="hero-title">{{ event.title }}</h1>
+    <div class="hero-meta">
+      <div class="h-meta-item"><i class="bi bi-calendar3"></i> {{ event.date.strftime('%d %b %Y') }}</div>
+      <div class="h-meta-item"><i class="bi bi-clock"></i> {{ event.date.strftime('%I:%M %p') }}</div>
+      <div class="h-meta-item"><i class="bi bi-geo-alt"></i> {{ event.location }}</div>
+    </div>
+    <div class="tag-pills">
+      <span class="tag-pill tp-cleanup"><i class="bi bi-tree-fill"></i> Cleanup</span>
+      <span class="tag-pill tp-community"><i class="bi bi-people-fill"></i> Community</span>
+      <span class="tag-pill tp-xp"><i class="bi bi-lightning-fill"></i> 100 XP Boost</span>
+    </div>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <!-- MAIN CONTENT -->
+  <div class="main-column">
+    <div class="glass-section">
+      <div class="section-title"><i class="bi bi-info-circle-fill"></i> About this Event</div>
+      <p style="color: #4b5563; line-height: 1.8; font-size: 0.95rem;">
+        {{ event.description or 'No description provided for this activity. Join our community of volunteers and help us make a difference!' }}
+      </p>
+    </div>
+
+    {% if event.latitude and event.longitude %}
+    <div class="glass-section">
+      <div class="section-title"><i class="bi bi-geo-alt-fill"></i> Event Location</div>
+      <div class="map-frame">
+        <div class="ratio ratio-21x9">
+          <iframe
+            src="https://www.google.com/maps?q={{ event.latitude }},{{ event.longitude }}&output=embed"
+            allowfullscreen loading="lazy" style="border:0;"></iframe>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="glass-section">
+      <div class="section-title"><i class="bi bi-trophy-fill"></i> Volunteer Rewards</div>
+      <div class="xp-reward">
+        <div style="font-size: 0.85rem; font-weight: 700; color: #475569;">Event Completion Reward</div>
+        <div class="xp-val">+{{ event.xp_reward or 80 }} XP</div>
+      </div>
+      <div class="xp-bar-bg">
+        <div class="xp-bar-fill"></div>
+      </div>
+      <p style="font-size: 0.78rem; color: #64748b; margin-top: 12px; font-weight: 500;">
+        You will earn this XP automatically after your attendance is verified by the host. 
+        This contributes directly to your level progression and badge unlocks.
+      </p>
+    </div>
+  </div>
+
+  <!-- SIDEBAR ACTIONS -->
+  <div class="sidebar-column">
+    <div class="action-card">
+      <div class="countdown-box">
+        <div class="cd-val" id="countdown">Calculating...</div>
+        <div class="cd-lbl">Starts in</div>
+      </div>
+
+      {% if booking %}
+        <div class="btn-book booked">
+          <i class="bi bi-check-circle-fill"></i> Already Booked
+        </div>
+        <p style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-bottom: 20px;">
+          Check your "My Bookings" page for details.
+        </p>
+      {% else %}
+        <button class="btn-book" onclick="handleBooking({{ event.id }})">
+          <i class="bi bi-calendar-plus"></i> Book Now
+        </button>
+      {% endif %}
+
+      <div class="tool-row">
+        <button class="btn-tool" onclick="navigator.clipboard.writeText(window.location.href)">
+          <i class="bi bi-share"></i> Share
+        </button>
+        {% if current_user.id == event.creator_id or current_user.role == 'admin' %}
+        <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="btn-tool">
+          <i class="bi bi-pencil-square"></i> Edit
+        </a>
+        {% endif %}
+      </div>
+
+      {% if event.qr_code %}
+      <div class="qr-wrap">
+        <div class="section-title" style="justify-content: center; font-size: 0.85rem;">
+          <i class="bi bi-qr-code"></i> Access Control
+        </div>
+        <div class="qr-code shadow-sm">
+          <img src="{{ url_for('static', filename='qr_codes/' ~ event.qr_code) }}" alt="QR Code">
+        </div>
+        <div style="font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Manual Passcode</div>
+        <span class="passcode">{{ event.passcode or '000000' }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── COUNTDOWN ───
+  const countdownEl = document.getElementById("countdown");
+  const eventTime = new Date("{{ event.date.isoformat() }}").getTime();
+
+  function updateCountdown() {
+    const now = new Date().getTime();
+    const distance = eventTime - now;
+
+    if (distance < 0) {
+      countdownEl.innerText = "EVENT LIVE";
+      countdownEl.style.color = "#16a34a";
+      return;
+    }
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hrs = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((distance % (1000 * 60)) / 1000);
+
+    countdownEl.innerText = `${days}d ${hrs}h ${mins}m ${secs}s`;
+  }
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
+
+  // ─── BOOKING HANDLER ───
+  async function handleBooking(eventId) {
+    if(!confirm("Are you sure you want to book this event?")) return;
+    
+    try {
+      // We'll use a dynamic form since the endpoint expects POST
+      const formData = new FormData();
+      formData.append('appointment_time', new Date().toISOString().slice(0, 16)); // Default time
+      formData.append('message', 'Booking from web interface');
+
+      const response = await fetch(`/book_event/${eventId}`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      
+      if(data.success) {
+        alert("🎉 Successfully Booked!");
+        window.location.reload();
+      } else {
+        alert("❌ Error: " + (data.message || "Could not complete booking"));
+      }
+    } catch(e) {
+      console.error(e);
+      alert("Something went wrong. Please try again.");
+    }
+  }
+</script>
+{% endblock %}

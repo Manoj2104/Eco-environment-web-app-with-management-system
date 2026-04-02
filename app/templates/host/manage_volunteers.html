@@ -1,0 +1,2648 @@
+{% extends 'base.html' %}
+{% block title %}Manage Volunteers — ReEarth{% endblock %}
+{% block page_title %}Manage Volunteers{% endblock %}
+{% block page_subtitle %}Host{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-green {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .4);
+    }
+
+    50% {
+      box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes modalPop {
+    from {
+      opacity: 0;
+      transform: scale(.92) translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  /* ── STAT TILES ── */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile.t-red::before {
+    background: #ef4444;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .04s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .08s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .12s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .16s;
+  }
+
+  .tile:nth-child(5) {
+    animation-delay: .20s;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .tile.t-red .tile-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ── CHART ROW ── */
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 16px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .18s ease both;
+  }
+
+  .chart-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+  }
+
+  .chart-card-title {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #9ca3af;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .chart-card-title i {
+    color: #16a34a;
+    font-size: .9rem;
+  }
+
+  .chart-big-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.04em;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .chart-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 16px;
+  }
+
+  .chart-body {
+    position: relative;
+    width: 100%;
+    height: 180px;
+  }
+
+  .chart-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* profile side card */
+  .side-stats-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .side-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .side-stat-row:last-child {
+    border-bottom: none;
+  }
+
+  .side-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    flex-shrink: 0;
+  }
+
+  .side-stat-label {
+    font-size: .76rem;
+    font-weight: 600;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .side-stat-sub {
+    font-size: .68rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .side-stat-val {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .88rem;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    animation: fadeUp .4s .22s ease both;
+  }
+
+  .toolbar-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .toolbar-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .85rem;
+    pointer-events: none;
+  }
+
+  .toolbar-search input {
+    width: 100%;
+    padding: 8px 14px 8px 34px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    color: #111827;
+    outline: none;
+    background: #f9fafb;
+    transition: all .18s;
+  }
+
+  .toolbar-search input:focus {
+    border-color: #4ade80;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .toolbar-search input::placeholder {
+    color: #9ca3af;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .fpill {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .fpill:hover:not(.active) {
+    color: #16a34a;
+  }
+
+  .fpill.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .sort-select {
+    padding: 7px 32px 7px 12px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    outline: none;
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    appearance: none;
+    transition: all .18s;
+  }
+
+  .sort-select:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .vtbtn {
+    width: 32px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: .85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .vtbtn.active {
+    background: #fff;
+    color: #374151;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+  }
+
+  .tb-action-btn {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1.5px solid transparent;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .18s;
+  }
+
+  .tba-primary {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .25);
+  }
+
+  .tba-primary:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .tba-outline {
+    background: #fff;
+    border-color: #e4ece6;
+    color: #374151;
+  }
+
+  .tba-outline:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .record-count {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+  }
+
+  /* ── VOLUNTEER GRID ── */
+  .vol-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  .vol-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 18px;
+    padding: 20px;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vol-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0 3px 3px 0;
+  }
+
+  .vol-card.vc-active::before {
+    background: #22c55e;
+  }
+
+  .vol-card.vc-inactive::before {
+    background: #9ca3af;
+  }
+
+  .vol-card.vc-managed::before {
+    background: #3b82f6;
+  }
+
+  .vol-card:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .12);
+    transform: translateY(-2px);
+  }
+
+  .vc-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .vc-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  .vc-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .vc-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .vc-name {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .vc-email {
+    font-size: .72rem;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  .vc-id {
+    font-size: .68rem;
+    color: #d1d5db;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .vc-status-pill {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Sora', sans-serif;
+    margin-top: 5px;
+  }
+
+  .vsp-active {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .vsp-inactive {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .vsp-managed {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .vc-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+
+  .vc-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .74rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .vc-meta-row i {
+    color: #16a34a;
+    width: 14px;
+    font-size: .8rem;
+    flex-shrink: 0;
+  }
+
+  .vc-tags {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .vc-tag {
+    font-size: .62rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #dcfce7;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .vc-xp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f0fdf4;
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+  }
+
+  .vc-xp-lbl {
+    font-size: .7rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .vc-xp-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .84rem;
+    font-weight: 800;
+    color: #16a34a;
+  }
+
+  /* Dropdown action menu */
+  .vc-actions {
+    display: flex;
+    gap: 8px;
+    position: relative;
+  }
+
+  .vc-btn {
+    height: 34px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .74rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all .18s;
+    padding: 0 14px;
+  }
+
+  .vcb-primary {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+    flex: 1;
+  }
+
+  .vcb-primary:hover {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .vcb-danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+  }
+
+  .vcb-danger:hover {
+    background: #dc2626;
+    color: #fff;
+  }
+
+  .vcb-more {
+    background: #f9fafb;
+    color: #374151;
+    border-color: #e4ece6;
+    width: 34px;
+    padding: 0;
+    flex-shrink: 0;
+    border-radius: 10px;
+  }
+
+  .vcb-more:hover {
+    border-color: #9ca3af;
+  }
+
+  /* dropdown menu */
+  .vc-dropdown {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .1);
+    z-index: 100;
+    min-width: 180px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .vc-dropdown.open {
+    display: block;
+    animation: fadeUp .18s ease both;
+  }
+
+  .vcd-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 14px;
+    font-size: .78rem;
+    font-weight: 600;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    transition: background .15s;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+  }
+
+  .vcd-item i {
+    width: 16px;
+    font-size: .85rem;
+    color: #9ca3af;
+  }
+
+  .vcd-item:hover {
+    background: #f9fafb;
+    color: #111827;
+  }
+
+  .vcd-item:hover i {
+    color: #16a34a;
+  }
+
+  .vcd-item.danger {
+    color: #dc2626;
+  }
+
+  .vcd-item.danger i {
+    color: #dc2626;
+  }
+
+  .vcd-item.danger:hover {
+    background: #fef2f2;
+  }
+
+  .vcd-divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 4px 0;
+  }
+
+  /* ── TABLE VIEW ── */
+  .vol-table-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    margin-bottom: 20px;
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  .vol-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .vol-table thead th {
+    padding: 11px 18px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .vol-table thead th:hover {
+    color: #16a34a;
+  }
+
+  .vol-table tbody tr {
+    border-bottom: 1px solid #f9fafb;
+    transition: background .15s;
+  }
+
+  .vol-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .vol-table tbody tr:hover {
+    background: #f0fdf4;
+  }
+
+  .vol-table tbody td {
+    padding: 13px 18px;
+    font-size: .8rem;
+    color: #374151;
+    vertical-align: middle;
+  }
+
+  .td-rank {
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .76rem;
+    font-weight: 600;
+  }
+
+  .td-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .td-ava {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  .td-ava img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .td-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .td-sub {
+    font-size: .7rem;
+    color: #9ca3af;
+    margin-top: 1px;
+  }
+
+  .td-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  .td-green {
+    color: #16a34a;
+  }
+
+  .td-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+    transition: all .18s;
+  }
+
+  .td-icon-btn:hover {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .td-icon-btn.red:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: #fef2f2;
+  }
+
+  /* ── EMPTY STATE ── */
+  .vol-empty {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 60px 24px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  .ve-icon {
+    font-size: 3rem;
+    opacity: .2;
+    margin-bottom: 12px;
+  }
+
+  .vol-empty h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .vol-empty p {
+    font-size: .82rem;
+    color: #9ca3af;
+    margin-bottom: 20px;
+  }
+
+  .ve-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 22px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .ve-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .38);
+  }
+
+  /* ── MODAL BASE ── */
+  .mv-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .mv-modal-overlay.open {
+    display: flex;
+  }
+
+  .mv-modal {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .18);
+    overflow: hidden;
+    animation: modalPop .25s cubic-bezier(.34, 1.56, .64, 1) both;
+  }
+
+  .mv-modal-top {
+    padding: 24px;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    position: relative;
+  }
+
+  .mv-modal-top.blue-grad {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+  }
+
+  .mv-modal-top.red-grad {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+  }
+
+  .mv-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background .18s;
+  }
+
+  .mv-modal-close:hover {
+    background: rgba(255, 255, 255, .35);
+  }
+
+  .mv-modal-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 4px;
+  }
+
+  .mv-modal-sub {
+    font-size: .76rem;
+    opacity: .8;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .mv-modal-body {
+    padding: 22px 24px;
+  }
+
+  .mv-field {
+    margin-bottom: 16px;
+  }
+
+  .mv-label {
+    font-size: .75rem;
+    font-weight: 700;
+    color: #374151;
+    display: block;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .mv-label .req {
+    color: #ef4444;
+    margin-left: 2px;
+  }
+
+  .mv-input,
+  .mv-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .83rem;
+    color: #111827;
+    background: #fff;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    appearance: none;
+  }
+
+  .mv-input:focus,
+  .mv-select:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, .12);
+  }
+
+  .mv-input::placeholder {
+    color: #9ca3af;
+  }
+
+  .mv-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  .mv-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .mv-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .mv-modal-btn {
+    flex: 1;
+    height: 40px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all .2s;
+  }
+
+  .mmb-primary {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+  }
+
+  .mmb-primary:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+    transform: translateY(-1px);
+  }
+
+  .mmb-blue {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, .28);
+  }
+
+  .mmb-blue:hover {
+    box-shadow: 0 8px 24px rgba(59, 130, 246, .4);
+    transform: translateY(-1px);
+  }
+
+  .mmb-danger {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, .28);
+  }
+
+  .mmb-danger:hover {
+    box-shadow: 0 8px 24px rgba(239, 68, 68, .4);
+    transform: translateY(-1px);
+  }
+
+  .mmb-outline {
+    background: #fff;
+    border: 1.5px solid #e4ece6 !important;
+    color: #374151;
+  }
+
+  .mmb-outline:hover {
+    border-color: #9ca3af !important;
+  }
+
+  /* ── PROFILE DRAWER ── */
+  .profile-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .35);
+    z-index: 8500;
+    display: none;
+  }
+
+  .profile-drawer-overlay.open {
+    display: block;
+  }
+
+  .profile-drawer {
+    position: fixed;
+    top: 0;
+    right: -420px;
+    width: 420px;
+    height: 100vh;
+    background: #fff;
+    box-shadow: -8px 0 40px rgba(0, 0, 0, .12);
+    z-index: 8600;
+    transition: right .3s cubic-bezier(.4, 0, .2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .profile-drawer.open {
+    right: 0;
+  }
+
+  .pd-header {
+    padding: 24px;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .pd-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background .18s;
+  }
+
+  .pd-close:hover {
+    background: rgba(255, 255, 255, .35);
+  }
+
+  .pd-ava {
+    width: 66px;
+    height: 66px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, .4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .pd-ava img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .pd-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 3px;
+  }
+
+  .pd-sub {
+    font-size: .76rem;
+    opacity: .82;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .pd-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .pd-section-title {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 10px;
+    margin-top: 16px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .pd-section-title:first-child {
+    margin-top: 0;
+  }
+
+  .pd-info-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: .8rem;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .pd-info-row i {
+    width: 18px;
+    color: #16a34a;
+    font-size: .85rem;
+    flex-shrink: 0;
+  }
+
+  .pd-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .pd-stat-item {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .pd-stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .9rem;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .pd-stat-lbl {
+    font-size: .6rem;
+    color: #9ca3af;
+    margin-top: 2px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .pd-xp-bar-wrap {
+    margin-bottom: 4px;
+  }
+
+  .pd-bar-track {
+    height: 8px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .pd-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+    border-radius: 99px;
+    transition: width 1s cubic-bezier(.4, 0, .2, 1);
+    position: relative;
+  }
+
+  .pd-bar-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .45) 50%, transparent 100%);
+    background-size: 200% 100%;
+    border-radius: 99px;
+    animation: shimmer 2.2s infinite;
+  }
+
+  .pd-bar-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
+  .pd-bar-meta span {
+    font-size: .62rem;
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .pd-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 0 20px;
+    flex-shrink: 0;
+  }
+
+  .pd-action-btn {
+    height: 40px;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: all .18s;
+  }
+
+  .pda-green {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .25);
+  }
+
+  .pda-green:hover {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .4);
+  }
+
+  .pda-blue {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1.5px solid #bfdbfe;
+  }
+
+  .pda-blue:hover {
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .pda-amber {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1.5px solid #fde68a;
+  }
+
+  .pda-amber:hover {
+    background: #f59e0b;
+    color: #fff;
+  }
+
+  .pda-red {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1.5px solid #fecaca;
+  }
+
+  .pda-red:hover {
+    background: #dc2626;
+    color: #fff;
+  }
+
+  /* ── BULK UPLOAD DROP ZONE ── */
+  .drop-zone {
+    border: 2px dashed #e4ece6;
+    border-radius: 14px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: #f9fafb;
+    margin-bottom: 12px;
+  }
+
+  .drop-zone:hover,
+  .drop-zone.drag-over {
+    border-color: #4ade80;
+    background: #f0fdf4;
+  }
+
+  .drop-zone i {
+    font-size: 2rem;
+    color: #9ca3af;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .drop-zone p {
+    font-size: .78rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    margin: 0;
+  }
+
+  .drop-zone strong {
+    color: #16a34a;
+  }
+
+  .file-chosen {
+    font-size: .76rem;
+    color: #16a34a;
+    font-weight: 600;
+    font-family: 'Sora', sans-serif;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ── TOAST ── */
+  .mv-toast-wrap {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .mv-toast {
+    background: #111827;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    font-weight: 600;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+    animation: slideIn .3s ease both;
+    pointer-events: auto;
+    max-width: 340px;
+  }
+
+  .mv-toast i {
+    font-size: 1rem;
+  }
+
+  .mv-toast.success i {
+    color: #4ade80;
+  }
+
+  .mv-toast.error i {
+    color: #f87171;
+  }
+
+  .mv-toast.info i {
+    color: #60a5fa;
+  }
+
+  /* ── MINI CHART (doughnut) ── */
+  .mini-chart-body {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+  }
+
+  .mini-chart-body canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  @media (max-width:1200px) {
+    .stat-tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .chart-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width:900px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width:640px) {
+    .page-content {
+      padding: 16px;
+    }
+
+    .vol-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+{# ── Compute stats ── #}
+{% set total_vols = all_volunteers | length %}
+{% set active_vols = all_volunteers | selectattr('is_volunteer_active','equalto',True) | list | length %}
+{% set managed_ct = managed | length %}
+{% set inactive_ct = total_vols - active_vols %}
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-people-fill"></i></div>
+    <div class="tile-val">{{ total_vols }}</div>
+    <div class="tile-lbl">Total Volunteers</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-check-circle-fill"></i></div>
+    <div class="tile-val">{{ active_vols }}</div>
+    <div class="tile-lbl">Active</div>
+  </div>
+  <div class="tile t-red">
+    <div class="tile-icon"><i class="bi bi-x-circle-fill"></i></div>
+    <div class="tile-val">{{ inactive_ct }}</div>
+    <div class="tile-lbl">Inactive</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-person-check-fill"></i></div>
+    <div class="tile-val">{{ managed_ct }}</div>
+    <div class="tile-lbl">In My Group</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-star-fill"></i></div>
+    <div class="tile-val">
+      {% if all_volunteers %}
+      {{ (all_volunteers | sum(attribute='xp') / total_vols) | round(0, 'floor') | int }}
+      {% else %}0{% endif %}
+    </div>
+    <div class="tile-lbl">Avg XP</div>
+  </div>
+</div>
+
+<!-- CHART ROW -->
+<div class="chart-row">
+  <!-- XP / Activity line chart -->
+  <div class="chart-card">
+    <div class="chart-card-title"><i class="bi bi-graph-up-arrow"></i> Volunteer Activity</div>
+    <div class="chart-big-val" id="totalXpDisplay">
+      {{ all_volunteers | sum(attribute='xp') if all_volunteers else 0 }} XP
+    </div>
+    <div class="chart-pill"><i class="bi bi-lightning-charge-fill"></i> Total XP earned across all volunteers</div>
+    <div class="chart-body"><canvas id="activityChart"></canvas></div>
+  </div>
+
+  <!-- Side stats -->
+  <div class="side-stats-card">
+    <div class="chart-card-title" style="border-bottom:1px solid #f3f4f6;padding-bottom:12px;margin-bottom:0;">
+      <i class="bi bi-bar-chart-fill"></i> Quick Stats
+    </div>
+    <div class="side-stat-row">
+      <div class="side-stat-icon" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-person-check"></i></div>
+      <div>
+        <div class="side-stat-label">Active Rate</div>
+        <div class="side-stat-sub">Currently active</div>
+      </div>
+      <div class="side-stat-val">{{ ((active_vols / total_vols) * 100) | round(1) if total_vols else 0 }}%</div>
+    </div>
+    <div class="side-stat-row">
+      <div class="side-stat-icon" style="background:#eff6ff;color:#3b82f6;"><i class="bi bi-collection"></i></div>
+      <div>
+        <div class="side-stat-label">My Group</div>
+        <div class="side-stat-sub">Managed by you</div>
+      </div>
+      <div class="side-stat-val">{{ managed_ct }}</div>
+    </div>
+    <div class="side-stat-row">
+      <div class="side-stat-icon" style="background:#fffbeb;color:#f59e0b;"><i class="bi bi-trophy"></i></div>
+      <div>
+        <div class="side-stat-label">Top Volunteer</div>
+        <div class="side-stat-sub">
+          {% if all_volunteers %}
+          {{ (all_volunteers | sort(attribute='xp', reverse=True) | first).name[:16] }}
+          {% else %}—{% endif %}
+        </div>
+      </div>
+      <div class="side-stat-val">
+        {% if all_volunteers %}
+        {{ (all_volunteers | sort(attribute='xp', reverse=True) | first).xp or 0 }}
+        {% else %}0{% endif %}
+      </div>
+    </div>
+    <div class="side-stat-row">
+      <div class="side-stat-icon" style="background:rgba(16,185,129,.1);color:#10b981;"><i
+          class="bi bi-gender-ambiguous"></i></div>
+      <div>
+        <div class="side-stat-label">Male / Female</div>
+        <div class="side-stat-sub">Gender breakdown</div>
+      </div>
+      <div class="side-stat-val" style="font-size:.74rem;">
+        {{ all_volunteers | selectattr('gender','equalto','Male') | list | length }}
+        /
+        {{ all_volunteers | selectattr('gender','equalto','Female') | list | length }}
+      </div>
+    </div>
+    <!-- mini doughnut -->
+    <div style="display:flex;align-items:center;justify-content:center;padding:16px 0 4px;">
+      <div class="mini-chart-body"><canvas id="genderChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar-card">
+  <div class="toolbar-search">
+    <i class="bi bi-search"></i>
+    <input type="text" id="volSearch" placeholder="Search by name, email or ID...">
+  </div>
+  <div class="filter-group">
+    <button class="fpill active" data-filter="all">All</button>
+    <button class="fpill" data-filter="active">Active</button>
+    <button class="fpill" data-filter="inactive">Inactive</button>
+    <button class="fpill" data-filter="managed">My Group</button>
+  </div>
+  <select class="sort-select" id="volSort">
+    <option value="name">Name A–Z</option>
+    <option value="xp">Highest XP</option>
+    <option value="level">Highest Level</option>
+    <option value="status">By Status</option>
+  </select>
+  <div class="view-toggle">
+    <button class="vtbtn active" id="gridBtn" title="Grid view"><i class="bi bi-grid-fill"></i></button>
+    <button class="vtbtn" id="tableBtn" title="Table view"><i class="bi bi-list-ul"></i></button>
+  </div>
+  <button class="tb-action-btn tba-primary" onclick="openModal('createModal')">
+    <i class="bi bi-person-plus-fill"></i> Add Volunteer
+  </button>
+  <button class="tb-action-btn tba-outline" onclick="openModal('bulkModal')">
+    <i class="bi bi-upload"></i> Bulk Upload
+  </button>
+  <div class="record-count"><span id="volCount">{{ total_vols }}</span> volunteers</div>
+</div>
+
+<!-- GRID VIEW -->
+<div id="gridView">
+  <div class="vol-grid" id="volGrid">
+    {% for v in all_volunteers %}
+    {% set is_managed = v in managed %}
+    {% set is_active = v.is_volunteer_active if v.is_volunteer_active is defined else True %}
+    <div class="vol-card {% if is_managed %}vc-managed{% elif is_active %}vc-active{% else %}vc-inactive{% endif %}"
+      data-name="{{ v.name | lower }}" data-email="{{ v.email | lower }}" data-id="{{ v.id }}"
+      data-active="{{ 'true' if is_active else 'false' }}" data-managed="{{ 'true' if is_managed else 'false' }}"
+      data-xp="{{ v.xp or 0 }}" data-level="{{ v.level or 1 }}" data-gender="{{ v.gender or 'Other' }}">
+
+      <div class="vc-top">
+        <div class="vc-avatar"
+          style="background:{{ ['#22c55e','#3b82f6','#f59e0b','#ef4444','#10b981','#a855f7','#f43f5e','#0ea5e9'][loop.index0 % 8] }};">
+          {% if v.profile_pic %}
+          <img src="{{ url_for('static', filename='uploads/' ~ v.profile_pic) }}" alt="{{ v.name }}"
+            onerror="this.style.display='none';this.nextSibling.style.display='flex';">
+          <span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">
+            {{ v.name[0].upper() }}
+          </span>
+          {% else %}
+          {{ v.name[0].upper() }}
+          {% endif %}
+        </div>
+        <div class="vc-info">
+          <div class="vc-name">{{ v.name }}</div>
+          <div class="vc-email">{{ v.email }}</div>
+          <div class="vc-id">ID: #{{ v.id }}</div>
+          {% if is_managed %}
+          <span class="vc-status-pill vsp-managed"><i class="bi bi-star-fill"></i> My Group</span>
+          {% elif is_active %}
+          <span class="vc-status-pill vsp-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+          {% else %}
+          <span class="vc-status-pill vsp-inactive"><i class="bi bi-dash-circle"></i> Inactive</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="vc-meta">
+        <div class="vc-meta-row">
+          <i class="bi bi-gender-ambiguous"></i>
+          <span>{{ v.gender or 'N/A' }}</span>
+        </div>
+        <div class="vc-meta-row">
+          <i class="bi bi-lightning-charge-fill"></i>
+          <span>{{ v.xp or 0 }} XP · Level {{ v.level or 1 }}</span>
+        </div>
+      </div>
+
+      <div class="vc-xp-row">
+        <span class="vc-xp-lbl">XP Score</span>
+        <span class="vc-xp-val">{{ v.xp or 0 }}</span>
+      </div>
+
+      <div class="vc-actions">
+        {% if is_managed %}
+        <form method="post" action="{{ url_for('dashboard.remove_volunteer', volunteer_id=v.id) }}" style="flex:1;">
+          <button type="submit" class="vc-btn vcb-danger" style="width:100%;">
+            <i class="bi bi-dash-circle"></i> Remove
+          </button>
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('dashboard.add_volunteer', volunteer_id=v.id) }}" style="flex:1;">
+          <button type="submit" class="vc-btn vcb-primary" style="width:100%;">
+            <i class="bi bi-person-plus"></i> Add to Group
+          </button>
+        </form>
+        {% endif %}
+
+        <!-- More menu -->
+        <div style="position:relative;">
+          <button class="vc-btn vcb-more more-trigger" data-id="{{ v.id }}">
+            <i class="bi bi-three-dots-vertical"></i>
+          </button>
+          <div class="vc-dropdown" id="dropdown-{{ v.id }}">
+            <button class="vcd-item open-profile-btn" data-id="{{ v.id }}" data-name="{{ v.name }}"
+              data-email="{{ v.email }}" data-gender="{{ v.gender or 'N/A' }}" data-xp="{{ v.xp or 0 }}"
+              data-level="{{ v.level or 1 }}" data-active="{{ 'true' if is_active else 'false' }}"
+              data-managed="{{ 'true' if is_managed else 'false' }}"
+              data-pic="{{ url_for('static', filename='uploads/' ~ v.profile_pic) if v.profile_pic else '' }}">
+              <i class="bi bi-person-circle"></i> View Profile
+            </button>
+            <button class="vcd-item assign-event-btn" data-id="{{ v.id }}" data-name="{{ v.name }}">
+              <i class="bi bi-calendar-plus"></i> Assign to Event
+            </button>
+            <div class="vcd-divider"></div>
+            <form method="post" action="{{ url_for('dashboard.reset_volunteer_password', volunteer_id=v.id) }}">
+              <button type="submit" class="vcd-item">
+                <i class="bi bi-key"></i> Reset Password
+              </button>
+            </form>
+            <form method="post" action="{{ url_for('dashboard.toggle_volunteer_status', volunteer_id=v.id) }}">
+              <button type="submit" class="vcd-item">
+                <i class="bi bi-power"></i> Toggle Active
+              </button>
+            </form>
+            <div class="vcd-divider"></div>
+            <form method="post" action="{{ url_for('dashboard.delete_volunteer_account', volunteer_id=v.id) }}"
+              onsubmit="return confirmDelete(event, '{{ v.name }}')">
+              <button type="submit" class="vcd-item danger">
+                <i class="bi bi-trash3"></i> Delete Account
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="vol-empty" id="gridEmpty" style="display:none;">
+    <div class="ve-icon"><i class="bi bi-people"></i></div>
+    <h3>No volunteers found</h3>
+    <p>Try adjusting your search or filter.</p>
+    <button class="ve-btn" onclick="openModal('createModal')">
+      <i class="bi bi-person-plus-fill"></i> Create First Volunteer
+    </button>
+  </div>
+</div>
+
+<!-- TABLE VIEW (hidden) -->
+<div id="tableView" style="display:none;">
+  <div class="vol-table-card">
+    <table class="vol-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Volunteer</th>
+          <th>Gender</th>
+          <th>XP</th>
+          <th>Level</th>
+          <th>Status</th>
+          <th>Group</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="volTableBody">
+        {% for v in all_volunteers %}
+        {% set is_managed = v in managed %}
+        {% set is_active = v.is_volunteer_active if v.is_volunteer_active is defined else True %}
+        <tr data-name="{{ v.name | lower }}" data-email="{{ v.email | lower }}" data-id="{{ v.id }}"
+          data-active="{{ 'true' if is_active else 'false' }}" data-managed="{{ 'true' if is_managed else 'false' }}"
+          data-xp="{{ v.xp or 0 }}" data-level="{{ v.level or 1 }}">
+          <td class="td-rank">{{ "%02d"|format(loop.index) }}</td>
+          <td>
+            <div class="td-user">
+              <div class="td-ava"
+                style="background:{{ ['#22c55e','#3b82f6','#f59e0b','#ef4444','#10b981','#a855f7','#f43f5e','#0ea5e9'][loop.index0 % 8] }};">
+                {% if v.profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/' ~ v.profile_pic) }}" alt="{{ v.name }}"
+                  onerror="this.parentElement.textContent='{{ v.name[0].upper() }}'">
+                {% else %}
+                {{ v.name[0].upper() }}
+                {% endif %}
+              </div>
+              <div>
+                <div class="td-name">{{ v.name }}</div>
+                <div class="td-sub">{{ v.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-size:.78rem;color:#6b7280;">{{ v.gender or 'N/A' }}</td>
+          <td class="td-mono td-green">{{ v.xp or 0 }}</td>
+          <td class="td-mono">{{ v.level or 1 }}</td>
+          <td>
+            {% if is_active %}
+            <span
+              style="font-size:.62rem;font-weight:700;padding:3px 10px;border-radius:99px;background:#dcfce7;color:#15803d;display:inline-flex;align-items:center;gap:4px;font-family:'Sora',sans-serif;">
+              <i class="bi bi-check-circle-fill"></i> Active
+            </span>
+            {% else %}
+            <span
+              style="font-size:.62rem;font-weight:700;padding:3px 10px;border-radius:99px;background:#f3f4f6;color:#6b7280;display:inline-flex;align-items:center;gap:4px;font-family:'Sora',sans-serif;">
+              <i class="bi bi-dash-circle"></i> Inactive
+            </span>
+            {% endif %}
+          </td>
+          <td>
+            {% if is_managed %}
+            <span
+              style="font-size:.62rem;font-weight:700;padding:3px 10px;border-radius:99px;background:#eff6ff;color:#2563eb;font-family:'Sora',sans-serif;">My
+              Group</span>
+            {% else %}
+            <span style="font-size:.62rem;color:#d1d5db;font-family:'Sora',sans-serif;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:5px;">
+              {% if is_managed %}
+              <form method="post" action="{{ url_for('dashboard.remove_volunteer', volunteer_id=v.id) }}">
+                <button type="submit" class="td-icon-btn red" title="Remove from group"><i
+                    class="bi bi-dash-circle"></i></button>
+              </form>
+              {% else %}
+              <form method="post" action="{{ url_for('dashboard.add_volunteer', volunteer_id=v.id) }}">
+                <button type="submit" class="td-icon-btn" style="border-color:#bbf7d0;color:#16a34a;"
+                  title="Add to group"><i class="bi bi-person-plus"></i></button>
+              </form>
+              {% endif %}
+              <button class="td-icon-btn assign-event-btn" data-id="{{ v.id }}" data-name="{{ v.name }}"
+                title="Assign to event"><i class="bi bi-calendar-plus"></i></button>
+              <form method="post" action="{{ url_for('dashboard.reset_volunteer_password', volunteer_id=v.id) }}">
+                <button type="submit" class="td-icon-btn" title="Reset password"><i class="bi bi-key"></i></button>
+              </form>
+              <form method="post" action="{{ url_for('dashboard.toggle_volunteer_status', volunteer_id=v.id) }}">
+                <button type="submit" class="td-icon-btn" title="Toggle active"><i class="bi bi-power"></i></button>
+              </form>
+              <form method="post" action="{{ url_for('dashboard.delete_volunteer_account', volunteer_id=v.id) }}"
+                onsubmit="return confirmDelete(event, '{{ v.name }}')">
+                <button type="submit" class="td-icon-btn red" title="Delete"><i class="bi bi-trash3"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="vol-empty" id="tableEmpty" style="display:none;border:none;border-radius:0;padding:40px 24px;">
+      <div class="ve-icon"><i class="bi bi-people"></i></div>
+      <h3>No volunteers found</h3>
+      <p>Adjust your search or filter.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     MODALS
+════════════════════════════════════ -->
+
+<!-- Create Volunteer Modal -->
+<div class="mv-modal-overlay" id="createModal">
+  <div class="mv-modal">
+    <div class="mv-modal-top">
+      <button class="mv-modal-close" onclick="closeModal('createModal')"><i class="bi bi-x-lg"></i></button>
+      <div class="mv-modal-title"><i class="bi bi-person-plus-fill me-2"></i>Create Volunteer</div>
+      <div class="mv-modal-sub">Add a new volunteer account to the system</div>
+    </div>
+    <div class="mv-modal-body">
+      <form method="post" action="{{ url_for('dashboard.create_volunteer_account') }}" id="createForm">
+        <div class="mv-grid-2">
+          <div class="mv-field">
+            <label class="mv-label">Full Name <span class="req">*</span></label>
+            <input class="mv-input" name="name" type="text" placeholder="Jane Smith" required>
+          </div>
+          <div class="mv-field">
+            <label class="mv-label">Gender <span class="req">*</span></label>
+            <select class="mv-select" name="gender" required>
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="mv-field">
+          <label class="mv-label">Email Address <span class="req">*</span></label>
+          <input class="mv-input" name="email" type="email" placeholder="volunteer@example.com" required>
+        </div>
+        <div class="mv-field">
+          <label class="mv-label">Temporary Password <span class="req">*</span></label>
+          <div style="position:relative;">
+            <input class="mv-input" name="password" type="text" id="createPw" placeholder="Min 6 characters" required
+              style="padding-right:80px;">
+            <button type="button" onclick="genPassword()"
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.68rem;font-weight:700;color:#16a34a;background:#dcfce7;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-family:'Sora',sans-serif;">
+              Generate
+            </button>
+          </div>
+        </div>
+        <div class="mv-modal-actions">
+          <button type="button" class="mv-modal-btn mmb-outline" onclick="closeModal('createModal')"><i
+              class="bi bi-x"></i> Cancel</button>
+          <button type="submit" class="mv-modal-btn mmb-primary"><i class="bi bi-check-circle-fill"></i> Create
+            Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Upload Modal -->
+<div class="mv-modal-overlay" id="bulkModal">
+  <div class="mv-modal">
+    <div class="mv-modal-top blue-grad">
+      <button class="mv-modal-close" onclick="closeModal('bulkModal')"><i class="bi bi-x-lg"></i></button>
+      <div class="mv-modal-title"><i class="bi bi-upload me-2"></i>Bulk Upload Volunteers</div>
+      <div class="mv-modal-sub">Upload a CSV to create multiple accounts at once</div>
+    </div>
+    <div class="mv-modal-body">
+      <form method="post" action="{{ url_for('dashboard.bulk_upload_volunteers') }}" enctype="multipart/form-data"
+        id="bulkForm">
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvFile').click()">
+          <i class="bi bi-file-earmark-spreadsheet"></i>
+          <p><strong>Click to upload</strong> or drag & drop your CSV file</p>
+          <p style="margin-top:4px;font-size:.68rem;">Supported format: <code>Name, Email, Gender [, Password]</code>
+          </p>
+        </div>
+        <div class="file-chosen" id="fileChosen"><i class="bi bi-check-circle-fill"></i> <span id="fileName"></span>
+        </div>
+        <input type="file" id="csvFile" name="csv_file" accept=".csv" style="display:none;" required>
+
+        <div
+          style="background:#f0fdf4;border:1px solid #dcfce7;border-radius:10px;padding:12px 14px;margin-bottom:4px;">
+          <p style="font-size:.72rem;color:#15803d;font-family:'Sora',sans-serif;margin:0;line-height:1.7;">
+            <strong>CSV Format:</strong><br>
+            Row 1: <code>Jane,jane@email.com,Female,pass123</code><br>
+            Row 2: <code>John,john@email.com,Male</code> (password auto-generated if omitted)
+          </p>
+        </div>
+
+        <div class="mv-modal-actions">
+          <button type="button" class="mv-modal-btn mmb-outline" onclick="closeModal('bulkModal')"><i
+              class="bi bi-x"></i> Cancel</button>
+          <button type="submit" class="mv-modal-btn mmb-blue"><i class="bi bi-cloud-arrow-up-fill"></i> Upload</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Assign to Event Modal -->
+<div class="mv-modal-overlay" id="assignModal">
+  <div class="mv-modal" style="max-width:420px;">
+    <div class="mv-modal-top" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+      <button class="mv-modal-close" onclick="closeModal('assignModal')"><i class="bi bi-x-lg"></i></button>
+      <div class="mv-modal-title"><i class="bi bi-calendar-plus me-2"></i>Assign to Event</div>
+      <div class="mv-modal-sub" id="assignVolName">Select an event for this volunteer</div>
+    </div>
+    <div class="mv-modal-body">
+      <form method="post" id="assignForm">
+        <div class="mv-field">
+          <label class="mv-label">Select Event <span class="req">*</span></label>
+          <select class="mv-select" name="event_id" required>
+            <option value="">— Choose an event —</option>
+            {% for event in host_events %}
+            <option value="{{ event.id }}">
+              {{ event.title }} — {{ event.date.strftime('%b %d, %Y') }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mv-modal-actions">
+          <button type="button" class="mv-modal-btn mmb-outline" onclick="closeModal('assignModal')"><i
+              class="bi bi-x"></i> Cancel</button>
+          <button type="submit" class="mv-modal-btn"
+            style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;box-shadow:0 4px 16px rgba(124,58,237,.3);">
+            <i class="bi bi-check-circle-fill"></i> Assign
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="mv-modal-overlay" id="deleteModal">
+  <div class="mv-modal" style="max-width:400px;">
+    <div class="mv-modal-top red-grad">
+      <button class="mv-modal-close" onclick="closeModal('deleteModal')"><i class="bi bi-x-lg"></i></button>
+      <div class="mv-modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete</div>
+      <div class="mv-modal-sub" id="deleteModalSub">This action cannot be undone.</div>
+    </div>
+    <div class="mv-modal-body">
+      <p style="font-size:.84rem;color:#6b7280;font-family:'Sora',sans-serif;margin-bottom:20px;">
+        Are you sure you want to permanently delete <strong id="deleteVolName"></strong>'s account?
+        All their data, bookings, and attendance records will be removed.
+      </p>
+      <div class="mv-modal-actions">
+        <button type="button" class="mv-modal-btn mmb-outline" onclick="closeModal('deleteModal')"><i
+            class="bi bi-x"></i> Cancel</button>
+        <button type="button" class="mv-modal-btn mmb-danger" id="confirmDeleteBtn">
+          <i class="bi bi-trash3-fill"></i> Delete Account
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PROFILE DRAWER
+════════════════════════════════════ -->
+<div class="profile-drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="profile-drawer" id="profileDrawer">
+  <div class="pd-header">
+    <button class="pd-close" onclick="closeDrawer()"><i class="bi bi-x-lg"></i></button>
+    <div class="pd-ava" id="drawerAva">?</div>
+    <div class="pd-name" id="drawerName">—</div>
+    <div class="pd-sub" id="drawerSub">—</div>
+  </div>
+  <div class="pd-body" id="drawerBody">
+    <div class="pd-section-title">Contact & Info</div>
+    <div class="pd-info-row"><i class="bi bi-envelope-fill"></i><span id="drawerEmail">—</span></div>
+    <div class="pd-info-row"><i class="bi bi-gender-ambiguous"></i><span id="drawerGender">—</span></div>
+    <div class="pd-info-row"><i class="bi bi-hash"></i><span id="drawerIdRow">—</span></div>
+
+    <div class="pd-section-title">Performance</div>
+    <div class="pd-stat-grid">
+      <div class="pd-stat-item">
+        <div class="pd-stat-val" id="drawerXp">0</div>
+        <div class="pd-stat-lbl">Total XP</div>
+      </div>
+      <div class="pd-stat-item">
+        <div class="pd-stat-val" id="drawerLevel">1</div>
+        <div class="pd-stat-lbl">Level</div>
+      </div>
+      <div class="pd-stat-item">
+        <div class="pd-stat-val" id="drawerStatus">—</div>
+        <div class="pd-stat-lbl">Status</div>
+      </div>
+    </div>
+
+    <div class="pd-section-title">XP Progress</div>
+    <div class="pd-xp-bar-wrap">
+      <div class="pd-bar-track">
+        <div class="pd-bar-fill" id="drawerBar" style="width:0%;"></div>
+      </div>
+    </div>
+    <div class="pd-bar-meta">
+      <span id="drawerXpCurr">0 XP</span>
+      <span id="drawerXpNext">100 XP to next level</span>
+    </div>
+
+    <div class="pd-section-title">Membership</div>
+    <div class="pd-info-row" id="drawerGroupRow">
+      <i class="bi bi-collection-fill"></i><span id="drawerGroup">—</span>
+    </div>
+  </div>
+  <div class="pd-actions" style="padding:0 20px 20px;">
+    <div id="drawerActionPrimary"></div>
+    <button class="pd-action-btn pda-blue" id="drawerAssignBtn">
+      <i class="bi bi-calendar-plus"></i> Assign to Event
+    </button>
+    <button class="pd-action-btn pda-amber" id="drawerResetBtn">
+      <i class="bi bi-key"></i> Reset Password
+    </button>
+    <button class="pd-action-btn pda-red" id="drawerDeleteBtn">
+      <i class="bi bi-trash3"></i> Delete Account
+    </button>
+  </div>
+</div>
+
+
+<!-- TOAST CONTAINER -->
+<div class="mv-toast-wrap" id="toastWrap"></div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script type="application/json" id="manageData">
+{
+  "total": {{ total_vols | default(0) | tojson }},
+  "active": {{ active_vols | default(0) | tojson }},
+  "inactive": {{ inactive_ct | default(0) | tojson }},
+  "managed": {{ managed_ct | default(0) | tojson }},
+  "maleCt": {{ all_volunteers | selectattr('gender', 'equalto', 'Male') | list | length }},
+  "femaleCt": {{ all_volunteers | selectattr('gender', 'equalto', 'Female') | list | length }},
+  "xpBuckets": {
+    "0-50": {{ all_volunteers | selectattr('xp', '<', 50) | list | length if all_volunteers else 0 }},
+    "50-100": {{ all_volunteers | selectattr('xp', '>=', 50) | selectattr('xp', '<', 100) | list | length if all_volunteers else 0 }},
+    "100-250": {{ all_volunteers | selectattr('xp', '>=', 100) | selectattr('xp', '<', 250) | list | length if all_volunteers else 0 }},
+    "250-500": {{ all_volunteers | selectattr('xp', '>=', 250) | selectattr('xp', '<', 500) | list | length if all_volunteers else 0 }},
+    "500+": {{ all_volunteers | selectattr('xp', '>=', 500) | list | length if all_volunteers else 0 }}
+  }
+}
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    /* ─── DATA FROM JINJA ──────────────────────────── */
+    let mData = { total: 0, active: 0, inactive: 0, managed: 0, maleCt: 0, femaleCt: 0, xpBuckets: { "0-50": 0, "50-100": 0, "100-250": 0, "250-500": 0, "500+": 0 } };
+    let dataIsland = document.getElementById('manageData');
+    if (dataIsland) {
+      try { mData = JSON.parse(dataIsland.textContent); } catch (e) { console.error("Could not parse manageData JSON", e); }
+    }
+
+    const TOTAL = mData.total;
+    const ACTIVE = mData.active;
+    const INACTIVE = mData.inactive;
+    const MANAGED = mData.managed;
+    const MALE_CT = mData.maleCt;
+    const FEMALE_CT = mData.femaleCt;
+    const OTHER_CT = Math.max(0, TOTAL - MALE_CT - FEMALE_CT);
+
+    /* XP buckets for activity bar chart */
+    const XP_BUCKETS = {
+      '0–50': mData.xpBuckets['0-50'],
+      '50–100': mData.xpBuckets['50-100'],
+      '100–250': mData.xpBuckets['100-250'],
+      '250–500': mData.xpBuckets['250-500'],
+      '500+': mData.xpBuckets['500+']
+    };
+
+  /* ─── ACTIVITY BAR CHART ───────────────────────── */
+  (function () {
+    const el = document.getElementById('activityChart');
+    if (!el) return;
+    new Chart(el.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(XP_BUCKETS),
+        datasets: [{
+          data: Object.values(XP_BUCKETS),
+          backgroundColor: ['#dcfce7', '#bbf7d0', '#4ade80', '#22c55e', '#16a34a'],
+          borderRadius: 8, borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#111827', titleColor: '#9ca3af', bodyColor: '#fff',
+            padding: 10, cornerRadius: 10,
+            titleFont: { family: 'Sora', size: 11 },
+            bodyFont: { family: 'JetBrains Mono', size: 12 },
+            callbacks: { label: c => ` ${c.parsed.y} volunteers` }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { family: 'Sora', size: 10 } }, border: { display: false } },
+          y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 10 }, stepSize: 1 }, border: { display: false }, beginAtZero: true }
+        }
+      }
+    });
+  })();
+
+  /* ─── GENDER DOUGHNUT ──────────────────────────── */
+  (function () {
+    const el = document.getElementById('genderChart');
+    if (!el) return;
+    const hasData = TOTAL > 0;
+    new Chart(el.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Male', 'Female', 'Other'],
+        datasets: [{
+          data: hasData ? [MALE_CT, FEMALE_CT, OTHER_CT] : [1, 0, 0],
+          backgroundColor: hasData ? ['#3b82f6', '#ec4899', '#a855f7'] : ['rgba(0,0,0,.06)'],
+          borderWidth: 3, borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: hasData }
+        }
+      }
+    });
+  })();
+
+
+  /* ─── FILTER / SEARCH / SORT ───────────────────── */
+  let activeFilter = 'all';
+  let activeSearch = '';
+  let activeSort = 'name';
+  let isGridView = true;
+
+  function matches(el) {
+    const name = el.dataset.name || '';
+    const email = el.dataset.email || '';
+    const id = el.dataset.id || '';
+    const active = el.dataset.active === 'true';
+    const managed = el.dataset.managed === 'true';
+    const q = activeSearch.toLowerCase();
+
+    if (q && !name.includes(q) && !email.includes(q) && !id.includes(q)) return false;
+    if (activeFilter === 'active' && !active) return false;
+    if (activeFilter === 'inactive' && active) return false;
+    if (activeFilter === 'managed' && !managed) return false;
+    return true;
+  }
+
+  function applyFilters() {
+    const cards = document.querySelectorAll('#volGrid .vol-card');
+    const rows = document.querySelectorAll('#volTableBody tr');
+    let visible = 0;
+
+    cards.forEach(c => { const show = matches(c); c.style.display = show ? '' : 'none'; if (show) visible++; });
+    rows.forEach(r => { r.style.display = matches(r) ? '' : 'none'; });
+
+    document.getElementById('volCount').textContent = visible;
+    document.getElementById('gridEmpty').style.display = (visible === 0 && isGridView) ? '' : 'none';
+    document.getElementById('tableEmpty').style.display = (visible === 0 && !isGridView) ? '' : 'none';
+  }
+
+  function applySort() {
+    const grid = document.getElementById('volGrid');
+    const tbody = document.getElementById('volTableBody');
+    const cards = [...grid.querySelectorAll('.vol-card')];
+    const rows = [...tbody.querySelectorAll('tr')];
+
+    function sortFn(a, b) {
+      if (activeSort === 'name') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+      if (activeSort === 'xp') return parseInt(b.dataset.xp || 0) - parseInt(a.dataset.xp || 0);
+      if (activeSort === 'level') return parseInt(b.dataset.level || 1) - parseInt(a.dataset.level || 1);
+      if (activeSort === 'status') return (a.dataset.active === 'true' ? 0 : 1) - (b.dataset.active === 'true' ? 0 : 1);
+      return 0;
+    }
+
+    cards.sort(sortFn).forEach(c => grid.appendChild(c));
+    rows.sort(sortFn).forEach(r => tbody.appendChild(r));
+  }
+
+  /* Filter pills */
+  document.querySelectorAll('.fpill').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      activeFilter = this.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  /* Search */
+  document.getElementById('volSearch').addEventListener('input', function () {
+    activeSearch = this.value;
+    applyFilters();
+  });
+
+  /* Sort */
+  document.getElementById('volSort').addEventListener('change', function () {
+    activeSort = this.value;
+    applySort();
+  });
+
+  /* View toggle */
+  document.getElementById('gridBtn').addEventListener('click', function () {
+    isGridView = true;
+    this.classList.add('active');
+    document.getElementById('tableBtn').classList.remove('active');
+    document.getElementById('gridView').style.display = '';
+    document.getElementById('tableView').style.display = 'none';
+    applyFilters();
+  });
+  document.getElementById('tableBtn').addEventListener('click', function () {
+    isGridView = false;
+    this.classList.add('active');
+    document.getElementById('gridBtn').classList.remove('active');
+    document.getElementById('gridView').style.display = 'none';
+    document.getElementById('tableView').style.display = '';
+    applyFilters();
+  });
+
+
+  /* ─── DROPDOWN MENUS ───────────────────────────── */
+  document.querySelectorAll('.more-trigger').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const id = this.dataset.id;
+      const dd = document.getElementById('dropdown-' + id);
+      const isOpen = dd.classList.contains('open');
+      /* Close all */
+      document.querySelectorAll('.vc-dropdown.open').forEach(d => d.classList.remove('open'));
+      if (!isOpen) dd.classList.add('open');
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.vc-dropdown.open').forEach(d => d.classList.remove('open'));
+  });
+
+
+  /* ─── PROFILE DRAWER ───────────────────────────── */
+  function openDrawer(data) {
+    const drawer = document.getElementById('profileDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+
+    /* Avatar */
+    const ava = document.getElementById('drawerAva');
+    if (data.pic) {
+      ava.innerHTML = `<img src="${data.pic}" alt="${data.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${data.name[0].toUpperCase()}'">`;
+    } else {
+      ava.textContent = data.name[0].toUpperCase();
+    }
+
+    document.getElementById('drawerName').textContent = data.name;
+    document.getElementById('drawerSub').textContent = `${data.active === 'true' ? '🟢 Active' : '⚪ Inactive'} · ${data.managed === 'true' ? 'My Group' : 'Not in group'}`;
+    document.getElementById('drawerEmail').textContent = data.email;
+    document.getElementById('drawerGender').textContent = data.gender;
+    document.getElementById('drawerIdRow').textContent = `Volunteer ID: #${data.id}`;
+    document.getElementById('drawerXp').textContent = data.xp;
+    document.getElementById('drawerLevel').textContent = data.level;
+    document.getElementById('drawerStatus').textContent = data.active === 'true' ? 'Active' : 'Inactive';
+    document.getElementById('drawerGroup').textContent = data.managed === 'true' ? '✅ In your group' : 'Not in your group';
+
+    /* XP bar */
+    const xp = parseInt(data.xp);
+    const level = parseInt(data.level);
+    const xpInLvl = xp % 100;
+    const xpPct = Math.min(100, Math.round((xpInLvl / 100) * 100));
+    document.getElementById('drawerBar').style.width = xpPct + '%';
+    document.getElementById('drawerXpCurr').textContent = `${xp} XP`;
+    document.getElementById('drawerXpNext').textContent = `${100 - xpInLvl} XP to Level ${level + 1}`;
+
+    /* Dynamic primary action */
+    const primDiv = document.getElementById('drawerActionPrimary');
+    if (data.managed === 'true') {
+      primDiv.innerHTML = `<form method="post" action="/host/remove-volunteer/${data.id}">
+        <button type="submit" class="pd-action-btn" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;width:100%;">
+          <i class="bi bi-dash-circle"></i> Remove from My Group
+        </button></form>`;
+    } else {
+      primDiv.innerHTML = `<form method="post" action="/host/add-volunteer/${data.id}">
+        <button type="submit" class="pd-action-btn pda-green" style="width:100%;">
+          <i class="bi bi-person-plus-fill"></i> Add to My Group
+        </button></form>`;
+    }
+
+    /* Assign / Reset / Delete from drawer */
+    document.getElementById('drawerAssignBtn').onclick = () => {
+      closeDrawer();
+      openAssignModal(data.id, data.name);
+    };
+    document.getElementById('drawerResetBtn').onclick = () => {
+      if (confirm(`Reset password for ${data.name}?`)) {
+        const f = document.createElement('form');
+        f.method = 'post';
+        f.action = `/volunteer/${data.id}/reset-password`;
+        document.body.appendChild(f);
+        f.submit();
+      }
+    };
+    document.getElementById('drawerDeleteBtn').onclick = () => {
+      closeDrawer();
+      openDeleteConfirm(data.id, data.name);
+    };
+
+    overlay.classList.add('open');
+    drawer.classList.add('open');
+  }
+
+  window.closeDrawer = function () {
+    document.getElementById('profileDrawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('open');
+  };
+
+  document.querySelectorAll('.open-profile-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const dd = this.closest('.vc-dropdown');
+      if (dd) dd.classList.remove('open');
+      openDrawer(this.dataset);
+    });
+  });
+
+
+  /* ─── ASSIGN MODAL ─────────────────────────────── */
+  function openAssignModal(volId, volName) {
+    document.getElementById('assignVolName').textContent = `Assigning ${volName} to an event`;
+    document.getElementById('assignForm').action = `/assign-volunteer/${volId}`;
+    openModal('assignModal');
+  }
+
+  document.querySelectorAll('.assign-event-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const dd = this.closest('.vc-dropdown');
+      if (dd) dd.classList.remove('open');
+      openAssignModal(this.dataset.id, this.dataset.name);
+    });
+  });
+
+
+  /* ─── DELETE CONFIRM ───────────────────────────── */
+  let pendingDeleteForm = null;
+
+  window.confirmDelete = function (e, name) {
+    e.preventDefault();
+    pendingDeleteForm = e.target.closest('form');
+    openDeleteConfirm(null, name, pendingDeleteForm);
+    return false;
+  };
+
+  function openDeleteConfirm(volId, name, form) {
+    document.getElementById('deleteVolName').textContent = name;
+    pendingDeleteForm = form;
+    document.getElementById('confirmDeleteBtn').onclick = function () {
+      if (pendingDeleteForm) pendingDeleteForm.submit();
+      else if (volId) {
+        const f = document.createElement('form');
+        f.method = 'post';
+        f.action = `/host/delete-volunteer/${volId}`;
+        document.body.appendChild(f);
+        f.submit();
+      }
+    };
+    openModal('deleteModal');
+  }
+
+
+  /* ─── MODAL HELPERS ────────────────────────────── */
+  window.openModal = function (id) {
+    document.getElementById(id).classList.add('open');
+  };
+  window.closeModal = function (id) {
+    document.getElementById(id).classList.remove('open');
+  };
+
+  /* Close on overlay click */
+  document.querySelectorAll('.mv-modal-overlay').forEach(ov => {
+    ov.addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.mv-modal-overlay.open').forEach(o => o.classList.remove('open'));
+      closeDrawer();
+    }
+  });
+
+
+  /* ─── BULK UPLOAD DROP ZONE ────────────────────── */
+  const dropZone = document.getElementById('dropZone');
+  const csvFile = document.getElementById('csvFile');
+  const fileChosen = document.getElementById('fileChosen');
+  const fileName = document.getElementById('fileName');
+
+  csvFile.addEventListener('change', function () {
+    if (this.files[0]) {
+      fileName.textContent = this.files[0].name;
+      fileChosen.style.display = 'block';
+      dropZone.style.borderColor = '#4ade80';
+    }
+  });
+
+  ['dragover', 'dragenter'].forEach(ev => {
+    dropZone.addEventListener(ev, function (e) {
+      e.preventDefault(); this.classList.add('drag-over');
+    });
+  });
+  ['dragleave', 'dragend'].forEach(ev => {
+    dropZone.addEventListener(ev, function () {
+      this.classList.remove('drag-over');
+    });
+  });
+  dropZone.addEventListener('drop', function (e) {
+    e.preventDefault(); this.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.csv')) {
+      csvFile.files = e.dataTransfer.files;
+      fileName.textContent = file.name;
+      fileChosen.style.display = 'block';
+      this.style.borderColor = '#4ade80';
+    } else {
+      showToast('Please upload a .csv file', 'error');
+    }
+  });
+
+
+  /* ─── PASSWORD GENERATOR ───────────────────────── */
+  window.genPassword = function () {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+    let pw = '';
+    for (let i = 0; i < 10; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('createPw').value = pw;
+  };
+
+
+  /* ─── TOAST ────────────────────────────────────── */
+  window.showToast = function (msg, type = 'success') {
+    const icons = { success: 'check-circle-fill', error: 'x-circle-fill', info: 'info-circle-fill' };
+    const wrap = document.getElementById('toastWrap');
+    const el = document.createElement('div');
+    el.className = `mv-toast ${type}`;
+    el.innerHTML = `<i class="bi bi-${icons[type] || 'bell'}"></i><span>${msg}</span>`;
+    wrap.appendChild(el);
+    setTimeout(() => {
+      el.style.transition = 'opacity .3s';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 300);
+    }, 3000);
+  };
+
+  /* ─── FLASH MESSAGES VIA TOAST ─────────────────── */
+  {% with messages = get_flashed_messages(with_categories = true) %}
+  {% for cat, msg in messages %}
+  showToast('{{ msg | replace("'","\\'")|safe }}', '{{ "success" if cat == "success" else "error" if cat == "danger" else "info" }}');
+  {% endfor %}
+  {% endwith %}
+
+});
+</script>
+{% endblock %}

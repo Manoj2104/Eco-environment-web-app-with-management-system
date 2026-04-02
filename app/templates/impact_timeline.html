@@ -1,0 +1,636 @@
+{% extends 'base.html' %}
+{% block title %}Impact Timeline — ReEarth{% endblock %}
+{% block page_title %}Impact Timeline{% endblock %}
+{% block page_subtitle %}Your eco journey at a glance 🌱{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ══════════════════════════════════════════════
+   PAGE BACKGROUND
+══════════════════════════════════════════════ */
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  /* ══════════════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════════════ */
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 4px rgba(34, 197, 94, .4);
+    }
+
+    to {
+      box-shadow: 0 0 14px rgba(34, 197, 94, .75);
+    }
+  }
+
+  @keyframes pulse-dot {
+
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    50% {
+      transform: scale(1.3);
+      opacity: .7;
+    }
+  }
+
+  /* ══════════════════════════════════════════════
+   STAT TILES
+══════════════════════════════════════════════ */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-purple::before {
+    background: #7c3aed;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .04s;
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .08s;
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .12s;
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .16s;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-purple .tile-icon {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* ══════════════════════════════════════════════
+   SECTION HEADER CARD
+══════════════════════════════════════════════ */
+  .section-header-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 16px 22px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .2s ease both;
+  }
+
+  .sh-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sh-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 14px rgba(22, 163, 74, .28);
+    flex-shrink: 0;
+  }
+
+  .sh-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    line-height: 1.2;
+  }
+
+  .sh-sub {
+    font-size: .74rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    margin-top: 2px;
+  }
+
+  .sh-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    border: 1px solid #bbf7d0;
+  }
+
+  /* ══════════════════════════════════════════════
+   TIMELINE CONTAINER
+══════════════════════════════════════════════ */
+  .timeline-outer {
+    position: relative;
+    padding-left: 28px;
+    animation: fadeUp .4s .28s ease both;
+  }
+
+  /* Vertical green line */
+  .timeline-outer::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 6px;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #22c55e 0%, rgba(34, 197, 94, .15) 100%);
+    border-radius: 99px;
+  }
+
+  /* ── Single timeline event ── */
+  .tl-event {
+    position: relative;
+    margin-bottom: 16px;
+    animation: slideIn .35s ease both;
+  }
+
+  /* Dot on the line */
+  .tl-event::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 14px;
+    width: 12px;
+    height: 12px;
+    background: #22c55e;
+    border-radius: 50%;
+    border: 2.5px solid #fff;
+    box-shadow: 0 0 0 2px #22c55e;
+    animation: pulse-dot 2.5s infinite;
+    z-index: 1;
+  }
+
+  /* ── Timeline card ── */
+  .tl-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .05), 0 2px 8px rgba(0, 0, 0, .04);
+    transition: box-shadow .22s, transform .22s;
+    cursor: default;
+  }
+
+  .tl-card:hover {
+    box-shadow: 0 6px 22px rgba(22, 163, 74, .12);
+    transform: translateX(4px);
+  }
+
+  .tl-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tl-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #dcfce7;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    flex-shrink: 0;
+  }
+
+  .tl-text {
+    min-width: 0;
+  }
+
+  .tl-title {
+    font-size: .88rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+
+  .tl-desc {
+    font-size: .74rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tl-date {
+    font-size: .68rem;
+    color: #9ca3af;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+  }
+
+  .tl-date i {
+    color: #22c55e;
+    font-size: .7rem;
+  }
+
+  .tl-xp {
+    font-size: .74rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    color: #fff;
+    padding: 5px 13px;
+    border-radius: 99px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    animation: glow 1.8s infinite alternate;
+  }
+
+  /* Icon-wrap colour variants driven by entry.color */
+  .tl-icon-wrap.c-warning { background: #fffbeb; color: #f59e0b; }
+  .tl-icon-wrap.c-primary { background: #eff6ff; color: #3b82f6; }
+  .tl-icon-wrap.c-success { background: #dcfce7; color: #16a34a; }
+  .tl-icon-wrap.c-danger  { background: #fef2f2; color: #ef4444; }
+  .tl-icon-wrap.c-info    { background: #f0fdfa; color: #0d9488; }
+  .tl-icon-wrap.c-default { background: #f3f4f6; color: #6b7280; }
+
+  /* ══════════════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════════════ */
+  .tl-empty {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    padding: 60px 24px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s .2s ease both;
+  }
+
+  .tl-empty-icon {
+    font-size: 3rem;
+    opacity: .2;
+    margin-bottom: 12px;
+    color: #22c55e;
+  }
+
+  .tl-empty h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #374151;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 6px;
+  }
+
+  .tl-empty p {
+    font-size: .82rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 20px;
+  }
+
+  .tl-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 22px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .tl-empty-btn:hover {
+    transform: translateY(-1px);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .38);
+  }
+
+  /* ══════════════════════════════════════════════
+   VIEW MORE BUTTON
+══════════════════════════════════════════════ */
+  .view-more-wrap {
+    text-align: center;
+    margin-top: 24px;
+    animation: fadeUp .4s .4s ease both;
+  }
+
+  .view-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 24px;
+    border-radius: 99px;
+    border: 1.5px solid #bbf7d0;
+    background: #fff;
+    color: #16a34a;
+    font-size: .8rem;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .view-more-btn:hover {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+    box-shadow: 0 4px 14px rgba(22, 163, 74, .28);
+  }
+
+  /* ══════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════ */
+  @media (max-width: 900px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .page-content {
+      padding: 14px;
+    }
+
+    .tl-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Compute summary counts ── #}
+{# Each entry dict has: icon, color, title, description, date, timestamp #}
+{# XP log entries have color='warning'; check-ins have color='primary' etc. #}
+{% set total_entries = impact_entries | length if impact_entries else 0 %}
+{% set xp_entries = impact_entries | selectattr('color', 'equalto', 'warning') | list if impact_entries else [] %}
+{% set xp_count = xp_entries | length %}
+{% set checkin_ct = impact_entries | selectattr('color', 'equalto', 'primary') | list | length if impact_entries else 0
+%}
+
+<!-- ── STAT TILES ── -->
+<div class="stat-tiles">
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="tile-val">{{ total_entries }}</div>
+    <div class="tile-lbl">Total Activities</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-geo-alt-fill"></i></div>
+    <div class="tile-val">{{ checkin_ct }}</div>
+    <div class="tile-lbl">Check-ins</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-val">{{ xp_count }}</div>
+    <div class="tile-lbl">XP Events</div>
+  </div>
+  <div class="tile t-purple">
+    <div class="tile-icon"><i class="bi bi-graph-up-arrow"></i></div>
+    <div class="tile-val">Lv {{ current_user.level or 1 }}</div>
+    <div class="tile-lbl">Current Level</div>
+  </div>
+</div>
+
+<!-- ── SECTION HEADER ── -->
+<div class="section-header-card">
+  <div class="sh-left">
+    <div class="sh-icon"><i class="bi bi-clock-history"></i></div>
+    <div>
+      <div class="sh-title">Impact Timeline</div>
+      <div class="sh-sub">Your eco journey, XP growth &amp; achievements</div>
+    </div>
+  </div>
+  {% if impact_entries %}
+  <div class="sh-pill">
+    <i class="bi bi-activity"></i> {{ total_entries }} Activities Logged
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── TIMELINE ── -->
+{% if impact_entries %}
+
+<div class="timeline-outer" id="timelineOuter">
+  {% for entry in impact_entries %}
+  <div class="tl-event {% if loop.index > 10 %}d-none extra-item{% endif %}"
+    style="animation-delay: {{ (loop.index0 * 0.05) | round(2) }}s;">
+    <div class="tl-card">
+
+      <div class="tl-left">
+        <div class="tl-icon-wrap c-{{ entry.color }}">
+          <i class="bi bi-{{ entry.icon }}"></i>
+        </div>
+        <div class="tl-text">
+          <div class="tl-title" title="{{ entry.title }}">{{ entry.title }}</div>
+          {% if entry.description %}
+          <div class="tl-desc">{{ entry.description }}</div>
+          {% endif %}
+          <div class="tl-date">
+            <i class="bi bi-calendar3"></i>
+            {{ entry.date }}
+          </div>
+        </div>
+      </div>
+
+      {% if entry.color == 'warning' %}
+      <div class="tl-xp">⚡ XP</div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if impact_entries | length > 10 %}
+<div class="view-more-wrap">
+  <button id="viewMoreBtn" class="view-more-btn">
+    <i class="bi bi-chevron-down"></i> View More
+  </button>
+</div>
+{% endif %}
+
+{% else %}
+
+<!-- ── EMPTY STATE ── -->
+<div class="tl-empty">
+  <div class="tl-empty-icon"><i class="bi bi-hourglass-split"></i></div>
+  <h3>No activity yet</h3>
+  <p>Start your eco journey today and your timeline will fill up here! 🚀</p>
+  <a href="{{ url_for('dashboard.home') }}" class="tl-empty-btn">
+    <i class="bi bi-compass"></i> Explore Events
+  </a>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  const viewMoreBtn = document.getElementById('viewMoreBtn');
+  if (viewMoreBtn) {
+    viewMoreBtn.addEventListener('click', function () {
+      document.querySelectorAll('.extra-item').forEach(function (el) {
+        el.classList.remove('d-none');
+      });
+      this.style.display = 'none';
+    });
+  }
+</script>
+{% endblock %}

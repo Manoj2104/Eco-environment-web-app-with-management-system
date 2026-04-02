@@ -1,0 +1,1564 @@
+{% extends 'base.html' %}
+{% block title %}My Bookings — ReEarth{% endblock %}
+{% block page_title %}My Bookings{% endblock %}
+{% block page_subtitle %}Events{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  /* ══════════════════════════════════════════════
+   PAGE
+══════════════════════════════════════════════ */
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 24px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ══════════════════════════════════════════════
+   STAT TILES
+══════════════════════════════════════════════ */
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tile {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .22s, transform .22s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    animation: fadeUp .4s ease both;
+  }
+
+  .tile:nth-child(1) {
+    animation-delay: .04s
+  }
+
+  .tile:nth-child(2) {
+    animation-delay: .08s
+  }
+
+  .tile:nth-child(3) {
+    animation-delay: .12s
+  }
+
+  .tile:nth-child(4) {
+    animation-delay: .16s
+  }
+
+  .tile:nth-child(5) {
+    animation-delay: .20s
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .tile.t-green::before {
+    background: #22c55e;
+  }
+
+  .tile.t-red::before {
+    background: #ef4444;
+  }
+
+  .tile.t-blue::before {
+    background: #3b82f6;
+  }
+
+  .tile.t-amber::before {
+    background: #f59e0b;
+  }
+
+  .tile.t-teal::before {
+    background: #10b981;
+  }
+
+  .tile:hover {
+    box-shadow: 0 6px 24px rgba(22, 163, 74, .13);
+    transform: translateY(-2px);
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .tile.t-green .tile-icon {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tile.t-red .tile-icon {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile.t-blue .tile-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .tile.t-amber .tile-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+  }
+
+  .tile.t-teal .tile-icon {
+    background: rgba(16, 185, 129, .1);
+    color: #10b981;
+  }
+
+  .tile-change {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .tile-change.up {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .tile-change.down {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  .tile-change.neu {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .tile-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tile-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  /* ══════════════════════════════════════════════
+   TOOLBAR
+══════════════════════════════════════════════ */
+  .bookings-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    animation: fadeUp .4s .2s ease both;
+  }
+
+  .tab-strip {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .tab-strip-btn {
+    padding: 7px 15px;
+    border-radius: 99px;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+  }
+
+  .tab-strip-btn:hover {
+    color: #16a34a;
+  }
+
+  .tab-strip-btn.active {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .toolbar-spacer {
+    flex: 1;
+  }
+
+  .sort-select {
+    padding: 7px 32px 7px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    cursor: pointer;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    appearance: none;
+  }
+
+  .search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-bar i {
+    position: absolute;
+    left: 12px;
+    color: #9ca3af;
+    font-size: .85rem;
+    pointer-events: none;
+  }
+
+  .search-bar input {
+    padding: 8px 14px 8px 34px;
+    border-radius: 10px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    color: #374151;
+    outline: none;
+    width: 200px;
+    transition: all .18s;
+  }
+
+  .search-bar input:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, .12);
+    width: 240px;
+  }
+
+  .search-bar input::placeholder {
+    color: #9ca3af;
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 3px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .view-btn {
+    width: 34px;
+    height: 30px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: .85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+  }
+
+  .view-btn.active {
+    background: #fff;
+    color: #374151;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+  }
+
+  /* ══════════════════════════════════════════════
+   SECTION TITLE
+══════════════════════════════════════════════ */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .section-divider-label {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #9ca3af;
+    white-space: nowrap;
+  }
+
+  .section-divider-count {
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .section-divider-count.green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .section-divider-count.gray {
+    background: #f3f4f6;
+    color: #9ca3af;
+  }
+
+  .section-divider-line {
+    flex: 1;
+    height: 1px;
+    background: #f3f4f6;
+  }
+
+  /* ══════════════════════════════════════════════
+   CARDS GRID
+══════════════════════════════════════════════ */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .cards-grid.list-view {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 8px rgba(0, 0, 0, .04);
+    transition: box-shadow .22s, transform .22s;
+    animation: fadeUp .4s ease both;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .booking-card:hover {
+    box-shadow: 0 8px 28px rgba(22, 163, 74, .12);
+    transform: translateY(-3px);
+  }
+
+  .cards-grid.list-view .booking-card {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  /* Thumbnail */
+  .booking-thumb {
+    position: relative;
+    height: 150px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .cards-grid.list-view .booking-thumb {
+    width: 140px;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .booking-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+
+  .booking-card:hover .booking-thumb img {
+    transform: scale(1.04);
+  }
+
+  .booking-thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, .45));
+  }
+
+  /* Status badge on thumb */
+  .status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: .66rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-family: 'Sora', sans-serif;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, .3);
+  }
+
+  .status-badge.booked {
+    background: rgba(59, 130, 246, .85);
+    color: #fff;
+  }
+
+  .status-badge.checked_in {
+    background: rgba(22, 163, 74, .85);
+    color: #fff;
+  }
+
+  .status-badge.completed {
+    background: rgba(17, 24, 39, .85);
+    color: #fff;
+  }
+
+  .status-badge.missed {
+    background: rgba(239, 68, 68, .85);
+    color: #fff;
+  }
+
+  .status-badge.last_checkin {
+    background: rgba(245, 158, 11, .9);
+    color: #111;
+  }
+
+  .status-badge.task {
+    background: rgba(16, 185, 129, .85);
+    color: #fff;
+  }
+
+  .status-badge.past {
+    background: rgba(156, 163, 175, .85);
+    color: #fff;
+  }
+
+  /* Countdown on thumb */
+  .thumb-countdown {
+    position: absolute;
+    bottom: 8px;
+    left: 10px;
+    font-size: .66rem;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+  }
+
+  /* Card body */
+  .booking-body {
+    padding: 16px 16px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cards-grid.list-view .booking-body {
+    padding: 14px 18px;
+  }
+
+  .booking-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 8px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .cards-grid.list-view .booking-title {
+    -webkit-line-clamp: 1;
+  }
+
+  .booking-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+
+  .booking-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .74rem;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .booking-meta-row i {
+    color: #9ca3af;
+    font-size: .78rem;
+    width: 14px;
+    flex-shrink: 0;
+  }
+
+  .booking-meta-row span {
+    color: #374151;
+    font-weight: 500;
+  }
+
+  /* XP chip */
+  .xp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #dcfce7;
+    color: #15803d;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 12px;
+  }
+
+  /* Progress bar (task completion) */
+  .task-progress-wrap {
+    margin-bottom: 12px;
+  }
+
+  .task-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: .66rem;
+    color: #9ca3af;
+    margin-bottom: 4px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .task-progress-bar {
+    height: 5px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .task-progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #16a34a, #10b981);
+    transition: width .6s ease;
+  }
+
+  /* Action row */
+  .booking-actions {
+    display: flex;
+    gap: 7px;
+    margin-top: auto;
+    flex-wrap: wrap;
+  }
+
+  .act-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: .74rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    font-family: 'Sora', sans-serif;
+    transition: all .18s;
+    text-decoration: none;
+  }
+
+  .act-btn.green {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+  }
+
+  .act-btn.green:hover {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+  }
+
+  .act-btn.blue {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+  }
+
+  .act-btn.blue:hover {
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .act-btn.gray {
+    background: #f3f4f6;
+    color: #6b7280;
+    border-color: #e5e7eb;
+  }
+
+  .act-btn.gray:hover {
+    background: #e5e7eb;
+    color: #374151;
+  }
+
+  .act-btn.red {
+    background: #fef2f2;
+    color: #ef4444;
+    border-color: #fecaca;
+  }
+
+  .act-btn.red:hover {
+    background: #ef4444;
+    color: #fff;
+  }
+
+  .act-btn.teal {
+    background: rgba(16, 185, 129, .1);
+    color: #059669;
+    border-color: rgba(16, 185, 129, .25);
+  }
+
+  .act-btn.teal:hover {
+    background: #059669;
+    color: #fff;
+  }
+
+  /* ══════════════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════════════ */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    animation: fadeUp .4s ease both;
+  }
+
+  .empty-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #f0fdf4;
+    border: 2px solid #dcfce7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin: 0 auto 16px;
+  }
+
+  .empty-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .empty-sub {
+    font-size: .82rem;
+    color: #9ca3af;
+    margin-bottom: 20px;
+  }
+
+  .empty-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 22px;
+    border-radius: 99px;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, .28);
+    font-family: 'Sora', sans-serif;
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .empty-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, .38);
+    color: #fff;
+  }
+
+  /* ══════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════ */
+  .bk-modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0, 0, 0, .45);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bk-modal-backdrop.open {
+    display: flex;
+  }
+
+  .bk-modal {
+    background: #fff;
+    border-radius: 24px;
+    width: min(640px, 92vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .18);
+    animation: modalIn .22s cubic-bezier(.4, 0, .2, 1);
+    scrollbar-width: thin;
+    scrollbar-color: #e4ece6 transparent;
+  }
+
+  .bk-modal::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .bk-modal::-webkit-scrollbar-thumb {
+    background: #e4ece6;
+    border-radius: 99px;
+  }
+
+  @keyframes modalIn {
+    from {
+      opacity: 0;
+      transform: scale(.94) translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .bk-modal-hero {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .bk-modal-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .bk-modal-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, .6), transparent);
+  }
+
+  .bk-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .9);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    color: #374151;
+    transition: background .15s;
+  }
+
+  .bk-modal-close:hover {
+    background: #fff;
+  }
+
+  .bk-modal-body {
+    padding: 22px 24px 24px;
+  }
+
+  .bk-modal-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 14px;
+  }
+
+  .bk-detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .bk-detail-row:last-of-type {
+    border-bottom: none;
+  }
+
+  .bk-detail-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #dcfce7;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+    flex-shrink: 0;
+  }
+
+  .bk-detail-label {
+    font-size: .68rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .bk-detail-value {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .bk-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 14px 0;
+  }
+
+  .bk-chip {
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .bk-chip.green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .bk-chip.blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .bk-chip.amber {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  /* Map inside modal */
+  .bk-map {
+    height: 220px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+  }
+
+  .bk-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+
+  /* ══════════════════════════════════════════════
+   CANCEL CONFIRM MODAL
+══════════════════════════════════════════════ */
+  .confirm-modal {
+    background: #fff;
+    border-radius: 20px;
+    width: min(400px, 90vw);
+    padding: 28px 26px;
+    text-align: center;
+    animation: modalIn .22s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .confirm-icon {
+    font-size: 2.2rem;
+    margin-bottom: 12px;
+  }
+
+  .confirm-title {
+    font-size: .98rem;
+    font-weight: 800;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    margin-bottom: 6px;
+  }
+
+  .confirm-sub {
+    font-size: .8rem;
+    color: #9ca3af;
+    margin-bottom: 22px;
+  }
+
+  .confirm-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  /* ══════════════════════════════════════════════
+   CALENDAR EXPORT TOAST
+══════════════════════════════════════════════ */
+  .ics-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(40px);
+    background: #111827;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    opacity: 0;
+    transition: all .3s;
+    z-index: 9999;
+    pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .22);
+  }
+
+  .ics-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .ics-toast i {
+    color: #4ade80;
+  }
+
+  /* Checkin pulse ring */
+  .checkin-ring {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 10px;
+    height: 10px;
+  }
+
+  .checkin-ring::before {
+    content: '';
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, .6);
+    animation: pulse 1.8s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, .6);
+    }
+
+    70% {
+      box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
+
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+  }
+
+  @media (max-width:1200px) {
+    .stat-tiles {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width:700px) {
+    .stat-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .page-content {
+      padding: 16px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- STAT TILES -->
+<div class="stat-tiles">
+  {% set total = (upcoming_bookings|length) + (past_bookings|length) %}
+  {% set upcoming_count = upcoming_bookings|length %}
+  {% set past_count = past_bookings|length %}
+  {% set completed_count = past_bookings|selectattr('status','equalto','completed')|list|length %}
+
+  <div class="tile t-green">
+    <div class="tile-icon"><i class="bi bi-calendar-check-fill"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> active</div>
+    <div class="tile-val">{{ total }}</div>
+    <div class="tile-lbl">Total Bookings</div>
+  </div>
+  <div class="tile t-blue">
+    <div class="tile-icon"><i class="bi bi-clock-fill"></i></div>
+    <div class="tile-change neu">upcoming</div>
+    <div class="tile-val">{{ upcoming_count }}</div>
+    <div class="tile-lbl">Upcoming Events</div>
+  </div>
+  <div class="tile t-teal">
+    <div class="tile-icon"><i class="bi bi-patch-check-fill"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> done</div>
+    <div class="tile-val">{{ completed_count }}</div>
+    <div class="tile-lbl">Completed</div>
+  </div>
+  <div class="tile t-amber">
+    <div class="tile-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div class="tile-change up"><i class="bi bi-arrow-up-short"></i> earned</div>
+    <div class="tile-val">{{ current_user.xp or 0 }}</div>
+    <div class="tile-lbl">Total XP</div>
+  </div>
+  <div class="tile t-red">
+    <div class="tile-icon"><i class="bi bi-hourglass-split"></i></div>
+    <div class="tile-change neu">past</div>
+    <div class="tile-val">{{ past_count }}</div>
+    <div class="tile-lbl">Past Events</div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="bookings-toolbar">
+  <div class="tab-strip" id="sectionTabs">
+    <button class="tab-strip-btn active" data-section="all" onclick="filterSection(this,'all')">All ({{ total
+      }})</button>
+    <button class="tab-strip-btn" data-section="upcoming" onclick="filterSection(this,'upcoming')">Upcoming ({{
+      upcoming_count }})</button>
+    <button class="tab-strip-btn" data-section="past" onclick="filterSection(this,'past')">Past ({{ past_count
+      }})</button>
+    <button class="tab-strip-btn" data-section="completed" onclick="filterSection(this,'completed')">Completed</button>
+    <button class="tab-strip-btn" data-section="missed" onclick="filterSection(this,'missed')">Missed</button>
+  </div>
+  <div class="toolbar-spacer"></div>
+  <div class="search-bar">
+    <i class="bi bi-search"></i>
+    <input type="text" id="bookingSearch" placeholder="Search events..." oninput="applySearch(this.value)">
+  </div>
+  <select class="sort-select" id="sortSelect" onchange="applySort(this.value)">
+    <option value="date-asc">Date ↑</option>
+    <option value="date-desc">Date ↓</option>
+    <option value="name-asc">Name A–Z</option>
+    <option value="status">Status</option>
+  </select>
+  <div class="view-toggle">
+    <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')" title="Grid view">
+      <i class="bi bi-grid-3x3-gap-fill"></i>
+    </button>
+    <button class="view-btn" id="listViewBtn" onclick="setView('list')" title="List view">
+      <i class="bi bi-list-ul"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════ UPCOMING BOOKINGS ═══════ -->
+{% if upcoming_bookings %}
+<div id="sec-upcoming" class="booking-section">
+  <div class="section-divider">
+    <span class="section-divider-label">Upcoming</span>
+    <span class="section-divider-count green">{{ upcoming_count }}</span>
+    <span class="section-divider-line"></span>
+  </div>
+
+  <div class="cards-grid" id="upcomingGrid">
+    {% for booking in upcoming_bookings %}
+    <div class="booking-card" data-section="upcoming" data-status="{{ booking.status or 'booked' }}"
+      data-title="{{ booking.event.title | lower }}" data-date="{{ booking.event.date.isoformat() }}">
+
+      <div class="booking-thumb">
+        <img src="{{ url_for('static', filename='uploads/' ~ booking.event.thumbnail) }}"
+          alt="{{ booking.event.title }}" loading="lazy" onerror="this.src='/static/img/event_default.jpg'">
+        <div class="booking-thumb-overlay"></div>
+
+        {% set s = booking.status or 'booked' %}
+        {% if s == 'checked_in' %}
+        <div class="checkin-ring"></div>
+        {% endif %}
+
+        <span class="status-badge {{ s }}">
+          {% if s == 'booked' %}📅 Booked
+          {% elif s == 'checked_in' %}✅ Checked In
+          {% elif s == 'task' %}⚡ Task Active
+          {% elif s == 'last_checkin' %}⏳ Last Chance
+          {% elif s == 'countdown' %}🔔 Starting Soon
+          {% elif s == 'missed' %}❌ Missed
+          {% else %}{{ s|title }}{% endif %}
+        </span>
+
+        <!-- Countdown timer -->
+        {% if booking.event.date > now %}
+        <div class="thumb-countdown" id="cd-{{ booking.id }}">
+          <i class="bi bi-alarm"></i>
+          <span data-start="{{ booking.event.date.isoformat() }}">—</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="booking-body">
+        <div class="booking-title">{{ booking.event.title }}</div>
+
+        <div class="booking-meta">
+          <div class="booking-meta-row">
+            <i class="bi bi-calendar3"></i>
+            <span>{{ booking.event.date.strftime('%d %b %Y, %I:%M %p') }}</span>
+          </div>
+          <div class="booking-meta-row">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>{{ booking.event.location }}</span>
+          </div>
+          {% if booking.event.duration %}
+          <div class="booking-meta-row">
+            <i class="bi bi-clock"></i>
+            <span>{{ booking.event.duration }} hrs estimated</span>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if booking.event.xp_reward %}
+        <div class="xp-chip"><i class="bi bi-lightning-charge-fill"></i> +{{ booking.event.xp_reward }} XP on completion
+        </div>
+        {% endif %}
+
+        {% if booking.status in ['task', 'checked_in'] %}
+        <div class="task-progress-wrap">
+          <div class="task-progress-label">
+            <span>Task Progress</span>
+            <span>{{ '100' if booking.status == 'completed' else '50' }}%</span>
+          </div>
+          <div class="task-progress-bar">
+            <div class="task-progress-fill" style="width:{{ '100' if booking.status == 'completed' else '50' }}%;">
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="booking-actions">
+          <button class="act-btn blue" onclick="openDetailModal({{ booking.id }})">
+            <i class="bi bi-eye"></i> View
+          </button>
+          {% if booking.event.latitude and booking.event.longitude %}
+          <button class="act-btn green"
+            onclick="openMapModal({{ booking.id }}, {{ booking.event.latitude }}, {{ booking.event.longitude }}, '{{ booking.event.title|e }}')">
+            <i class="bi bi-map"></i> Map
+          </button>
+          {% endif %}
+          <a class="act-btn teal" href="{{ url_for('dashboard.calendar') }}">
+            <i class="bi bi-calendar-plus"></i>
+          </a>
+          <button class="act-btn red" onclick="confirmCancel({{ booking.id }})">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden data for modal -->
+    <div class="d-none" id="data-{{ booking.id }}" data-title="{{ booking.event.title }}"
+      data-date="{{ booking.event.date.strftime('%d %B %Y, %I:%M %p') }}" data-location="{{ booking.event.location }}"
+      data-status="{{ booking.status or 'booked' }}" data-xp="{{ booking.event.xp_reward or 0 }}"
+      data-lat="{{ booking.event.latitude or '' }}" data-lng="{{ booking.event.longitude or '' }}"
+      data-duration="{{ booking.event.duration or '' }}" data-category="{{ booking.event.category or 'General' }}"
+      data-description="{{ booking.event.description or '' }}"
+      data-thumb="{{ url_for('static', filename='uploads/' ~ booking.event.thumbnail) }}"
+      data-booking-id="{{ booking.id }}">
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ═══════ PAST BOOKINGS ═══════ -->
+{% if past_bookings %}
+<div id="sec-past" class="booking-section">
+  <div class="section-divider">
+    <span class="section-divider-label">Past Events</span>
+    <span class="section-divider-count gray">{{ past_count }}</span>
+    <span class="section-divider-line"></span>
+  </div>
+
+  <div class="cards-grid" id="pastGrid">
+    {% for booking in past_bookings %}
+    <div class="booking-card" data-section="past" data-status="{{ booking.status or 'past' }}"
+      data-title="{{ booking.event.title | lower }}" data-date="{{ booking.event.date.isoformat() }}"
+      style="opacity:.88;">
+
+      <div class="booking-thumb">
+        <img src="{{ url_for('static', filename='uploads/' ~ booking.event.thumbnail) }}"
+          alt="{{ booking.event.title }}" loading="lazy" onerror="this.src='/static/img/event_default.jpg'"
+          style="filter:grayscale(20%)">
+        <div class="booking-thumb-overlay"></div>
+        <span class="status-badge {{ booking.status or 'past' }}">
+          {% if booking.status == 'completed' %}✅ Completed
+          {% elif booking.status == 'missed' %}❌ Missed
+          {% else %}🕐 Past{% endif %}
+        </span>
+      </div>
+
+      <div class="booking-body">
+        <div class="booking-title">{{ booking.event.title }}</div>
+        <div class="booking-meta">
+          <div class="booking-meta-row">
+            <i class="bi bi-calendar3"></i>
+            <span>{{ booking.event.date.strftime('%d %b %Y, %I:%M %p') }}</span>
+          </div>
+          <div class="booking-meta-row">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>{{ booking.event.location }}</span>
+          </div>
+        </div>
+
+        <div class="booking-actions">
+          <button class="act-btn gray" onclick="openDetailModal({{ booking.id }})">
+            <i class="bi bi-eye"></i> Details
+          </button>
+          {% if booking.status == 'completed' %}
+          <a class="act-btn green" href="{{ url_for('dashboard.certificates') }}">
+            <i class="bi bi-award"></i> Certificate
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden data for modal -->
+    <div class="d-none" id="data-{{ booking.id }}" data-title="{{ booking.event.title }}"
+      data-date="{{ booking.event.date.strftime('%d %B %Y, %I:%M %p') }}" data-location="{{ booking.event.location }}"
+      data-status="{{ booking.status or 'past' }}" data-xp="{{ booking.event.xp_reward or 0 }}"
+      data-lat="{{ booking.event.latitude or '' }}" data-lng="{{ booking.event.longitude or '' }}"
+      data-duration="{{ booking.event.duration or '' }}" data-category="{{ booking.event.category or 'General' }}"
+      data-description="{{ booking.event.description or '' }}"
+      data-thumb="{{ url_for('static', filename='uploads/' ~ booking.event.thumbnail) }}"
+      data-booking-id="{{ booking.id }}">
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- EMPTY STATE -->
+{% if not upcoming_bookings and not past_bookings %}
+<div class="empty-state">
+  <div class="empty-icon">📅</div>
+  <div class="empty-title">No bookings yet</div>
+  <div class="empty-sub">Join an event to see your bookings here.</div>
+  <a href="{{ url_for('dashboard.home') }}" class="empty-cta">
+    <i class="bi bi-compass"></i> Browse Events
+  </a>
+</div>
+{% endif %}
+
+<!-- ═══════ DETAIL MODAL ═══════ -->
+<div class="bk-modal-backdrop" id="detailModalBg" onclick="closeDetailModal(event)">
+  <div class="bk-modal" id="detailModal">
+    <div class="bk-modal-hero">
+      <img id="modal-thumb" src="" alt="">
+      <div class="bk-modal-hero-overlay"></div>
+      <button class="bk-modal-close" onclick="closeDetailModal()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="bk-modal-body">
+      <div class="bk-modal-title" id="modal-title">—</div>
+
+      <div class="bk-chips">
+        <span class="bk-chip green" id="modal-xp">⚡ — XP</span>
+        <span class="bk-chip blue" id="modal-status">—</span>
+        <span class="bk-chip amber" id="modal-category">—</span>
+      </div>
+
+      <div class="bk-detail-row">
+        <div class="bk-detail-icon"><i class="bi bi-calendar3"></i></div>
+        <div>
+          <div class="bk-detail-label">Date & Time</div>
+          <div class="bk-detail-value" id="modal-date">—</div>
+        </div>
+      </div>
+      <div class="bk-detail-row">
+        <div class="bk-detail-icon"><i class="bi bi-geo-alt-fill"></i></div>
+        <div>
+          <div class="bk-detail-label">Location</div>
+          <div class="bk-detail-value" id="modal-location">—</div>
+        </div>
+      </div>
+      <div class="bk-detail-row">
+        <div class="bk-detail-icon"><i class="bi bi-clock"></i></div>
+        <div>
+          <div class="bk-detail-label">Duration</div>
+          <div class="bk-detail-value" id="modal-duration">—</div>
+        </div>
+      </div>
+      <div class="bk-detail-row" id="modal-desc-row">
+        <div class="bk-detail-icon"><i class="bi bi-file-text"></i></div>
+        <div>
+          <div class="bk-detail-label">Description</div>
+          <div class="bk-detail-value" id="modal-description"
+            style="font-weight:400;color:#6b7280;line-height:1.5;font-size:.8rem;">—</div>
+        </div>
+      </div>
+
+      <div class="bk-map" id="modal-map" style="display:none;"></div>
+
+      <div class="bk-modal-actions" id="modal-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ CANCEL CONFIRM MODAL ═══════ -->
+<div class="bk-modal-backdrop" id="cancelModalBg" onclick="closeCancelModal(event)">
+  <div class="confirm-modal">
+    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-title">Cancel this booking?</div>
+    <div class="confirm-sub">This action cannot be undone. Your spot will be released.</div>
+    <div class="confirm-btns">
+      <a class="act-btn red" id="cancelConfirmBtn" href="#">
+        <i class="bi bi-x-circle"></i> Yes, Cancel
+      </a>
+      <button class="act-btn gray" onclick="closeCancelModal()">
+        <i class="bi bi-arrow-left"></i> Go Back
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ICS Toast -->
+<div class="ics-toast" id="icsToast">
+  <i class="bi bi-check-circle-fill"></i>
+  <span>Added to calendar!</span>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  /* ── Countdown Timers ──────────────────────────────── */
+  function updateCountdowns() {
+    document.querySelectorAll('.thumb-countdown [data-start]').forEach(el => {
+      const start = new Date(el.getAttribute('data-start'));
+      const diff = start - new Date();
+      if (diff <= 0) {
+        el.parentElement.style.display = 'none';
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      el.textContent = (h ? h + 'h ' : '') + (m ? m + 'm ' : '') + s + 's';
+    });
+  }
+  setInterval(updateCountdowns, 1000);
+  updateCountdowns();
+
+  /* ── Section filter ─────────────────────────────────── */
+  let activeSection = 'all';
+  let activeSearch = '';
+  let activeSort = 'date-asc';
+
+  function filterSection(btn, section) {
+    document.querySelectorAll('.tab-strip-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeSection = section;
+    applyFilters();
+  }
+
+  function applySearch(val) {
+    activeSearch = val.toLowerCase();
+    applyFilters();
+  }
+
+  function applySort(val) {
+    activeSort = val;
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const cards = document.querySelectorAll('.booking-card');
+    cards.forEach(card => {
+      const sec = card.dataset.section;
+      const status = card.dataset.status;
+      const title = card.dataset.title || '';
+
+      let show = true;
+      if (activeSection === 'upcoming' && sec !== 'upcoming') show = false;
+      if (activeSection === 'past' && sec !== 'past') show = false;
+      if (activeSection === 'completed' && status !== 'completed') show = false;
+      if (activeSection === 'missed' && status !== 'missed') show = false;
+      if (activeSearch && !title.includes(activeSearch)) show = false;
+
+      card.style.display = show ? '' : 'none';
+    });
+  }
+
+  /* ── View toggle ─────────────────────────────────────── */
+  function setView(mode) {
+    document.getElementById('gridViewBtn').classList.toggle('active', mode === 'grid');
+    document.getElementById('listViewBtn').classList.toggle('active', mode === 'list');
+    document.querySelectorAll('.cards-grid').forEach(g => {
+      g.classList.toggle('list-view', mode === 'list');
+    });
+  }
+
+  /* ── Detail Modal ─────────────────────────────────────── */
+  let modalMapInstance = null;
+
+  function openDetailModal(bookingId) {
+    const d = document.getElementById('data-' + bookingId);
+    if (!d) return;
+
+    document.getElementById('modal-thumb').src = d.dataset.thumb;
+    document.getElementById('modal-title').textContent = d.dataset.title;
+    document.getElementById('modal-date').textContent = d.dataset.date;
+    document.getElementById('modal-location').textContent = d.dataset.location;
+    document.getElementById('modal-duration').textContent = d.dataset.duration ? d.dataset.duration + ' hrs' : 'N/A';
+    document.getElementById('modal-description').textContent = d.dataset.description || 'No description available.';
+    document.getElementById('modal-xp').textContent = '⚡ ' + (d.dataset.xp || 0) + ' XP';
+    document.getElementById('modal-status').textContent = d.dataset.status.replace(/_/g, ' ');
+    document.getElementById('modal-category').textContent = d.dataset.category;
+
+    // Actions
+    const actDiv = document.getElementById('modal-actions');
+    actDiv.innerHTML = '';
+
+    if (d.dataset.status !== 'past' && d.dataset.status !== 'missed' && d.dataset.status !== 'completed') {
+      const a = document.createElement('a');
+      a.href = `/bookings/add_to_calendar/${bookingId}`;
+      a.className = 'act-btn teal';
+      a.innerHTML = '<i class="bi bi-calendar-plus"></i> Add to Calendar';
+      actDiv.appendChild(a);
+    }
+    if (d.dataset.status === 'completed') {
+      const a = document.createElement('a');
+      a.href = '/dashboard/certificates';
+      a.className = 'act-btn green';
+      a.innerHTML = '<i class="bi bi-award"></i> View Certificate';
+      actDiv.appendChild(a);
+    }
+
+    // Map
+    const mapEl = document.getElementById('modal-map');
+    if (d.dataset.lat && d.dataset.lng) {
+      mapEl.style.display = 'block';
+      setTimeout(() => {
+        if (modalMapInstance) { modalMapInstance.remove(); modalMapInstance = null; }
+        modalMapInstance = L.map('modal-map').setView([d.dataset.lat, d.dataset.lng], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19, attribution: '© OpenStreetMap'
+        }).addTo(modalMapInstance);
+        L.marker([d.dataset.lat, d.dataset.lng]).addTo(modalMapInstance)
+          .bindPopup(d.dataset.title).openPopup();
+      }, 120);
+    } else {
+      mapEl.style.display = 'none';
+    }
+
+    document.getElementById('detailModalBg').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetailModal(e) {
+    if (e && e.target !== document.getElementById('detailModalBg')) return;
+    document.getElementById('detailModalBg').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  /* Quick map modal (shortcut) */
+  function openMapModal(bookingId, lat, lng, title) {
+    const d = document.getElementById('data-' + bookingId);
+    if (d) openDetailModal(bookingId);
+  }
+
+  /* ── Cancel confirm ────────────────────────────────── */
+  function confirmCancel(bookingId) {
+    document.getElementById('cancelConfirmBtn').href =
+      '{{ url_for("bookings.cancel_booking", booking_id=0) }}'.replace('0', bookingId);
+    document.getElementById('cancelModalBg').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCancelModal(e) {
+    if (e && e.target !== document.getElementById('cancelModalBg')) return;
+    document.getElementById('cancelModalBg').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  /* ── Calendar export feedback ────────────────────── */
+  document.querySelectorAll('.act-btn.teal[href*="calendar"]').forEach(a => {
+    a.addEventListener('click', () => {
+      const t = document.getElementById('icsToast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    });
+  });
+
+  /* ── Escape key closes modals ────────────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeDetailModal();
+      closeCancelModal();
+    }
+  });
+
+  /* ── Stagger card animations ─────────────────────── */
+  document.querySelectorAll('.booking-card').forEach((c, i) => {
+    c.style.animationDelay = (0.05 + i * 0.06) + 's';
+  });
+</script>
+{% endblock %}

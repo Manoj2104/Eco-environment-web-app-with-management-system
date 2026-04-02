@@ -1,0 +1,866 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile — ReEarth{% endblock %}
+{% block page_title %}Edit Profile{% endblock %}
+{% block page_subtitle %}Account{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-content {
+    background: #f0f7f2;
+    min-height: calc(100vh - 68px);
+    padding: 28px;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ── Layout ── */
+  .ep-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  /* ── Cards ── */
+  .ep-card {
+    background: #fff;
+    border: 1px solid #e4ece6;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 2px 12px rgba(0, 0, 0, .05);
+    padding: 24px;
+    animation: fadeUp .4s ease both;
+  }
+
+  .ep-card:nth-child(1) {
+    animation-delay: .04s;
+  }
+
+  .ep-card:nth-child(2) {
+    animation-delay: .08s;
+  }
+
+  .ep-card:nth-child(3) {
+    animation-delay: .12s;
+  }
+
+  .ep-card:nth-child(4) {
+    animation-delay: .16s;
+  }
+
+  .ep-card-title {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .ep-card-title i {
+    color: #16a34a;
+    font-size: .95rem;
+  }
+
+  /* ── Avatar panel ── */
+  .avatar-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .avatar-ring {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    margin-bottom: 16px;
+  }
+
+  .avatar-ring img,
+  .avatar-ring .avatar-initials {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 3px #dcfce7, 0 8px 28px rgba(22, 163, 74, .2);
+  }
+
+  .avatar-ring .avatar-initials {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 2.2rem;
+    font-weight: 800;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .avatar-edit-btn {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #fff;
+    border: 2.5px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, .4);
+    transition: background .2s, transform .2s;
+  }
+
+  .avatar-edit-btn:hover {
+    background: #15803d;
+    transform: scale(1.1);
+  }
+
+  .avatar-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #111827;
+    font-family: 'Sora', sans-serif;
+    text-align: center;
+    margin-bottom: 2px;
+  }
+
+  .avatar-role {
+    font-size: .76rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .avatar-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .astat {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+
+  .astat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .88rem;
+    font-weight: 800;
+    color: #111827;
+  }
+
+  .astat-lbl {
+    font-size: .6rem;
+    color: #9ca3af;
+    margin-top: 2px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .avatar-divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 4px 0 16px;
+    width: 100%;
+  }
+
+  .avatar-tip {
+    background: #f0fdf4;
+    border: 1px solid #dcfce7;
+    border-radius: 12px;
+    padding: 12px 14px;
+    width: 100%;
+  }
+
+  .avatar-tip p {
+    font-size: .72rem;
+    color: #15803d;
+    font-family: 'Sora', sans-serif;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .avatar-tip i {
+    margin-right: 4px;
+  }
+
+  /* ── Form fields ── */
+  .ep-label {
+    font-size: .75rem;
+    font-weight: 700;
+    color: #374151;
+    display: block;
+    margin-bottom: 6px;
+    font-family: 'Sora', sans-serif;
+    letter-spacing: .01em;
+  }
+
+  .ep-label .req {
+    color: #ef4444;
+    margin-left: 2px;
+  }
+
+  .ep-input,
+  .ep-textarea,
+  .ep-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e4ece6;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: .83rem;
+    color: #111827;
+    background: #fff;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    appearance: none;
+  }
+
+  .ep-input:focus,
+  .ep-textarea:focus,
+  .ep-select:focus {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, .12);
+  }
+
+  .ep-input::placeholder,
+  .ep-textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  .ep-textarea {
+    resize: vertical;
+    min-height: 88px;
+  }
+
+  /* input with left icon */
+  .ep-input-icon {
+    position: relative;
+  }
+
+  .ep-input-icon .ep-input {
+    padding-left: 38px;
+  }
+
+  .ep-input-icon .icon-l {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .9rem;
+    pointer-events: none;
+  }
+
+  /* select arrow */
+  .ep-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  .ep-field {
+    margin-bottom: 16px;
+  }
+
+  .ep-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* char counter */
+  .ep-meta {
+    display: flex;
+    justify-content: flex-end;
+    font-size: .68rem;
+    color: #9ca3af;
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .ep-meta.warn {
+    color: #f59e0b;
+  }
+
+  .ep-meta.danger {
+    color: #ef4444;
+  }
+
+  /* social row */
+  .social-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .social-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    flex-shrink: 0;
+  }
+
+  .social-icon.ig {
+    background: #fce7f3;
+    color: #db2777;
+  }
+
+  .social-icon.tw {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .social-icon.li {
+    background: #eff6ff;
+    color: #0a66c2;
+  }
+
+  .social-item .ep-input {
+    margin: 0;
+  }
+
+  /* password strength bar */
+  .pw-strength {
+    margin-top: 6px;
+  }
+
+  .pw-bar {
+    height: 4px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .pw-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .3s, background .3s;
+    width: 0;
+  }
+
+  .pw-hint {
+    font-size: .68rem;
+    color: #9ca3af;
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* ── Danger zone ── */
+  .danger-zone {
+    background: #fff;
+    border: 1.5px solid #fecaca;
+    border-radius: 20px;
+    padding: 20px 24px;
+    animation: fadeUp .4s .2s ease both;
+  }
+
+  .danger-zone-title {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #ef4444;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #fef2f2;
+  }
+
+  .danger-btn {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 99px;
+    border: 1.5px solid #fecaca;
+    background: #fff;
+    color: #ef4444;
+    font-family: 'Sora', sans-serif;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .danger-btn:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+  }
+
+  /* ── Submit row ── */
+  .ep-submit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .ep-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 99px;
+    border: 1.5px solid #e4ece6;
+    background: #fff;
+    color: #6b7280;
+    font-family: 'Sora', sans-serif;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .2s;
+  }
+
+  .ep-back-btn:hover {
+    border-color: #9ca3af;
+    color: #374151;
+  }
+
+  .ep-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 28px;
+    border-radius: 99px;
+    border: none;
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+    font-family: 'Sora', sans-serif;
+    font-size: .84rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(22, 163, 74, .3);
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .ep-save-btn:hover {
+    box-shadow: 0 10px 28px rgba(22, 163, 74, .42);
+    transform: translateY(-1px);
+  }
+
+  /* ── File input hidden ── */
+  #picInput {
+    display: none;
+  }
+
+  /* ── Flash/success toast ── */
+  .ep-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #111827;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: 'Sora', sans-serif;
+    font-size: .82rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
+    z-index: 9999;
+    pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+  }
+
+  .ep-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .ep-toast i {
+    color: #4ade80;
+  }
+
+  @media (max-width: 900px) {
+    .ep-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .ep-grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .page-content {
+      padding: 16px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width:1000px; margin:0 auto;">
+
+  <form method="POST" enctype="multipart/form-data" id="editForm">
+    {{ form.hidden_tag() }}
+    <input type="file" id="picInput" name="profile_pic" accept="image/*">
+
+    <div class="ep-layout">
+
+      <!-- ── LEFT: Avatar panel ── -->
+      <div style="display:flex; flex-direction:column; gap:16px;">
+
+        <div class="ep-card avatar-panel">
+
+          <!-- Avatar -->
+          <div class="avatar-ring" id="avatarRing">
+            {% if current_user.profile_pic %}
+            <img id="avatarImg" src="{{ url_for('static', filename='uploads/' ~ current_user.profile_pic) }}"
+              alt="{{ current_user.name }}">
+            {% else %}
+            <div class="avatar-initials" id="avatarInitials">
+              {{ current_user.name[0].upper() }}
+            </div>
+            {% endif %}
+            <div class="avatar-edit-btn" onclick="document.getElementById('picInput').click()" title="Change photo">
+              <i class="bi bi-camera-fill"></i>
+            </div>
+          </div>
+
+          <div class="avatar-name" id="liveNameDisplay">{{ current_user.name }}</div>
+          <div class="avatar-role">{{ current_user.role|capitalize }} · ReEarth</div>
+
+          <!-- Mini stats -->
+          <div class="avatar-stats">
+            <div class="astat">
+              <div class="astat-val">{{ current_user.xp or 0 }}</div>
+              <div class="astat-lbl">Total XP</div>
+            </div>
+            <div class="astat">
+              <div class="astat-val">{{ current_user.level or 1 }}</div>
+              <div class="astat-lbl">Level</div>
+            </div>
+            <div class="astat">
+              <div class="astat-val">{{ earned_badges|length if earned_badges else 0 }}</div>
+              <div class="astat-lbl">Badges</div>
+            </div>
+          </div>
+
+          <div class="avatar-divider"></div>
+
+          <div class="avatar-tip">
+            <p><i class="bi bi-info-circle-fill"></i>
+              Click the camera icon to update your photo. JPG or PNG, max 2MB recommended.
+            </p>
+          </div>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="danger-zone">
+          <div class="danger-zone-title"><i class="bi bi-exclamation-triangle-fill"></i> Danger Zone</div>
+          <p style="font-size:.78rem;color:#9ca3af;font-family:'Sora',sans-serif;margin-bottom:12px;">
+            These actions are permanent and cannot be undone.
+          </p>
+          <button type="button" class="danger-btn">
+            <i class="bi bi-trash3"></i> Delete Account
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ── RIGHT: Form fields ── -->
+      <div style="display:flex; flex-direction:column; gap:16px;">
+
+        <!-- Personal info -->
+        <div class="ep-card">
+          <div class="ep-card-title"><i class="bi bi-person-fill"></i> Personal Information</div>
+
+          <div class="ep-grid-2 ep-field">
+            <div>
+              <label class="ep-label">Full Name <span class="req">*</span></label>
+              <div class="ep-input-icon">
+                <i class="bi bi-person icon-l"></i>
+                {{ form.name(class="ep-input", id="nameInput", placeholder="Your full name") }}
+              </div>
+            </div>
+            <div>
+              <label class="ep-label">Email Address <span class="req">*</span></label>
+              <div class="ep-input-icon">
+                <i class="bi bi-envelope icon-l"></i>
+                {{ form.email(class="ep-input", placeholder="you@example.com") }}
+              </div>
+            </div>
+          </div>
+
+          <div class="ep-field">
+            <label class="ep-label">Bio</label>
+            {{ form.bio(class="ep-textarea", id="bioTextarea", placeholder="Tell volunteers about yourself — your
+            motivation, skills, areas of interest...", rows="3") }}
+            <div class="ep-meta" id="bioCounter">0 / 300</div>
+          </div>
+
+          <div class="ep-field" style="margin-bottom:0;">
+            <label class="ep-label">Location</label>
+            <div class="ep-input-icon">
+              <i class="bi bi-geo-alt icon-l"></i>
+              {{ form.location(class="ep-input", placeholder="City, State") }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Social links -->
+        <div class="ep-card">
+          <div class="ep-card-title"><i class="bi bi-link-45deg"></i> Social Links</div>
+
+          <div class="social-item">
+            <div class="social-icon ig"><i class="bi bi-instagram"></i></div>
+            <div class="ep-input-icon" style="flex:1;">
+              <i class="bi bi-at icon-l"></i>
+              {{ form.instagram(class="ep-input", placeholder="instagram_handle") }}
+            </div>
+          </div>
+
+          {% if form.twitter is defined %}
+          <div class="social-item">
+            <div class="social-icon tw"><i class="bi bi-twitter-x"></i></div>
+            <div class="ep-input-icon" style="flex:1;">
+              <i class="bi bi-at icon-l"></i>
+              {{ form.twitter(class="ep-input", placeholder="twitter_handle") }}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if form.linkedin is defined %}
+          <div class="social-item" style="margin-bottom:0;">
+            <div class="social-icon li"><i class="bi bi-linkedin"></i></div>
+            <div class="ep-input-icon" style="flex:1;">
+              <i class="bi bi-person-badge icon-l"></i>
+              {{ form.linkedin(class="ep-input", placeholder="linkedin.com/in/handle") }}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Password change (optional) -->
+        <div class="ep-card">
+          <div class="ep-card-title"><i class="bi bi-shield-lock-fill"></i> Change Password <span
+              style="font-weight:400;text-transform:none;letter-spacing:0;color:#9ca3af;font-size:.72rem;">(leave blank
+              to keep current)</span></div>
+
+          <div class="ep-grid-2">
+            <div class="ep-field">
+              <label class="ep-label">New Password</label>
+              <div class="ep-input-icon">
+                <i class="bi bi-lock icon-l"></i>
+                <input type="password" name="new_password" id="pwInput" class="ep-input" placeholder="Min 8 characters"
+                  autocomplete="new-password">
+              </div>
+              <div class="pw-strength">
+                <div class="pw-bar">
+                  <div class="pw-bar-fill" id="pwBar"></div>
+                </div>
+                <div class="pw-hint" id="pwHint">Enter a new password</div>
+              </div>
+            </div>
+            <div class="ep-field">
+              <label class="ep-label">Confirm Password</label>
+              <div class="ep-input-icon">
+                <i class="bi bi-lock-fill icon-l"></i>
+                <input type="password" name="confirm_password" id="pwConfirm" class="ep-input"
+                  placeholder="Repeat password" autocomplete="new-password">
+              </div>
+              <div class="ep-meta" id="pwMatch" style="justify-content:flex-start;margin-top:6px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="ep-card" style="padding:18px 24px;">
+          <div class="ep-submit-row">
+            <a href="{{ url_for('dashboard.view_volunteer_profile', user_id=current_user.id) }}" class="ep-back-btn">
+              <i class="bi bi-arrow-left"></i> Back to Profile
+            </a>
+            <button type="submit" class="ep-save-btn">
+              <i class="bi bi-check-circle-fill"></i> Save Changes
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </form>
+
+</div>
+
+<!-- Toast -->
+<div class="ep-toast" id="epToast">
+  <i class="bi bi-check-circle-fill"></i>
+  <span id="epToastMsg">Changes saved!</span>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  /* ── Avatar preview ──────────────────────────────── */
+  document.getElementById('picInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const ring = document.getElementById('avatarRing');
+      /* replace whatever is inside with an img */
+      const existing = ring.querySelector('img, .avatar-initials');
+      let img;
+      if (existing && existing.tagName === 'IMG') {
+        img = existing;
+      } else {
+        img = document.createElement('img');
+        img.id = 'avatarImg';
+        if (existing) existing.replaceWith(img);
+        else ring.insertBefore(img, ring.firstChild);
+      }
+      img.src = reader.result;
+      img.style.cssText = 'width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 0 0 3px #dcfce7,0 8px 28px rgba(22,163,74,.2);';
+    };
+    reader.readAsDataURL(file);
+  });
+
+
+  /* ── Live name display in avatar card ────────────── */
+  const nameInput = document.getElementById('nameInput');
+  const liveDisplay = document.getElementById('liveNameDisplay');
+  if (nameInput && liveDisplay) {
+    nameInput.addEventListener('input', () => {
+      liveDisplay.textContent = nameInput.value || '{{ current_user.name }}';
+    });
+  }
+
+
+  /* ── Bio char counter ────────────────────────────── */
+  const bioTA = document.getElementById('bioTextarea');
+  const bioCounter = document.getElementById('bioCounter');
+  const MAX_BIO = 300;
+  if (bioTA && bioCounter) {
+    function updateBioCount() {
+      const len = bioTA.value.length;
+      bioCounter.textContent = `${len} / ${MAX_BIO}`;
+      bioCounter.className = 'ep-meta' + (len > MAX_BIO ? ' danger' : len > MAX_BIO * 0.85 ? ' warn' : '');
+    }
+    updateBioCount();
+    bioTA.addEventListener('input', updateBioCount);
+  }
+
+
+  /* ── Password strength ───────────────────────────── */
+  const pwInput = document.getElementById('pwInput');
+  const pwBar = document.getElementById('pwBar');
+  const pwHint = document.getElementById('pwHint');
+  const pwConfirm = document.getElementById('pwConfirm');
+  const pwMatch = document.getElementById('pwMatch');
+
+  function checkStrength(pw) {
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+  }
+
+  if (pwInput) {
+    pwInput.addEventListener('input', () => {
+      const pw = pwInput.value;
+      if (!pw) { pwBar.style.width = '0'; pwHint.textContent = 'Enter a new password'; pwBar.style.background = ''; return; }
+      const s = checkStrength(pw);
+      const pct = [25, 50, 75, 100][s - 1] || 10;
+      const col = ['#ef4444', '#f59e0b', '#22c55e', '#16a34a'][s - 1] || '#ef4444';
+      const hint = ['Too short', 'Fair', 'Good', 'Strong 💪'][s - 1] || 'Too short';
+      pwBar.style.width = pct + '%';
+      pwBar.style.background = col;
+      pwHint.textContent = hint;
+      pwHint.style.color = col;
+      checkMatch();
+    });
+  }
+
+  if (pwConfirm) {
+    pwConfirm.addEventListener('input', checkMatch);
+  }
+
+  function checkMatch() {
+    if (!pwInput || !pwConfirm || !pwMatch) return;
+    if (!pwConfirm.value) { pwMatch.textContent = ''; return; }
+    if (pwInput.value === pwConfirm.value) {
+      pwMatch.innerHTML = '<i class="bi bi-check-circle-fill" style="color:#16a34a;margin-right:4px;"></i><span style="color:#16a34a;">Passwords match</span>';
+    } else {
+      pwMatch.innerHTML = '<i class="bi bi-x-circle-fill" style="color:#ef4444;margin-right:4px;"></i><span style="color:#ef4444;">Passwords don\'t match</span>';
+    }
+  }
+
+
+  /* ── Toast helper ────────────────────────────────── */
+  function showToast(msg, duration = 3000) {
+    const t = document.getElementById('epToast');
+    document.getElementById('epToastMsg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), duration);
+  }
+
+  /* Show toast if Flask flashed a success (detect via page title or a hidden flag) */
+  {% with messages = get_flashed_messages(with_categories = true) %}
+  {% for cat, msg in messages %}
+  {% if cat == 'success' %}
+  document.addEventListener('DOMContentLoaded', () => showToast('{{ msg }}'));
+  {% endif %}
+  {% endfor %}
+  {% endwith %}
+
+
+  <form method="POST" action="{{ url_for('dashboard.delete_account') }}">
+    <button type="submit" class="danger-btn"
+      onclick="return confirm('Are you sure? This action cannot be undone.')">
+      <i class="bi bi-trash3"></i> Delete Account
+    </button>
+  </form>
+</script>
+{% endblock %}

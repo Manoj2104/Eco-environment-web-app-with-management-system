@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Specific to your project
+instance/
+Reearth/*.db
+*.zip
+speed_debug.log
+tmp_routes*.txt
+fix_dashboard.ps1
+.DS_Store
+
+# Flask
+.env
+.venv
+venv/
+ENV/
+
+# Static uploads (Optional: only if you don't want to commit user-uploaded images)
+app/static/uploads/*
+!app/static/uploads/default.jpg

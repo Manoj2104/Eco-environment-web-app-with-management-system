@@ -13,6 +13,7 @@
   <!-- Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='assets/css/mobile_optimization.css') }}" rel="stylesheet">
 
   <style>
     /* ===== ROOT VARIABLES ===== */
@@ -1268,6 +1269,33 @@
         </div>
       </div>
     </header>
+
+    <!-- ===== MOBILE BOTTOM NAVIGATION ===== -->
+    <nav class="mobile-nav d-md-none">
+      <a href="{{ url_for('dashboard.home') if current_user.role == 'volunteer' else url_for('events.manage_events') }}" 
+         class="mobile-nav-item {% if request.path == url_for('dashboard.home') or request.path == url_for('events.manage_events') %}active{% endif %}">
+        <i class="bi bi-house-door-fill"></i>
+        <span>Home</span>
+      </a>
+      <a href="{{ url_for('dashboard.calendar') }}" class="mobile-nav-item {% if 'calendar' in request.path %}active{% endif %}">
+        <i class="bi bi-calendar3"></i>
+        <span>Schedule</span>
+      </a>
+      
+      <!-- Action Button -->
+      <a href="{{ url_for('dashboard.dashboard1_home') }}" class="mobile-nav-item mobile-nav-action">
+        <i class="bi bi-shield-plus"></i>
+      </a>
+
+      <a href="{{ url_for('dashboard.view_notifications') }}" class="mobile-nav-item {% if 'notifications' in request.path %}active{% endif %}">
+        <i class="bi bi-bell-fill"></i>
+        <span>Updates</span>
+      </a>
+      <a href="{{ url_for('dashboard.profile') }}" class="mobile-nav-item {% if 'profile' in request.path %}active{% endif %}">
+        <i class="bi bi-person-circle"></i>
+        <span>Profile</span>
+      </a>
+    </nav>
 
 
     <!-- ===== PAGE CONTENT ===== -->

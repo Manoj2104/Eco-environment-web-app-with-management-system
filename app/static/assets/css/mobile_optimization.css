@@ -1,0 +1,287 @@
+/* 
+    RE-EARTH MOBILE OPTIMIZATION 
+    Zepto-inspired Modern UI System
+    Premium Mobile-First Experience
+*/
+
+:root {
+    --ios-safe-bottom: env(safe-area-inset-bottom, 0);
+    --mobile-nav-height: calc(65px + var(--ios-safe-bottom));
+    --z-primary: #15803d;
+    --z-accent: #10b981;
+    --z-bg: #f8fafc;
+    --z-card-bg: rgba(255, 255, 255, 0.95);
+    --z-text: #0f172a;
+    --z-text-muted: #64748b;
+}
+
+/* ===== MOBILE OVERRIDES ===== */
+@media (max-width: 768px) {
+    :root {
+        --radius: 24px;
+        --radius-sm: 14px;
+        --radius-xs: 8px;
+    }
+
+    body {
+        padding-bottom: var(--mobile-nav-height);
+        background: var(--z-bg);
+        -webkit-tap-highlight-color: transparent;
+        font-size: 15px;
+    }
+
+    /* Hide Desktop Sidebar & Topbar Elements */
+    .sidebar { display: none !important; }
+    .main { margin-left: 0 !important; }
+    .tb-divider, .topbar-search, .tb-spacer, .tb-xp-widget, .user-chip-info { display: none !important; }
+
+    /* Premium Topbar */
+    .topbar {
+        padding: 0 20px;
+        height: 68px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .topbar-left {
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .topbar-page-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: var(--z-text);
+    }
+
+    .user-chip {
+        padding: 2px !important;
+        border-radius: 50% !important;
+        border: 2px solid var(--z-accent) !important;
+        background: white !important;
+    }
+
+    .user-avatar {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Page Content Padding */
+    .page-content {
+        padding: 20px 20px 40px 20px !important;
+    }
+
+    /* ===== ZEPTO-STYLE CARDS ===== */
+    .card, .section-card, .tile, .metric-card {
+        border: 1px solid rgba(0,0,0,0.03) !important;
+        border-radius: var(--radius) !important;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.04), 0 8px 10px -6px rgba(0,0,0,0.04) !important;
+        background: white !important;
+        margin-bottom: 20px !important;
+        padding: 16px !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .card:active {
+        transform: scale(0.97);
+    }
+
+    /* Horizontal Scroller (Zepto Categories) */
+    .mobile-scroller {
+        display: flex;
+        overflow-x: auto;
+        gap: 16px;
+        padding: 4px 20px 20px 20px;
+        margin: 0 -20px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        scroll-snap-type: x mandatory;
+    }
+
+    .mobile-scroller::-webkit-scrollbar { display: none; }
+
+    .scroller-item {
+        flex: 0 0 auto;
+        width: 140px;
+        scroll-snap-align: center;
+        background: white;
+        border-radius: var(--radius);
+        padding: 12px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    /* Stats Grid Overrides */
+    .stat-tiles {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .tile { margin-bottom: 0 !important; }
+
+    /* Forms Optimization */
+    input, select, textarea {
+        height: 52px !important;
+        padding: 0 16px !important;
+        border-radius: var(--radius-sm) !important;
+        font-size: 16px !important; /* Prevents auto-zoom on iOS */
+        background: #f1f5f9 !important;
+        border: 1.5px solid transparent !important;
+    }
+
+    input:focus {
+        background: white !important;
+        border-color: var(--z-accent) !important;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+    }
+
+    /* Buttons Optimizations */
+    .btn, .prof-btn, .tb-btn {
+        height: 52px !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm) !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.2px;
+    }
+
+    /* ===== BOTTOM NAVIGATION (Zepto Pro) ===== */
+    .mobile-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--mobile-nav-height);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(25px);
+        border-top: 1px solid rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 0 10px calc(2px + var(--ios-safe-bottom));
+        z-index: 2000;
+        box-shadow: 0 -8px 24px rgba(0,0,0,0.03);
+    }
+
+    .mobile-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: var(--z-text-muted);
+        font-size: 0.65rem;
+        font-weight: 700;
+        gap: 4px;
+        flex: 1;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .mobile-nav-item i {
+        font-size: 1.4rem;
+        padding: 6px 12px;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-nav-item.active {
+        color: var(--z-primary);
+    }
+
+    .mobile-nav-item.active i {
+        background: rgba(21, 128, 61, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .mobile-nav-action {
+        flex: 0 0 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--z-primary), var(--z-accent));
+        border-radius: 20px;
+        margin-top: -35px;
+        color: white !important;
+        box-shadow: 0 10px 20px rgba(21, 128, 61, 0.25);
+        border: 4px solid var(--z-bg);
+    }
+
+    .mobile-nav-action i {
+        font-size: 1.6rem;
+        padding: 0;
+    }
+
+    /* Modal -> Bottom Sheet */
+    .modal.fade .modal-dialog {
+        transform: translateY(100%);
+        transition: transform 0.3s ease-out;
+        margin: 0;
+        max-width: 100%;
+        width: 100%;
+        position: fixed;
+        bottom: 0;
+    }
+
+    .modal.show .modal-dialog {
+        transform: translateY(0);
+    }
+
+    .modal-content {
+        border-radius: 30px 30px 0 0 !important;
+        padding-bottom: var(--ios-safe-bottom);
+    }
+
+    .modal-header {
+        border: none !important;
+        padding: 24px 24px 10px !important;
+    }
+
+    /* Floating Action System */
+    .fab-container {
+        position: fixed;
+        right: 20px;
+        bottom: calc(var(--mobile-nav-height) + 20px);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 1500;
+    }
+
+    .fab {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: white;
+        color: var(--z-text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        text-decoration: none;
+    }
+
+    .fab.primary {
+        background: var(--z-primary);
+        color: white;
+    }
+}
+
+/* Animations */
+@keyframes zFadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.z-animate-up {
+    animation: zFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}

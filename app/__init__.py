@@ -13,7 +13,7 @@ migrate = Migrate()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
-socketio = SocketIO(cors_allowed_origins="*", async_mode="eventlet")
+socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
 
 # Live check-in tracker
 checked_in_volunteers = {}
@@ -22,17 +22,8 @@ def create_app():
     app = Flask(__name__)
 
     # -------------------- Config --------------------
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'super-secret-key')
-    
-    # Use DATABASE_URL for production (PostgreSQL), fallback to SQLite for local development
-    database_url = os.environ.get('DATABASE_URL', '').strip()
-    
-    if database_url:
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql://", 1)
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///eco_nova.db'
+    app.config['SECRET_KEY'] = 'super-secret-key'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///eco_nova.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join('app', 'static', 'uploads')
     app.config['QR_FOLDER'] = os.path.join('app', 'static', 'qr_codes')
@@ -41,13 +32,7 @@ def create_app():
     os.makedirs(app.config['QR_FOLDER'], exist_ok=True)
 
     # -------------------- Init Extensions --------------------
-    try:
-        db.init_app(app)
-    except Exception as e:
-        print(f"FAILED TO INIT DB WITH MAIN URI: {e}")
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///eco_nova.db'
-        db.init_app(app)
-    
+    db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     socketio.init_app(app)

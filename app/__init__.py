@@ -41,7 +41,13 @@ def create_app():
     os.makedirs(app.config['QR_FOLDER'], exist_ok=True)
 
     # -------------------- Init Extensions --------------------
-    db.init_app(app)
+    try:
+        db.init_app(app)
+    except Exception as e:
+        print(f"FAILED TO INIT DB WITH MAIN URI: {e}")
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///eco_nova.db'
+        db.init_app(app)
+    
     migrate.init_app(app, db)
     login_manager.init_app(app)
     socketio.init_app(app)

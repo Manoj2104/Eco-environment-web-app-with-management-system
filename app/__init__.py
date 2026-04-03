@@ -64,10 +64,24 @@ def create_app():
 # -------------------- Socket.IO Events --------------------
 def register_socketio_handlers():
     from flask import request
-    from app.models import Goal, Review, ImpactEntry
+    from app.models import Goal, Review, ImpactEntry, GoalTask, Event, Notification, User, AttendanceRecord
     from app.utils.badge_unlocker import check_and_unlock_badges
+    from sqlalchemy import func
     import random
     import datetime
+
+    @socketio.on('connect')
+    def handle_connect(auth=None):
+        if current_user.is_authenticated:
+            from flask_socketio import join_room
+            join_room(str(current_user.id))
+            emit('connected', {
+                "message": "Connected successfully",
+                "unread_notifications": Notification.query.filter_by(user_id=current_user.id, read=False).count(),
+                "ongoing_events": Event.query.filter(Event.status == 'ongoing').count(),
+            }, room=str(current_user.id))
+        else:
+            print("Unauthenticated user tried to connect.")
 
     @socketio.on('check_in')
     def handle_check_in(data):
@@ -79,12 +93,17 @@ def register_socketio_handlers():
                 'volunteer_id': volunteer_id,
                 'checked_in_at': now
             }, broadcast=True)
+            
+            # Analytics update
+            live_volunteer_count = User.query.filter_by(role='volunteer', is_active=True).count()
+            emit('analytics_data', {
+                'live_volunteer_count': live_volunteer_count
+            }, broadcast=True)
 
     @socketio.on('get_goals')
     def handle_get_goals():
         if not current_user.is_authenticated:
             return
-        from app.models import GoalTask
         goals = Goal.query.filter_by(user_id=current_user.id).all()
         result = []
         for g in goals:
@@ -120,129 +139,17 @@ def register_socketio_handlers():
         db.session.commit()
         handle_get_reviews()
 
-    @socketio.on("request_timeline")
-    def handle_request_timeline():
-        if not current_user.is_authenticated:
-            return
-        entries = ImpactEntry.query.filter_by(user_id=current_user.id).order_by(ImpactEntry.date.desc()).all()
-        result = [{
-            "title": e.title,
-            "description": e.description,
-            "type": e.type,
-            "date": e.date.strftime("%Y-%m-%d"),
-            "xp": e.xp,
-            "badge": e.badge,
-            "level_up": e.level_up
-        } for e in entries]
-        emit("receive_timeline", result)
-
-    @socketio.on("get_feedback_summary")
-    def handle_feedback_summary():
-        summary = {
-            "avg_rating": round(random.uniform(3.5, 5.0), 2),
-            "total_responses": random.randint(50, 150),
-            "positive_percent": random.randint(70, 95)
-        }
-        emit("feedback_stats", summary)
-
-        breakdown = {
-            "5_votes": random.randint(50, 100),
-            "4_votes": random.randint(20, 60),
-            "3_votes": random.randint(10, 30),
-            "2_votes": random.randint(1, 10),
-            "1_votes": random.randint(1, 5)
-        }
-        emit("rating_breakdown", breakdown)
-
-        keywords = ["engaging", "fun", "inspiring", "interactive", "informative"]
-        emit("feedback_keywords", keywords)
-
-        today = datetime.date.today()
-        labels = [(today - datetime.timedelta(days=i)).strftime("%d %b") for i in range(6, -1, -1)]
-        values = [round(random.uniform(3.5, 5.0), 2) for _ in range(7)]
-        emit("trend_data", {"labels": labels, "values": values})
-
-    @socketio.on("task_completed")
-    def handle_task_completed(data):
-        if current_user.is_authenticated:
-            check_and_unlock_badges(current_user)
-
-
-
-from flask_socketio import join_room, emit
-from flask_login import current_user
-from app.models import Event, Notification
-
-@socketio.on('connect')
-def handle_connect(auth=None):
-    if current_user.is_authenticated:
-        join_room(str(current_user.id))
-        emit('connected', {
-            "message": "Connected successfully",
-            "unread_notifications": Notification.query.filter_by(user_id=current_user.id, read=False).count(),
-            "ongoing_events": Event.query.filter(Event.status == 'ongoing').count(),
-        }, room=str(current_user.id))
-    else:
-        print("Unauthenticated user tried to connect.")
-
-
-from flask_socketio import SocketIO, emit
-from app.models import User, Event, AttendanceRecord
-from app import db
-from datetime import datetime
-from sqlalchemy import func
-# Global set to track live checked-in volunteer IDs
-live_checked_in_volunteers = set()
-
-@socketio.on('check_in')
-def handle_check_in(data):
-    volunteer_id = data.get('volunteer_id')
-    if volunteer_id:
-        # Add volunteer to live checked-in set
-        live_checked_in_volunteers.add(volunteer_id)
-        
-        # You may want to update your AttendanceRecord checked_in status here in DB too
-        attendance = AttendanceRecord.query.filter_by(volunteer_id=volunteer_id, checked_in=True).first()
-        if not attendance:
-            # Example: mark the volunteer as checked in in attendance record, or create one if needed
-            # This part depends on your app logic
-            pass
-        
-        # Emit updated live volunteer count to all clients
+    @socketio.on("get_analytics_data")
+    def handle_analytics():
+        live_volunteer_count = User.query.filter_by(role='volunteer', is_active=True).count()
+        now = datetime.datetime.utcnow()
+        ongoing_events_count = Event.query.filter(Event.start_time <= now, Event.end_time >= now).count()
+        avg_hours = db.session.query(func.avg(AttendanceRecord.hours)).scalar() or 0
         emit('analytics_data', {
-            'live_volunteer_count': len(live_checked_in_volunteers)
-        }, broadcast=True)
-
-@socketio.on('check_out')
-def handle_check_out(data):
-    volunteer_id = data.get('volunteer_id')
-    if volunteer_id and volunteer_id in live_checked_in_volunteers:
-        live_checked_in_volunteers.remove(volunteer_id)
-        emit('analytics_data', {
-            'live_volunteer_count': len(live_checked_in_volunteers)
-        }, broadcast=True)
-
-from flask_socketio import SocketIO, emit
-from app import socketio, db
-from app.models import User, Event, AttendanceRecord
-from sqlalchemy import func
-from datetime import datetime
-
-@socketio.on('get_analytics_data')
-def handle_analytics():
-    live_volunteer_count = User.query.filter_by(role='volunteer', is_active=True).count()
-
-    now = datetime.utcnow()
-    ongoing_events_count = Event.query.filter(Event.start_time <= now, Event.end_time >= now).count()
-
-    avg_hours = db.session.query(func.avg(AttendanceRecord.hours)).scalar() or 0
-    avg_hours = round(avg_hours, 1)
-
-    emit('analytics_data', {
-        'live_volunteer_count': live_volunteer_count,
-        'ongoing_events_count': ongoing_events_count,
-        'avg_hours': avg_hours
-    })
+            'live_volunteer_count': live_volunteer_count,
+            'ongoing_events_count': ongoing_events_count,
+            'avg_hours': round(avg_hours, 1)
+        })
 
 
 

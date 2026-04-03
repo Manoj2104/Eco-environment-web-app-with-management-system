@@ -105,8 +105,8 @@ class Event(db.Model):
 # -------------------- Booking --------------------
 class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False, index=True)
     appointment_time = db.Column(db.DateTime, nullable=True)
     message = db.Column(db.Text, nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
@@ -131,8 +131,8 @@ class AttendanceRecord(db.Model):
     __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
-    volunteer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False, index=True)
+    volunteer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     hours = db.Column(db.Float, nullable=False, default=0.0)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     check_in_time = db.Column(db.DateTime)

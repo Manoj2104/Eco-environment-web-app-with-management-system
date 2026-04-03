@@ -7,6 +7,8 @@ from datetime import datetime
 import os
 
 
+from flask_compress import Compress
+
 # -------------------- Extensions --------------------
 db = SQLAlchemy()
 migrate = Migrate()
@@ -14,6 +16,7 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
+compress = Compress()
 
 # Live check-in tracker
 checked_in_volunteers = {}
@@ -27,6 +30,9 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join('app', 'static', 'uploads')
     app.config['QR_FOLDER'] = os.path.join('app', 'static', 'qr_codes')
+    
+    # 🏎️ Enable ULTRA FAST static file caching (1 year)
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000 
 
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     os.makedirs(app.config['QR_FOLDER'], exist_ok=True)
@@ -36,6 +42,7 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
     socketio.init_app(app)
+    compress.init_app(app)
 
     # -------------------- Blueprints --------------------
     from app.auth import auth as auth_blueprint

@@ -41,20 +41,25 @@ from app.models import User, Badge, UserBadge, AttendanceRecord, XPLog, UserXP, 
 
 dashboard = Blueprint('dashboard', __name__)
 
-# Function to archive old events
-def archive_expired_events():
-    now = datetime.utcnow()
-    cutoff = now - timedelta(minutes=45)
-    expired_events = Event.query.filter(Event.date < cutoff, Event.archived == False).all()
-    current_app.logger.info(f"Archiving {len(expired_events)} events older than {cutoff}")
-    for event in expired_events:
-        event.archived = True
-    db.session.commit()
+LAST_ARCHIVE_CHECK = None
 
-# Dashboard home route
+def archive_expired_events():
+    global LAST_ARCHIVE_CHECK
+    now = datetime.utcnow()
+    # 🏎️ Only run once every 15 minutes to keep it ULTRA FAST
+    if LAST_ARCHIVE_CHECK and (now - LAST_ARCHIVE_CHECK).total_seconds() < 900:
+        return
+        
+    cutoff = now - timedelta(minutes=45)
+    # 🚀 Use Bulk Update instead of loop for speed
+    Event.query.filter(Event.date < cutoff, Event.archived == False).update({Event.archived: True}, synchronize_session=False)
+    db.session.commit()
+    LAST_ARCHIVE_CHECK = now
+
 @dashboard.route('/dashboard')
 @login_required
 def home():
+    # archive_expired_events() is now throttled internally
     archive_expired_events()
     now = datetime.utcnow() + timedelta(hours=5, minutes=30)
 

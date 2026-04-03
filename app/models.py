@@ -125,8 +125,6 @@ class Booking(db.Model):
 
 
 # -------------------- AttendanceRecord --------------------
-from datetime import datetime
-from app import db
 
 class AttendanceRecord(db.Model):
     __tablename__ = 'attendance_record'
@@ -225,8 +223,6 @@ class Notification(db.Model):
 
 
 # -------------------- Goal --------------------
-from datetime import datetime
-from app import db
 
 class Goal(db.Model):
     __tablename__ = 'goals'

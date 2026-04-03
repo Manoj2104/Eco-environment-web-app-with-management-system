@@ -1,6 +1,11 @@
-from app import db, create_app, socketio
+import os
+from app import create_app, socketio
+
 app = create_app()
-with app.app_context():
-    db.create_all()
-if __name__ == '__main__':
-    socketio.run(app, debug=True, port=2105)
+
+if __name__ == "__main__":
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 2105))
+    )

@@ -25,11 +25,14 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'super-secret-key')
     
     # Use DATABASE_URL for production (PostgreSQL), fallback to SQLite for local development
-    database_url = os.environ.get('DATABASE_URL')
-    if database_url and database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    database_url = os.environ.get('DATABASE_URL', '').strip()
     
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///eco_nova.db'
+    if database_url:
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///eco_nova.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join('app', 'static', 'uploads')
     app.config['QR_FOLDER'] = os.path.join('app', 'static', 'qr_codes')

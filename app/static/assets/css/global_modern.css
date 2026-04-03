@@ -1,0 +1,71 @@
+/* ─── ReEarth Global Modern Design System ─── */
+:root {
+  --primary: #16a34a;
+  --primary-dark: #15803d;
+  --primary-light: #dcfce7;
+  --secondary: #111827;
+  --text-main: #374151;
+  --text-muted: #6b7280;
+  --bg-main: #f0f7f2;
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Universal Modern resets */
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', 'Sora', sans-serif;
+  margin: 0;
+}
+
+/* Glassmorphism Classes */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: #ffffff;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Hero Elements */
+.ultra-hero-title {
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  color: var(--secondary);
+}
+
+/* Page Transitions */
+.view-transition {
+  animation: fadeUp .4s ease both;
+}
+
+/* Common UI Elements */
+.badge-pill {
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+}
+
+.primary-pill { background: var(--primary-light); color: var(--primary-dark); }

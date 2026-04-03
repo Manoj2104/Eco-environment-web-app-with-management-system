@@ -2,12 +2,13 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, join_room, emit
 from datetime import datetime
 import os
 
 
 from flask_compress import Compress
+from flask_caching import Cache
 
 # -------------------- Extensions --------------------
 db = SQLAlchemy()
@@ -17,6 +18,7 @@ login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
 compress = Compress()
+cache = Cache()
 
 # Live check-in tracker
 checked_in_volunteers = {}
@@ -31,6 +33,11 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = os.path.join('app', 'static', 'uploads')
     app.config['QR_FOLDER'] = os.path.join('app', 'static', 'qr_codes')
     
+    # 🕵️ Cache Configuration
+    app.config['CACHE_TYPE'] = 'FileSystemCache'
+    app.config['CACHE_DIR'] = 'flask_cache'
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
+    
     # 🏎️ Enable ULTRA FAST static file caching (1 year)
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000 
 
@@ -43,6 +50,7 @@ def create_app():
     login_manager.init_app(app)
     socketio.init_app(app)
     compress.init_app(app)
+    cache.init_app(app)
 
     # -------------------- Blueprints --------------------
     from app.auth import auth as auth_blueprint

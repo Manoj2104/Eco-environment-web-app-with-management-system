@@ -67,24 +67,44 @@ def home():
     current_app.logger.info(f"Loaded {len(all_events)} active events")
 
     event_data = []
-
     # 📍 User location
     try:
         user_loc = (float(current_user.latitude), float(current_user.longitude))
     except Exception as e:
         current_app.logger.warning(f"User location not available: {e}")
         user_loc = None
+        
+    # 🛰️ Ultra-Fast Spatial Filtering (Bounding Box)
+    # 1 degree lat is ~111km. 20km is ~0.18 degrees.
+    if user_loc:
+        lat, lon = user_loc
+        lat_min, lat_max = lat - 0.2, lat + 0.2
+        lon_min, lon_max = lon - 0.2, lon + 0.2
+        
+        # ⚡ SQL pre-filter (Fast indexed scan)
+        all_events = Event.query.filter(
+            Event.archived == False,
+            Event.latitude.between(lat_min, lat_max),
+            Event.longitude.between(lon_min, lon_max)
+        ).all()
+    else:
+        all_events = Event.query.filter_by(archived=False).all()
+
+    current_app.logger.info(f"Loaded {len(all_events)} active events")
+
+    event_data = []
 
     # 🚀 Pre-fetch user bookings and attendance to avoid N+1 queries
     user_bookings = {b.event_id: b for b in current_user.bookings}
     user_attendances = {a.event_id: a for a in current_user.attendances}
 
-    # 🔄 Loop events
+    # 🔄 Loop events (Only candidates)
     for event in all_events:
         include_event = True
 
         if user_loc and event.latitude and event.longitude:
             try:
+                # Precise check on the survivors
                 distance_km = geodesic((event.latitude, event.longitude), user_loc).km
                 include_event = distance_km <= 20
             except Exception as e:

@@ -70,6 +70,10 @@ def home():
         current_app.logger.warning(f"User location not available: {e}")
         user_loc = None
 
+    # 🚀 Pre-fetch user bookings and attendance to avoid N+1 queries
+    user_bookings = {b.event_id: b for b in current_user.bookings}
+    user_attendances = {a.event_id: a for a in current_user.attendances}
+
     # 🔄 Loop events
     for event in all_events:
         include_event = True
@@ -83,15 +87,9 @@ def home():
                 include_event = False
 
         if include_event:
-            booking = Booking.query.filter_by(
-                event_id=event.id,
-                user_id=current_user.id
-            ).first()
-
-            attendance = AttendanceRecord.query.filter_by(
-                event_id=event.id,
-                volunteer_id=current_user.id
-            ).first()
+            # Use dictionary lookup instead of db query
+            booking = user_bookings.get(event.id)
+            attendance = user_attendances.get(event.id)
 
             status = {
                 "booked": False,
@@ -295,6 +293,10 @@ def dashboard1_home():
         current_app.logger.warning(f"[Dashboard1] Location error: {e}")
         user_loc = None
 
+    # 🚀 Pre-fetch user bookings and attendance to avoid N+1 queries
+    user_bookings = {b.event_id: b for b in current_user.bookings}
+    user_attendances = {a.event_id: a for a in current_user.attendances}
+
     # 🔄 Loop events
     for event in all_events:
         include_event = True
@@ -308,15 +310,9 @@ def dashboard1_home():
                 include_event = False
 
         if include_event:
-            booking = Booking.query.filter_by(
-                event_id=event.id,
-                user_id=current_user.id
-            ).first()
-
-            attendance = AttendanceRecord.query.filter_by(
-                event_id=event.id,
-                volunteer_id=current_user.id
-            ).first()
+            # Use dictionary lookup instead of db query
+            booking = user_bookings.get(event.id)
+            attendance = user_attendances.get(event.id)
 
             status = {
                 "booked": False,
